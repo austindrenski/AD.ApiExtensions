@@ -1,8 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
-using AD.ApiExtensions.Logging;
 using JetBrains.Annotations;
-using Microsoft.EntityFrameworkCore;
 
 namespace AD.ApiExtensions
 {
@@ -19,9 +18,17 @@ namespace AD.ApiExtensions
         Guid SessionId { get; }
 
         /// <summary>
-        /// Provides private access to the event log entities.
+        /// Provides read access to the event log entities.
         /// </summary>
-        DbSet<LogEntry> EventLog { get; }
+        IQueryable<ILogEntry> LogEntries { get; }
+
+        /// <summary>
+        /// Adds an entry to the log.
+        /// </summary>
+        /// <param name="entry">
+        /// The entry to be added.
+        /// </param>
+        void AddLogEntry<TEntry>([NotNull] TEntry entry) where TEntry : class, ILogEntry;
 
         /// <summary>
         /// Saves all changes made in this context to the underlying database.

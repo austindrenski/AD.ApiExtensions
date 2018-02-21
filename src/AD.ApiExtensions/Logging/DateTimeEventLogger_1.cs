@@ -89,7 +89,7 @@ namespace AD.ApiExtensions.Logging
             {
                 using (ILoggingContext context = _context())
                 {
-                    context.EventLog.Add(_logEntryConstructor(_sessionId, json));
+                    context.AddLogEntry(_logEntryConstructor(_sessionId, json));
                     context.SaveChanges();
                 }
             }
