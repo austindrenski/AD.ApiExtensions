@@ -20,7 +20,7 @@ namespace AD.ApiExtensions.Logging
 
         [NotNull] private readonly Func<ILoggingContext> _context;
 
-        [NotNull] private readonly Func<Guid, string, ILogEntry> _logEntryConstructor;
+        [NotNull] private readonly Func<Guid, string, LogEntry> _logEntryConstructor;
 
         /// <summary>
         /// Constructs a new logger that wraps an existing implementation.

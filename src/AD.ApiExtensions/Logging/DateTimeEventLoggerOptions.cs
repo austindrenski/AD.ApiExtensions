@@ -20,6 +20,6 @@ namespace AD.ApiExtensions.Logging
         /// Constructs a log entry.
         /// </summary>
         [CanBeNull]
-        public Func<Guid, string, ILogEntry> LogEntryConstructor { get; set; }
+        public Func<Guid, string, LogEntry> LogEntryConstructor { get; set; }
     }
 }

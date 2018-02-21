@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AD.ApiExtensions.Logging;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,7 @@ namespace AD.ApiExtensions
         /// <summary>
         /// Provides private access to the event log entities.
         /// </summary>
-        DbSet<ILogEntry> EventLog { get; }
+        DbSet<LogEntry> EventLog { get; }
 
         /// <summary>
         /// Saves all changes made in this context to the underlying database.
