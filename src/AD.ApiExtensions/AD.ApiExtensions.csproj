@@ -3,6 +3,8 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <DocumentationFile>bin\Release\netstandard2.0\AD.ApiExtensions.xml</DocumentationFile>
+        <AssemblyName>AD.ApiExtensions</AssemblyName>
+        <RootNamespace>AD.ApiExtensions</RootNamespace>
     </PropertyGroup>
     <PropertyGroup>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
