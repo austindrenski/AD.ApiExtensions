@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.Extensions.Primitives;
 
-namespace AD.ApiExtensions
+namespace AD.ApiExtensions.Primitives
 {
     // TODO: document StringValuesExtensions
     /// <summary>
