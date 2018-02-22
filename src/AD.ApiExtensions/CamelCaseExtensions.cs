@@ -81,6 +81,7 @@ namespace AD.ApiExtensions
             return CamelCaseRegex.Replace(value, " $1");
         }
 
+        // TODO: this should be recapitalizing
         /// <summary>
         /// Applies the regular expression to change kebab style to camel case style.
         /// </summary>
@@ -101,6 +102,28 @@ namespace AD.ApiExtensions
             }
 
             return value.Replace("-", null).ToLower();
+        }
+
+        /// <summary>
+        /// Applies the regular expression to change camel case to snake case.
+        /// </summary>
+        /// <param name="value">
+        /// The value to modify.
+        /// </param>
+        /// <returns>
+        /// The value in camel case style.
+        /// </returns>
+        /// <exception cref="ArgumentNullException" />
+        [Pure]
+        [NotNull]
+        public static string CamelCaseToSnakeCase([NotNull] this string value)
+        {
+            if (value is null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            return CamelCaseRegex.Replace(value, "_$1").ToLower();
         }
     }
 }

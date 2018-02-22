@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace AD.ApiExtensions.Conventions
 {
@@ -10,8 +14,40 @@ namespace AD.ApiExtensions.Conventions
     ///
     /// </summary>
     [PublicAPI]
-    public class KebabControllerModelConvention : IControllerModelConvention
+    public sealed class KebabControllerModelConvention : IControllerModelConvention
     {
+        /// <summary>
+        ///
+        /// </summary>
+        [NotNull] private static readonly string Index = "Index";
+
+        /// <summary>
+        ///
+        /// </summary>
+        [NotNull] private static readonly Regex HomeRegex = new Regex("Api\\b");
+
+        /// <summary>
+        ///
+        /// </summary>
+        [NotNull] private readonly string _home;
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="home">
+        ///
+        /// </param>
+        /// <exception cref="ArgumentNullException" />
+        public KebabControllerModelConvention([NotNull] string home)
+        {
+            if (home is null)
+            {
+                throw new ArgumentNullException(nameof(home));
+            }
+
+            _home = HomeRegex.Replace(home, string.Empty);
+        }
+
         /// <inheritdoc />
         public void Apply([NotNull] ControllerModel controller)
         {
@@ -20,18 +56,17 @@ namespace AD.ApiExtensions.Conventions
                 throw new ArgumentNullException(nameof(controller));
             }
 
-            if (controller.ControllerName == "Home")
-            {
-                return;
-            }
-
             foreach (SelectorModel selector in controller.Selectors)
             {
                 if (selector.AttributeRouteModel is default)
                 {
                     selector.AttributeRouteModel = new AttributeRouteModel();
                 }
-                selector.AttributeRouteModel.Template = controller.ControllerName.CamelCaseToKebabCase();
+
+                selector.AttributeRouteModel.Template =
+                    controller.ControllerName.Equals(_home, StringComparison.OrdinalIgnoreCase)
+                        ? string.Empty
+                        : controller.ControllerName.CamelCaseToKebabCase();
             }
 
             foreach (ActionModel action in controller.Actions)
@@ -42,7 +77,31 @@ namespace AD.ApiExtensions.Conventions
                     {
                         selector.AttributeRouteModel = new AttributeRouteModel();
                     }
-                    selector.AttributeRouteModel.Template = action.ActionName.CamelCaseToPathCase();
+
+                    selector.AttributeRouteModel.Template =
+                        action.ActionName.Equals(Index, StringComparison.OrdinalIgnoreCase)
+                            ? string.Empty
+                            : action.ActionName.CamelCaseToPathCase();
+                }
+
+                foreach (ParameterModel parameter in action.Parameters)
+                {
+                    if (!parameter.ParameterInfo.ParameterType.IsPrimitive && parameter.ParameterInfo.ParameterType != typeof(string))
+                    {
+                        continue;
+                    }
+
+                    if (parameter.BindingInfo is null)
+                    {
+                        parameter.BindingInfo = new BindingInfo();
+                    }
+
+                    parameter.BindingInfo.BinderModelName = parameter.ParameterName.CamelCaseToKebabCase();
+
+                    parameter.BindingInfo.BindingSource =
+                        parameter.Action.Attributes.OfType<HttpPostAttribute>().Any()
+                            ? BindingSource.Form
+                            : BindingSource.Query;
                 }
             }
         }
