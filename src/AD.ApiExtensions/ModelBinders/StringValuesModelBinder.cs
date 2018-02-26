@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AD.ApiExtensions.Primitives;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace AD.ApiExtensions.Primitives
+namespace AD.ApiExtensions.ModelBinders
 {
     /// <inheritdoc />
     /// <summary>

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using AD.ApiExtensions.ModelBinders;
 using AD.ApiExtensions.TypeConverters;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
@@ -129,6 +130,7 @@ namespace AD.ApiExtensions.Primitives
             {
                 throw new ArgumentNullException(nameof(key));
             }
+
             if (values is null)
             {
                 throw new ArgumentNullException(nameof(values));
@@ -154,6 +156,7 @@ namespace AD.ApiExtensions.Primitives
             {
                 throw new ArgumentNullException(nameof(key));
             }
+
             if (values is null)
             {
                 throw new ArgumentNullException(nameof(values));
@@ -334,11 +337,7 @@ namespace AD.ApiExtensions.Primitives
         [NotNull]
         public override string ToString()
         {
-            if (_groupings is null)
-            {
-                return _grouping.ToString();
-            }
-            return string.Join(",", _groupings);
+            return _groupings is null ? _grouping.ToString() : string.Join(",", _groupings);
         }
 
         /// <summary>
@@ -535,12 +534,15 @@ namespace AD.ApiExtensions.Primitives
             if (_grouping != default)
             {
                 yield return _grouping;
+
                 yield break;
             }
+
             if (_groupings is null)
             {
                 yield break;
             }
+
             for (int i = 0; i < _groupings.Length; i++)
             {
                 yield return _groupings[i];
