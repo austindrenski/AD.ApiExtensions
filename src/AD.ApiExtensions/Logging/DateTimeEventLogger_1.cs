@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
