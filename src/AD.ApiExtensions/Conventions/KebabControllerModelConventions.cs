@@ -34,11 +34,19 @@ namespace AD.ApiExtensions.Conventions
         /// <summary>
         ///
         /// </summary>
-        /// <param name="home">
+        private readonly bool _respectAttributeId;
+
+        ///  <summary>
+        ///
+        ///  </summary>
+        ///  <param name="home">
+        ///
+        ///  </param>
+        /// <param name="respectAttributeId">
         ///
         /// </param>
         /// <exception cref="ArgumentNullException" />
-        public KebabControllerModelConvention([NotNull] string home)
+        public KebabControllerModelConvention([NotNull] string home, bool respectAttributeId = false)
         {
             if (home is null)
             {
@@ -46,6 +54,7 @@ namespace AD.ApiExtensions.Conventions
             }
 
             _home = HomeRegex.Replace(home, string.Empty);
+            _respectAttributeId = respectAttributeId;
         }
 
         /// <inheritdoc />
@@ -80,8 +89,8 @@ namespace AD.ApiExtensions.Conventions
 
                     selector.AttributeRouteModel.Template =
                         action.ActionName.Equals(Index, StringComparison.OrdinalIgnoreCase)
-                            ? string.Empty
-                            : action.ActionName.CamelCaseToPathCase();
+                            ? TryGetAttributeId(action)
+                            : action.ActionName.CamelCaseToPathCase() + TryGetAttributeId(action);
                 }
 
                 foreach (ParameterModel parameter in action.Parameters)
@@ -104,6 +113,21 @@ namespace AD.ApiExtensions.Conventions
                             : BindingSource.Query;
                 }
             }
+        }
+
+        [CanBeNull]
+        private string TryGetAttributeId([NotNull] ActionModel action)
+        {
+            if (action is null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            return
+                _respectAttributeId &&
+                action.Attributes.OfType<HttpGetAttribute>().SingleOrDefault()?.Template == "{id}"
+                    ? "/{id}"
+                    : null;
         }
     }
 }
