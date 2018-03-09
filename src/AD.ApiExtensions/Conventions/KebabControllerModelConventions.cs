@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -8,53 +7,56 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace AD.ApiExtensions.Conventions
 {
-    // TODO: document KebabControllerModelConventions.
     /// <inheritdoc />
     /// <summary>
-    ///
+    /// Provides conventional mapping from camel case to kebab case for controller and action routing.
     /// </summary>
     [PublicAPI]
     public sealed class KebabControllerModelConvention : IControllerModelConvention
     {
         /// <summary>
-        ///
+        /// The default string referencing the server itself.
         /// </summary>
-        [NotNull] private static readonly string Index = "Index";
+        [NotNull] private const string Home = "Home";
 
         /// <summary>
-        ///
+        /// The default string for the controller action referencing the controller itself.
         /// </summary>
-        [NotNull] private static readonly Regex HomeRegex = new Regex("Api\\b");
+        [NotNull] private const string Index = "Index";
 
         /// <summary>
-        ///
+        /// The string for the controller referencing the server itself.
         /// </summary>
         [NotNull] private readonly string _home;
 
         /// <summary>
-        ///
+        /// The string for the controller action referencing the controller itself.
         /// </summary>
-        private readonly bool _respectAttributeId;
+        [NotNull] private readonly string _index;
 
-        ///  <summary>
-        ///
-        ///  </summary>
-        ///  <param name="home">
-        ///
-        ///  </param>
-        /// <param name="respectAttributeId">
-        ///
+        /// <summary>
+        /// Initializes the <see cref="KebabBindingMetadataProvider"/>
+        /// </summary>
+        /// <param name="home">
+        /// The string for the controller referencing the server itself.
+        /// </param>
+        /// <param name="index">
         /// </param>
         /// <exception cref="ArgumentNullException" />
-        public KebabControllerModelConvention([NotNull] string home, bool respectAttributeId = false)
+        public KebabControllerModelConvention([NotNull] string home = Home, [NotNull] string index = Index)
         {
             if (home is null)
             {
                 throw new ArgumentNullException(nameof(home));
             }
 
-            _home = HomeRegex.Replace(home, string.Empty);
-            _respectAttributeId = respectAttributeId;
+            if (index is null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
+            _home = home;
+            _index = index;
         }
 
         /// <inheritdoc />
@@ -98,7 +100,7 @@ namespace AD.ApiExtensions.Conventions
                     }
 
                     selector.AttributeRouteModel.Template =
-                        action.ActionName.Equals(Index, StringComparison.OrdinalIgnoreCase)
+                        action.ActionName.Equals(_index, StringComparison.OrdinalIgnoreCase)
                             ? string.Empty
                             : action.ActionName.CamelCaseToPathCase();
                 }
