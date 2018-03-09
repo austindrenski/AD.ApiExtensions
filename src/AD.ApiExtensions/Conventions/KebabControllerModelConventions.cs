@@ -72,6 +72,11 @@ namespace AD.ApiExtensions.Conventions
                     selector.AttributeRouteModel = new AttributeRouteModel();
                 }
 
+                if (selector.AttributeRouteModel.Template != null)
+                {
+                    continue;
+                }
+
                 selector.AttributeRouteModel.Template =
                     controller.ControllerName.Equals(_home, StringComparison.OrdinalIgnoreCase)
                         ? string.Empty
@@ -87,10 +92,15 @@ namespace AD.ApiExtensions.Conventions
                         selector.AttributeRouteModel = new AttributeRouteModel();
                     }
 
+                    if (selector.AttributeRouteModel.Template != null)
+                    {
+                        continue;
+                    }
+
                     selector.AttributeRouteModel.Template =
                         action.ActionName.Equals(Index, StringComparison.OrdinalIgnoreCase)
-                            ? TryGetAttributeId(action)
-                            : action.ActionName.CamelCaseToPathCase() + TryGetAttributeId(action);
+                            ? string.Empty
+                            : action.ActionName.CamelCaseToPathCase();
                 }
 
                 foreach (ParameterModel parameter in action.Parameters)
@@ -113,21 +123,6 @@ namespace AD.ApiExtensions.Conventions
                             : BindingSource.Query;
                 }
             }
-        }
-
-        [CanBeNull]
-        private string TryGetAttributeId([NotNull] ActionModel action)
-        {
-            if (action is null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
-            return
-                _respectAttributeId &&
-                action.Attributes.OfType<HttpGetAttribute>().SingleOrDefault()?.Template == "{id}"
-                    ? "/{id}"
-                    : null;
         }
     }
 }
