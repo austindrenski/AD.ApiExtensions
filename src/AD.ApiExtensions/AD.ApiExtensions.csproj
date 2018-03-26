@@ -13,10 +13,6 @@
     <Description>Provides configuration extensions for API building with ASP.NET Core.</Description>
     <Authors>Austin Drenski</Authors>
     <Company>Austin Drenski</Company>
-    <Version />
-    <AssemblyVersion />
-    <FileVersion />
-    <PackageVersion>1.1.0</PackageVersion>
     <Copyright>Copyright (c) 2017 Austin Drenski</Copyright>
   </PropertyGroup>
   <ItemGroup>
