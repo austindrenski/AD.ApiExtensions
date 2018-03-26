@@ -9,7 +9,7 @@ namespace AD.ApiExtensions.Expressions
 {
     // TODO: document TypeCache
     /// <summary>
-    /// Represents a cache of types and updates. 
+    /// Represents a cache of types and updates.
     /// </summary>
     [PublicAPI]
     public class TypeCache
@@ -20,7 +20,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull] private readonly IDictionary<Type, Type> _types;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         [NotNull] private readonly ISet<(string Name, Type Type)> _differences;
 
@@ -29,14 +29,13 @@ namespace AD.ApiExtensions.Expressions
         /// </summary>
         [NotNull] private readonly IDictionary<Type, ParameterExpression> _parameters;
 
-
         /// <summary>
         /// True if the cache is empty; otherwise false;
         /// </summary>
         public bool IsEmpty => !_types.Any();
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public TypeCache()
         {
@@ -46,13 +45,13 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type">
-        /// 
+        ///
         /// </param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [Pure]
@@ -67,13 +66,13 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="methodInfo">
-        /// 
+        ///
         /// </param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [Pure]
@@ -96,13 +95,13 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="node">
-        /// 
+        ///
         /// </param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [Pure]
@@ -118,13 +117,13 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type">
-        /// 
+        ///
         /// </param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [Pure]
@@ -143,7 +142,7 @@ namespace AD.ApiExtensions.Expressions
         /// Tests if it is provable that an assignment results in a default initialization.
         /// </summary>
         /// <param name="expression">
-        /// The expression for assignment. 
+        /// The expression for assignment.
         /// </param>
         /// <param name="unavailable">
         /// The property names that were explicitly removed by the time of testing.
@@ -162,10 +161,12 @@ namespace AD.ApiExtensions.Expressions
             {
                 throw new ArgumentNullException(nameof(memberInfo));
             }
+
             if (expression is null)
             {
                 throw new ArgumentNullException(nameof(expression));
             }
+
             if (unavailable is null)
             {
                 throw new ArgumentNullException(nameof(unavailable));
@@ -175,23 +176,25 @@ namespace AD.ApiExtensions.Expressions
             {
                 return IsDefault(constantExpression.Value);
             }
+
             if (IsEmpty || IsUpdatedMemberName(memberInfo.Name))
             {
                 return false;
             }
+
 //            // TODO: look into this to replace the current "unavailable" methodology.
 //                return _differences.Contains((memberInfo.Name, memberInfo.GetType()));
             return unavailable.ContainsKey(memberInfo.Name) && unavailable[memberInfo.Name].GetType() == memberInfo.GetType();
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="name">
-        /// 
+        ///
         /// </param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         private bool IsUpdatedMemberName([NotNull] string name)
@@ -200,7 +203,7 @@ namespace AD.ApiExtensions.Expressions
             {
                 throw new ArgumentNullException(nameof(name));
             }
-            
+
             return
                 _types.Select(x => x.Value)
                       .SelectMany(x => x.GetProperties(BindingFlags.Instance | BindingFlags.Public))
@@ -209,13 +212,13 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type">
-        /// 
+        ///
         /// </param>
         /// <param name="result">
-        /// 
+        ///
         /// </param>
         /// <exception cref="ArgumentNullException" />
         public void Register([NotNull] Type type, [NotNull] Type result)
@@ -224,6 +227,7 @@ namespace AD.ApiExtensions.Expressions
             {
                 throw new ArgumentNullException(nameof(type));
             }
+
             if (result is null)
             {
                 throw new ArgumentNullException(nameof(result));
@@ -253,7 +257,7 @@ namespace AD.ApiExtensions.Expressions
 //                _types.Select(x => x.Key)
 //                      .SelectMany(x => x.GetProperties(BindingFlags.FlattenHierarchy).Select(y => (y.Name, y.PropertyType)))
 //                      .Distinct();
-//          
+//
 //            IEnumerable<(string Name, Type PropertyType)> values =
 //                _types.Select(x => x.Value)
 //                      .SelectMany(x => x.GetProperties(BindingFlags.FlattenHierarchy).Select(y => (y.Name, y.PropertyType)))
@@ -266,16 +270,16 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type">
-        /// 
+        ///
         /// </param>
         /// <param name="result"
-        /// 
+        ///
         /// ></param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [
@@ -291,13 +295,13 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="type">
-        /// 
+        ///
         /// </param>
         /// <returns>
-        /// 
+        ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [
@@ -340,55 +344,55 @@ namespace AD.ApiExtensions.Expressions
                 }
                 case char value:
                 {
-                    return value is default;
+                    return value is '\0';
                 }
                 case bool value:
                 {
-                    return value is default;
+                    return value is false;
                 }
                 case byte value:
                 {
-                    return value is default;
+                    return value is (byte) 0;
                 }
                 case sbyte value:
                 {
-                    return value is default;
+                    return value is (sbyte) 0;
                 }
                 case decimal value:
                 {
-                    return value is default;
+                    return value is (decimal) 0;
                 }
                 case double value:
                 {
-                    return value is default;
+                    return value is (double) 0;
                 }
                 case float value:
                 {
-                    return value is default;
+                    return value is (float) 0;
                 }
                 case int value:
                 {
-                    return value is default;
+                    return value is 0;
                 }
                 case uint value:
                 {
-                    return value is default;
+                    return value is (uint) 0;
                 }
                 case long value:
                 {
-                    return value is default;
+                    return value is (long) 0;
                 }
                 case ulong value:
                 {
-                    return value is default;
+                    return value is (ulong) 0;
                 }
                 case short value:
                 {
-                    return value is default;
+                    return value is (short) 0;
                 }
                 case ushort value:
                 {
-                    return value is default;
+                    return value is (ushort) 0;
                 }
                 default:
                 {

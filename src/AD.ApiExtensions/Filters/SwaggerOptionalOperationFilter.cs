@@ -21,7 +21,7 @@ namespace AD.ApiExtensions.Filters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (operation.Parameters is default)
+            if (operation.Parameters is null)
             {
                 return;
             }

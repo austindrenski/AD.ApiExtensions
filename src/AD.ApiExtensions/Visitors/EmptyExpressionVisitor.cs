@@ -121,7 +121,7 @@ namespace AD.ApiExtensions.Visitors
             {
                 throw new ArgumentNullException(nameof(node));
             }
-            if (node.Arguments is default || node.Arguments?.Count == 0)
+            if (node.Arguments is null || node.Arguments.Count is 0)
             {
                 return node;
             }
