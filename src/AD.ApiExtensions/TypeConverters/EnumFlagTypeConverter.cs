@@ -15,24 +15,14 @@ namespace AD.ApiExtensions.TypeConverters
     [PublicAPI]
     public sealed class EnumFlagTypeConverter<T> : TypeConverter where T : struct, IComparable, IFormattable, IConvertible
     {
-        /// <summary>
-        /// True if base conversions are not permitted; otherwise false.
-        /// </summary>
-        private readonly bool _strict;
-
         /// <inheritdoc />
-        /// <param name="strict">
-        /// True if base conversions are not permitted.
-        /// </param>
         /// <exception cref="InvalidEnumArgumentException" />
-        public EnumFlagTypeConverter(bool strict = false)
+        public EnumFlagTypeConverter()
         {
             if (!typeof(T).IsEnum)
             {
                 throw new InvalidEnumArgumentException(typeof(T).Name);
             }
-
-            _strict = strict;
         }
 
         /// <inheritdoc />
@@ -42,9 +32,9 @@ namespace AD.ApiExtensions.TypeConverters
             return
                 sourceType == typeof(string) ||
                 sourceType == typeof(StringValues) ||
-                sourceType == typeof(StringSegment) ||
-                !_strict &&
-                base.CanConvertFrom(context, sourceType);
+                sourceType == typeof(StringSegment);
+
+//                base.CanConvertFrom(context, sourceType);
         }
 
         /// <inheritdoc />
