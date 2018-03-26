@@ -69,7 +69,7 @@ namespace AD.ApiExtensions.Conventions
 
             foreach (SelectorModel selector in controller.Selectors)
             {
-                if (selector.AttributeRouteModel is default)
+                if (selector.AttributeRouteModel is null)
                 {
                     selector.AttributeRouteModel = new AttributeRouteModel();
                 }
