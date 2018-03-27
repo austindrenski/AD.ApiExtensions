@@ -7,7 +7,7 @@ namespace AD.ApiExtensions.Attributes
 {
     /// <inheritdoc cref="ValidationAttribute" />
     /// <summary>
-    /// Requires that an enum parameter be bound against a non-default value.
+    /// Requires that an int-based enum parameter be bound against a non-default value.
     /// </summary>
     [PublicAPI]
     public class EnumBindRequiredAttribute : ValidationAttribute
@@ -31,7 +31,7 @@ namespace AD.ApiExtensions.Attributes
             }
 
             return
-                (long) value is (long) 0
+                (int) value is 0
                     ? new ValidationResult($"Expected non-default enumeration, but received: {value}")
                     : ValidationResult.Success;
         }
