@@ -355,15 +355,15 @@ namespace AD.ApiExtensions.Primitives
             HashSet<Grouping<string, string>> groups = new HashSet<Grouping<string, string>>();
             HashSet<string> individuals = new HashSet<string>();
 
-            foreach (string value in values.SelectMany(x => x.Split(',')))
+            foreach (StringSegment value in values.SelectMany(x => x.SplitDelimited(Delimiter.Parenthetical)))
             {
-                if (Grouping<TKey, TValue>.TryParse(value, out Grouping<string, string> result))
+                if (Grouping<TKey, TValue>.TryParse(value.Value, out Grouping<string, string> result))
                 {
                     groups.Add(result);
                 }
                 else
                 {
-                    individuals.Add(value);
+                    individuals.Add(value.Value);
                 }
             }
 

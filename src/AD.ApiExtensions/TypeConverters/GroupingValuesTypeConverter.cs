@@ -17,7 +17,10 @@ namespace AD.ApiExtensions.TypeConverters
         /// <inheritdoc />
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            return sourceType == typeof(string) || sourceType == typeof(StringValues) || base.CanConvertFrom(context, sourceType);
+            return
+                sourceType == typeof(string) ||
+                sourceType == typeof(StringValues) ||
+                base.CanConvertFrom(context, sourceType);
         }
 
         /// <inheritdoc />
@@ -43,7 +46,10 @@ namespace AD.ApiExtensions.TypeConverters
         /// <inheritdoc />
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            return destinationType == typeof(string) ? value.ToString() : base.ConvertTo(context, culture, value, destinationType);
+            return
+                destinationType == typeof(string)
+                    ? value.ToString()
+                    : base.ConvertTo(context, culture, value, destinationType);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace AD.ApiExtensions.Primitives
     /// The type of the keys by which the values are grouped.
     /// </typeparam>
     /// <typeparam name="TValue">
-    /// The type of the values in the groups. 
+    /// The type of the values in the groups.
     /// </typeparam>
     [PublicAPI]
     public struct Grouping<TKey, TValue>
@@ -25,9 +25,9 @@ namespace AD.ApiExtensions.Primitives
           IEquatable<IGrouping<TKey, TValue>>
     {
         /// <summary>
-        /// The regular expression string to match strings in the form: NAME(MEMBER-MEMBER-MEMBER).
+        /// The regular expression string to match strings in the form: NAME(MEMBER,MEMBER,MEMBER).
         /// </summary>
-        [NotNull] private const string NameMembersRegexString = "(?<Key>[A-z0-9_]+)\\((?<Members>[A-z0-9\\-]*)\\)";
+        [NotNull] private const string NameMembersRegexString = "(?<Key>[A-z0-9_]+)\\((?<Members>[A-z0-9,]*)\\)";
 
         /// <summary>
         /// The regular expression string to match strings in the form: MEMBER-MEMBER-MEMBER.
@@ -50,7 +50,7 @@ namespace AD.ApiExtensions.Primitives
         [NotNull] private static readonly Regex InnerRegex;
 
         /// <summary>
-        /// The default zero-length values array. 
+        /// The default zero-length values array.
         /// </summary>
         [NotNull] private static readonly TValue[] DefaultValuesArray;
 
@@ -167,7 +167,7 @@ namespace AD.ApiExtensions.Primitives
         /// The individual items for the individuals collection.
         /// </param>
         /// <returns>
-        /// A <see cref="Grouping{TKey, TValue}"/> whose key is set to a special string indicating that the group is a collection of individuals. 
+        /// A <see cref="Grouping{TKey, TValue}"/> whose key is set to a special string indicating that the group is a collection of individuals.
         /// </returns>
         [Pure]
         public static Grouping<string, TValue> CreateIndividuals([NotNull] IEnumerable<TValue> items)
@@ -202,7 +202,7 @@ namespace AD.ApiExtensions.Primitives
         [NotNull]
         public override string ToString()
         {
-            return $"{Key}({string.Join("-", _values ?? DefaultValuesArray)})";
+            return $"{Key}({string.Join(",", _values ?? DefaultValuesArray)})";
         }
 
         /// <summary>
