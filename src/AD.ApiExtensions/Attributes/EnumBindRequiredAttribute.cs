@@ -31,7 +31,7 @@ namespace AD.ApiExtensions.Attributes
             }
 
             return
-                (long) value is default
+                (long) value is (long) 0
                     ? new ValidationResult($"Expected non-default enumeration, but received: {value}")
                     : ValidationResult.Success;
         }
