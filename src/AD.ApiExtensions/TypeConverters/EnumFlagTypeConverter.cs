@@ -15,6 +15,11 @@ namespace AD.ApiExtensions.TypeConverters
     [PublicAPI]
     public sealed class EnumFlagTypeConverter<T> : TypeConverter where T : struct, IComparable, IFormattable, IConvertible
     {
+        /// <summary>
+        /// The names of the enum members.
+        /// </summary>
+        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(T)));
+
         /// <inheritdoc />
         /// <exception cref="InvalidEnumArgumentException" />
         public EnumFlagTypeConverter()
@@ -33,8 +38,6 @@ namespace AD.ApiExtensions.TypeConverters
                 sourceType == typeof(string) ||
                 sourceType == typeof(StringValues) ||
                 sourceType == typeof(StringSegment);
-
-//                base.CanConvertFrom(context, sourceType);
         }
 
         /// <inheritdoc />
@@ -82,7 +85,9 @@ namespace AD.ApiExtensions.TypeConverters
             }
 
             return
-                values.Select(x => Enum.TryParse(x.KebabCaseToCamelCase(), true, out T result) ? Convert.ToUInt64(result) : default)
+                values.Select(x => x.KebabCaseToCamelCase())
+                      .Where(x => Names.Contains(x, StringComparer.OrdinalIgnoreCase))
+                      .Select(x => Enum.TryParse(x, true, out T result) ? Convert.ToUInt64(result) : default)
                       .Aggregate(
                           default(ulong),
                           (current, next) => current | next,
