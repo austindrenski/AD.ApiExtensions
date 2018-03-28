@@ -9,10 +9,10 @@ namespace AD.ApiExtensions.Tests
     public static class GroupingValuesTests
     {
         [Theory]
-        [InlineData("a,b,c,d,e,f,g", 1, 7)]
-        [InlineData("a,b,c,group_1(d,e,f),g", 2, 4)]
-        [InlineData("a,b,c,group_1(d,e,f),group_2(g)", 3, 3)]
-        public static void Test0(string value, int groupCount, int individualCount)
+        [InlineData("a,b,c,d,e,f,g", 1)]
+        [InlineData("a,b,c,group_1(d,e,f),g", 2)]
+        [InlineData("a,b,c,group_1(d,e,f),group_2(g)", 3)]
+        public static void Test0(string value, int groupCount)
         {
             GroupingValues<string, string> groups = GroupingValues<string, string>.Parse(value);
 

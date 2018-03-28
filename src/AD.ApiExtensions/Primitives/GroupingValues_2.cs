@@ -10,6 +10,7 @@ using AD.ApiExtensions.TypeConverters;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Delimiter = AD.IO.Delimiter;
 
 namespace AD.ApiExtensions.Primitives
 {
@@ -355,7 +356,8 @@ namespace AD.ApiExtensions.Primitives
             HashSet<Grouping<string, string>> groups = new HashSet<Grouping<string, string>>();
             HashSet<string> individuals = new HashSet<string>();
 
-            foreach (StringSegment value in values.SelectMany(x => x.SplitDelimited(Delimiter.Parenthetical)))
+            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
+            foreach (StringSegment value in values.SelectMany(x => Delimiter.Parenthetical.Split(x)))
             {
                 if (Grouping<TKey, TValue>.TryParse(value.Value, out Grouping<string, string> result))
                 {
