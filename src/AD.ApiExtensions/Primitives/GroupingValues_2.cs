@@ -356,7 +356,6 @@ namespace AD.ApiExtensions.Primitives
             HashSet<Grouping<string, string>> groups = new HashSet<Grouping<string, string>>();
             HashSet<string> individuals = new HashSet<string>();
 
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
             foreach (StringSegment value in values.SelectMany(x => Delimiter.Parenthetical.Split(x)))
             {
                 if (Grouping<TKey, TValue>.TryParse(value.Value, out Grouping<string, string> result))

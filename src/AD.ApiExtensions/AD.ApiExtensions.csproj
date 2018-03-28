@@ -3,6 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <DocumentationFile>bin\Release\netstandard2.0\AD.ApiExtensions.xml</DocumentationFile>
+    <DefineConstants>JETBRAINS_ANNOTATIONS</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -19,17 +20,17 @@
     <Version>1.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AD.IO" Version="1.5.23" />
-    <PackageReference Include="AD.Xml" Version="1.4.13" />
-    <PackageReference Include="JetBrains.Annotations" Version="11.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="1.2.0" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="AD.IO" Version="1.5.24"/>
+    <PackageReference Include="AD.Xml" Version="1.4.13"/>
+    <PackageReference Include="JetBrains.Annotations" Version="11.1.0"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.0.2"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.0.2"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.0.1"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.0.1"/>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0"/>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.0.1"/>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="2.3.0"/>
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0"/>
   </ItemGroup>
 </Project>
