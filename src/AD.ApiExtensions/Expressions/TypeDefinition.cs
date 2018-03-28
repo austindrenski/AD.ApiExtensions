@@ -11,11 +11,9 @@ namespace AD.ApiExtensions.Expressions
     /// <summary>
     /// Private structure to construct a new type.
     /// </summary>
-    internal struct TypeDefinition
+    internal readonly struct TypeDefinition
     {
-        private static long _typeCounter;
-
-        [NotNull] private const string AnonymousAssemblyName = "ApiLibrary.Anonymous";
+        [NotNull] private const string AnonymousAssemblyName = "AD.ApiExtensions.Anonymous";
 
         [NotNull] private const TypeAttributes AnonymousTypeAttributes = TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.SequentialLayout | TypeAttributes.Serializable;
 
@@ -24,6 +22,8 @@ namespace AD.ApiExtensions.Expressions
         [NotNull] private static readonly ConstructorInfo BaseConstructorInfo;
 
         [NotNull] private readonly TypeBuilder _typeBuilder;
+
+        private static long _typeCounter;
 
         static TypeDefinition()
         {
@@ -38,6 +38,11 @@ namespace AD.ApiExtensions.Expressions
 
         internal TypeDefinition([NotNull] IEnumerable<(string Name, Type Type)> properties)
         {
+            if (properties is null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
             long next = Interlocked.Increment(ref _typeCounter);
 
             _typeBuilder = ModuleBuilder.DefineType($"f__Anonymous__{next}", AnonymousTypeAttributes, typeof(ValueType));

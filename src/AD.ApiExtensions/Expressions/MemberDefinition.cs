@@ -8,7 +8,7 @@ namespace AD.ApiExtensions.Expressions
     /// <summary>
     /// Private structure to store information about a member of a new type.
     /// </summary>
-    internal struct MemberDefinition
+    internal readonly struct MemberDefinition
     {
         /// <summary>
         /// Defines the method attributes needed to generate CLR compliant getter and setters in IL code.
@@ -34,7 +34,7 @@ namespace AD.ApiExtensions.Expressions
         /// Defines the public property backed by the private field.
         /// </summary>
         [NotNull] private readonly PropertyBuilder _propertyBuilder;
-        
+
         internal MemberDefinition((string Name, Type Type) propertyInfo, [NotNull] TypeBuilder typeBuilder)
         {
             _name = propertyInfo.Name;
@@ -57,7 +57,7 @@ namespace AD.ApiExtensions.Expressions
         {
             return memberDefinition._type;
         }
-       
+
         /// <summary>
         /// Implicitly casts from <see cref="T:AD.ApiExtensions.Expressions.MemberDefinition"/> to <see cref="T:System.Reflection.FieldInfo"/>.
         /// </summary>

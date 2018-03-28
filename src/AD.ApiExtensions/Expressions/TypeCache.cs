@@ -304,8 +304,7 @@ namespace AD.ApiExtensions.Expressions
         ///
         /// </returns>
         /// <exception cref="ArgumentNullException" />
-        [
-            Pure]
+        [Pure]
         [NotNull]
         private Type RecurseType([NotNull] Type type)
         {

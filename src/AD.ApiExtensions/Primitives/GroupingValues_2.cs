@@ -28,7 +28,7 @@ namespace AD.ApiExtensions.Primitives
     [PublicAPI]
     [ModelBinder(typeof(GroupingValuesModelBinder))]
     [TypeConverter(typeof(GroupingValuesTypeConverter))]
-    public struct GroupingValues<TKey, TValue>
+    public readonly struct GroupingValues<TKey, TValue>
         : IExpressive<TValue>,
           IEnumerable<IGrouping<TKey, TValue>>,
           IEquatable<GroupingValues<TKey, TValue>>,
@@ -262,14 +262,14 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public TValue Express(Expression<Func<TValue>> argument)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
         }
 
         /// <inheritdoc />
         [Pure]
         public object Express(Expression argument)
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
         }
 
         /// <inheritdoc />
@@ -358,13 +358,20 @@ namespace AD.ApiExtensions.Primitives
 
             foreach (StringSegment value in values.SelectMany(x => Delimiter.Parenthetical.Split(x)))
             {
-                if (Grouping<TKey, TValue>.TryParse(value.Value, out Grouping<string, string> result))
+                // TODO: C# 8.0 will support normal FP-style tuple match.
+                // see: https://github.com/dotnet/csharplang/issues/1395
+                switch (Grouping<TKey, TValue>.TryParse(value.Value))
                 {
-                    groups.Add(result);
-                }
-                else
-                {
-                    individuals.Add(value.Value);
+                    case ValueTuple<bool, Grouping<string, string>> t when t.Item1:
+                    {
+                        groups.Add(t.Item2);
+                        continue;
+                    }
+                    default:
+                    {
+                        individuals.Add(value.Value);
+                        continue;
+                    }
                 }
             }
 
@@ -575,14 +582,14 @@ namespace AD.ApiExtensions.Primitives
             [NotNull] private readonly Expression _expression;
 
             /// <inheritdoc />
-            public override bool CanReduce => false;
+            public override bool CanReduce { get; } = false;
 
             /// <inheritdoc />
-            public override ExpressionType NodeType => ExpressionType.Conditional;
+            public override ExpressionType NodeType { get; } = ExpressionType.Conditional;
 
             /// <inheritdoc />
             [NotNull]
-            public override Type Type => typeof(TValue);
+            public override Type Type { get; } = typeof(TValue);
 
             /// <inheritdoc />
             /// <summary>

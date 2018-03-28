@@ -19,7 +19,7 @@ namespace AD.ApiExtensions.Primitives
     /// The type of the values in the groups.
     /// </typeparam>
     [PublicAPI]
-    public struct Grouping<TKey, TValue>
+    public readonly struct Grouping<TKey, TValue>
         : IGrouping<TKey, TValue>,
           IEquatable<Grouping<TKey, TValue>>,
           IEquatable<IGrouping<TKey, TValue>>
@@ -75,7 +75,7 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// True if the group is empty; otherwise false.
         /// </summary>
-        public bool IsEmpty => _values is null || _values.Length == 0;
+        public bool IsEmpty => _values is null || _values.Length is 0;
 
         /// <summary>
         /// True if the key contains a special signature indicating a group of individuals; otherwise false.
@@ -108,6 +108,7 @@ namespace AD.ApiExtensions.Primitives
             {
                 throw new ArgumentNullException(nameof(key));
             }
+
             if (values is null)
             {
                 throw new ArgumentNullException(nameof(values));
@@ -133,6 +134,7 @@ namespace AD.ApiExtensions.Primitives
             {
                 throw new ArgumentNullException(nameof(key));
             }
+
             if (values is null)
             {
                 throw new ArgumentNullException(nameof(values));
@@ -172,6 +174,11 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public static Grouping<string, TValue> CreateIndividuals([NotNull] IEnumerable<TValue> items)
         {
+            if (items is null)
+            {
+                throw new ArgumentNullException(nameof(items));
+            }
+
             return new Grouping<string, TValue>(IndividualsGroupName, items);
         }
 
@@ -223,6 +230,7 @@ namespace AD.ApiExtensions.Primitives
             {
                 throw new ArgumentNullException(nameof(input));
             }
+
             if (!OuterRegex.IsMatch(input))
             {
                 return new Grouping<string, string>(input, input);
@@ -246,16 +254,13 @@ namespace AD.ApiExtensions.Primitives
         /// <param name="value">
         /// The string to parse.
         /// </param>
-        /// <param name="result">
-        /// The result value.
-        /// </param>
         /// <returns>
         /// True if the value was able to be parsed; otherwise false.
         /// </returns>
         /// <exception cref="T:System.ArgumentNullException" />
         /// <exception cref="T:System.ArgumentException" />
         [Pure]
-        public static bool TryParse([NotNull] string value, out Grouping<string, string> result)
+        public static (bool Success, Grouping<string, string> Result) TryParse([NotNull] string value)
         {
             if (value is null)
             {
@@ -264,8 +269,7 @@ namespace AD.ApiExtensions.Primitives
 
             if (!OuterRegex.IsMatch(value))
             {
-                result = default;
-                return false;
+                return (false, default);
             }
 
             Match parse = OuterRegex.Match(value);
@@ -277,8 +281,7 @@ namespace AD.ApiExtensions.Primitives
                           .Cast<Match>()
                           .Select(x => x.Groups["Member"].Value);
 
-            result = new Grouping<string, string>(key, members);
-            return true;
+            return (true, new Grouping<string, string>(key, members));
         }
 
         /// <inheritdoc />
@@ -331,7 +334,7 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public override bool Equals([CanBeNull] object obj)
         {
-            return !ReferenceEquals(null, obj) && obj is Grouping<TKey, TValue> values && Equals(values);
+            return obj is Grouping<TKey, TValue> values && Equals(values);
         }
 
         /// <summary>
@@ -383,7 +386,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator ==(Grouping<TKey, TValue> left, [NotNull] IGrouping<TKey, TValue> right)
+        public static bool operator ==(Grouping<TKey, TValue> left, [CanBeNull] IGrouping<TKey, TValue> right)
         {
             return left.Equals(right);
         }
@@ -401,7 +404,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator !=(Grouping<TKey, TValue> left, [NotNull] IGrouping<TKey, TValue> right)
+        public static bool operator !=(Grouping<TKey, TValue> left, [CanBeNull] IGrouping<TKey, TValue> right)
         {
             return !left.Equals(right);
         }
@@ -419,7 +422,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator ==([NotNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right)
+        public static bool operator ==([CanBeNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right)
         {
             return right.Equals(left);
         }
@@ -437,7 +440,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator !=([NotNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right)
+        public static bool operator !=([CanBeNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right)
         {
             return !right.Equals(left);
         }
