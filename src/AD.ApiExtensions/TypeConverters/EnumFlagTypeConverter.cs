@@ -40,6 +40,8 @@ namespace AD.ApiExtensions.TypeConverters
                 sourceType == typeof(StringSegment);
         }
 
+        private static readonly char[] Splits = new char[] { ',' };
+
         /// <inheritdoc />
         [Pure]
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
@@ -48,15 +50,15 @@ namespace AD.ApiExtensions.TypeConverters
             {
                 case string s:
                 {
-                    return Parse(s.Split(','));
+                    return Parse(new StringSegment(s).Split(Splits));
                 }
                 case StringValues s:
                 {
-                    return Parse(s.SelectMany(x => x.Split(',')));
+                    return Parse(s.SelectMany(x => new StringSegment(x).Split(Splits)));
                 }
                 case StringSegment s:
                 {
-                    return Parse(s.ToString().Split(','));
+                    return Parse(s.Split(Splits));
                 }
                 default:
                 {
@@ -77,7 +79,7 @@ namespace AD.ApiExtensions.TypeConverters
         /// <exception cref="ArgumentNullException" />
         [Pure]
         [NotNull]
-        private static object Parse([NotNull] IEnumerable<string> values)
+        private static object Parse([NotNull] IEnumerable<StringSegment> values)
         {
             if (values is null)
             {
@@ -85,7 +87,7 @@ namespace AD.ApiExtensions.TypeConverters
             }
 
             return
-                values.Select(x => x.KebabCaseToCamelCase())
+                values.Select(x => x.Value.KebabCaseToCamelCase())
                       .Where(x => Names.Contains(x, StringComparer.OrdinalIgnoreCase))
                       .Select(x => Enum.TryParse(x, true, out T result) ? Convert.ToUInt64(result) : default)
                       .Aggregate(

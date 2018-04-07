@@ -12,16 +12,16 @@ namespace AD.ApiExtensions.Attributes
     public class EnumBindRequiredAttribute : ValidationAttribute
     {
         /// <inheritdoc />
-        protected override ValidationResult IsValid([NotNull] object value, [NotNull] ValidationContext validationContext)
+        protected override ValidationResult IsValid([NotNull] object value, [NotNull] ValidationContext context)
         {
             if (value is null)
             {
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (validationContext is null)
+            if (context is null)
             {
-                throw new ArgumentNullException(nameof(validationContext));
+                throw new ArgumentNullException(nameof(context));
             }
 
             if (!value.GetType().IsEnum)
@@ -31,7 +31,7 @@ namespace AD.ApiExtensions.Attributes
 
             return
                 (int) value is 0
-                    ? new ValidationResult($"Expected non-default enumeration, but received: {value}")
+                    ? new ValidationResult($"Expected a non-default enumeration for {context.DisplayName}, but received: '{value}'")
                     : ValidationResult.Success;
         }
     }

@@ -23,12 +23,12 @@ namespace AD.ApiExtensions.Tests
         [InlineData("Red", Colors.Red)]
         [InlineData("blue", Colors.Blue)]
         [InlineData("yelloW", Colors.Yellow)]
+        [InlineData("red,blue,yellow", Colors.Red | Colors.Blue | Colors.Yellow)]
         public static void Test0(string value, Colors expected)
         {
             EnumFlagTypeConverter<Colors> converter = new EnumFlagTypeConverter<Colors>();
 
-            converter.CanConvertFrom(value.GetType());
-
+            Assert.True(converter.CanConvertFrom(value.GetType()));
             Assert.Equal(expected, converter.ConvertFrom(value));
         }
     }
