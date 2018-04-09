@@ -16,13 +16,10 @@ namespace AD.ApiExtensions.Configuration
         /// This method follows the ASP.NET Core convention of returning the original reference with modifications (i.e. not pure).
         /// </summary>
         /// <param name="services">
-        ///     The service collection to modify.
+        /// The service collection to modify.
         /// </param>
         /// <param name="connectionString">
-        ///     The connection string to use for the database.
-        /// </param>
-        /// <param name="commandTimeout">
-        ///     The wait time (in seconds) before terminating the attempt to execute the command and generating an error.
+        /// The connection string to use for the database.
         /// </param>
         /// <param name="queryTrackingBehavior">
         /// Sets the tracking behavior for LINQ queries run against the context.
@@ -32,7 +29,7 @@ namespace AD.ApiExtensions.Configuration
         /// </typeparam>
         /// <exception cref="ArgumentNullException"/>
         [NotNull]
-        public static IServiceCollection AddPostgres<T>([NotNull] this IServiceCollection services, [NotNull] string connectionString, int commandTimeout, QueryTrackingBehavior queryTrackingBehavior = QueryTrackingBehavior.NoTracking) where T : DbContext
+        public static IServiceCollection AddPostgres<T>([NotNull] this IServiceCollection services, [NotNull] string connectionString, QueryTrackingBehavior queryTrackingBehavior = QueryTrackingBehavior.NoTracking) where T : DbContext
         {
             if (services is null)
             {
@@ -53,7 +50,6 @@ namespace AD.ApiExtensions.Configuration
                             connectionString,
                             y =>
                             {
-                                y.CommandTimeout(commandTimeout);
                                 y.EnableRetryOnFailure();
                                 y.UseRelationalNulls();
                             });
