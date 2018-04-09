@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -25,12 +24,6 @@ namespace AD.ApiExtensions.Conventions
         [NotNull] private readonly string _index;
 
         /// <summary>
-        /// True if actions that have both an <see cref="HttpGetAttribute"/> and an <see cref="HttpPostAttribute"/>
-        /// should be configure to use <see cref="BindingSource.Query"/> and <see cref="BindingSource.Form"/>, respectively.
-        /// </summary>
-        private readonly bool _bindQueryOrForm;
-
-        /// <summary>
         /// Initializes the <see cref="KebabBindingMetadataProvider"/>
         /// </summary>
         /// <param name="home">
@@ -38,12 +31,8 @@ namespace AD.ApiExtensions.Conventions
         /// </param>
         /// <param name="index">
         /// </param>
-        /// <param name="bindQueryOrForm">
-        /// True if actions that have both an <see cref="HttpGetAttribute"/> and an <see cref="HttpPostAttribute"/>
-        /// should be configure to use <see cref="BindingSource.Query"/> and <see cref="BindingSource.Form"/>, respectively.
-        /// </param>
         /// <exception cref="ArgumentNullException" />
-        public KebabControllerModelConvention([NotNull] string home = "Home", [NotNull] string index = "Index", bool bindQueryOrForm = true)
+        public KebabControllerModelConvention([NotNull] string home = "Home", [NotNull] string index = "Index")
         {
             if (home is null)
             {
@@ -57,7 +46,6 @@ namespace AD.ApiExtensions.Conventions
 
             _home = home;
             _index = index;
-            _bindQueryOrForm = bindQueryOrForm;
         }
 
         /// <inheritdoc />
@@ -108,26 +96,12 @@ namespace AD.ApiExtensions.Conventions
 
                 foreach (ParameterModel parameter in action.Parameters)
                 {
-                    if (!parameter.ParameterInfo.ParameterType.IsPrimitive && parameter.ParameterInfo.ParameterType != typeof(string))
-                    {
-                        continue;
-                    }
-
                     if (parameter.BindingInfo is null)
                     {
                         parameter.BindingInfo = new BindingInfo();
                     }
 
                     parameter.BindingInfo.BinderModelName = parameter.ParameterName.CamelCaseToKebabCase();
-
-                    if (_bindQueryOrForm)
-                    {
-                        parameter.BindingInfo.BindingSource =
-                            action.Attributes.OfType<HttpGetAttribute>().Any() &&
-                            action.Attributes.OfType<HttpPostAttribute>().Any()
-                                ? BindingSource.Form
-                                : BindingSource.Query;
-                    }
                 }
             }
         }
