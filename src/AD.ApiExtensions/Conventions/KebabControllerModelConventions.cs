@@ -2,7 +2,6 @@
 using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace AD.ApiExtensions.Conventions
 {
@@ -94,15 +93,16 @@ namespace AD.ApiExtensions.Conventions
                             : action.ActionName.CamelCaseToPathCase();
                 }
 
-                foreach (ParameterModel parameter in action.Parameters)
-                {
-                    if (parameter.BindingInfo is null)
-                    {
-                        parameter.BindingInfo = new BindingInfo();
-                    }
-
-                    parameter.BindingInfo.BinderModelName = parameter.ParameterName.CamelCaseToKebabCase();
-                }
+// TODO: is there any good case for this?
+//                foreach (ParameterModel parameter in action.Parameters)
+//                {
+//                    if (parameter.BindingInfo is null)
+//                    {
+//                        parameter.BindingInfo = new BindingInfo();
+//                    }
+//
+//                    parameter.BindingInfo.BinderModelName = parameter.ParameterName.CamelCaseToKebabCase();
+//                }
             }
         }
     }
