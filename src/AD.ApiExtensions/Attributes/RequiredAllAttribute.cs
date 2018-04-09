@@ -13,7 +13,7 @@ namespace AD.ApiExtensions.Attributes
     /// Specifies that a parameter must be present in the query string.
     /// </summary>
     [PublicAPI]
-    public class RequiredAttribute : ActionFilterAttribute
+    public class RequiredAllAttribute : ActionFilterAttribute
     {
         /// <summary>
         /// The name of the required query parameter.
@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.Attributes
         /// Specifies the parameters that must occur in the query string.
         /// </summary>
         /// <param name="names">The parameter names that are required.</param>
-        public RequiredAttribute(params string[] names)
+        public RequiredAllAttribute(params string[] names)
         {
             _names = names;
         }

@@ -17,8 +17,9 @@ namespace AD.ApiExtensions.Attributes
         /// </summary>
         [NotNull] private readonly Regex _regex;
 
+        /// <inheritdoc />
         /// <summary>
-        /// Constructs a <see cref="PatternValidationAttribute"/>.
+        /// Constructs a <see cref="T:AD.ApiExtensions.Attributes.PatternValidationAttribute" />.
         /// </summary>
         /// <param name="pattern">
         /// The pattern for validation.

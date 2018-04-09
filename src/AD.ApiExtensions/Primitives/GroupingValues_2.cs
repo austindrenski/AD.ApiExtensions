@@ -5,12 +5,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using AD.ApiExtensions.ModelBinders;
 using AD.ApiExtensions.TypeConverters;
+using AD.IO;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using Delimiter = AD.IO.Delimiter;
 
 namespace AD.ApiExtensions.Primitives
 {
@@ -26,7 +24,6 @@ namespace AD.ApiExtensions.Primitives
     /// The type of the values in the groups.
     /// </typeparam>
     [PublicAPI]
-    [ModelBinder(typeof(GroupingValuesModelBinder))]
     [TypeConverter(typeof(GroupingValuesTypeConverter))]
     public readonly struct GroupingValues<TKey, TValue>
         : IExpressive<TValue>,
