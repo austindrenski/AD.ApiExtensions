@@ -61,7 +61,7 @@ namespace AD.ApiExtensions.Logging
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DateTimeEventLoggerProvider>());
+//            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DateTimeEventLoggerProvider>());
 
             builder.Services
                    .AddScoped<ILogContext, T>()
