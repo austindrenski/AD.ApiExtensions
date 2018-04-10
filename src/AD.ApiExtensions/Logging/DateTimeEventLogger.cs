@@ -2,6 +2,7 @@
 using System.Net;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace AD.ApiExtensions.Logging
 {
@@ -12,36 +13,26 @@ namespace AD.ApiExtensions.Logging
     [PublicAPI]
     public class DateTimeEventLogger : IEventLogger
     {
-        private readonly Guid _sessionId = Guid.NewGuid();
-
-        [NotNull] private readonly ILogger _logger;
+        private readonly Guid _sessionId;
 
         [NotNull] private readonly ILogContext _context;
 
         /// <summary>
         /// Constructs a new logger that wraps an existing implementation.
         /// </summary>
-        /// <param name="logger">
-        /// The logger to be wrapped.
-        /// </param>
         /// <param name="context">
         /// The <see cref="ILogContext"/> to which log entries are saved.
         /// </param>
         /// <exception cref="ArgumentNullException" />
-        public DateTimeEventLogger([NotNull] ILogger logger, [NotNull] ILogContext context)
+        public DateTimeEventLogger([NotNull] ILogContext context)
         {
-            if (logger is null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
             if (context is null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            _logger = logger;
             _context = context;
+            _sessionId = Guid.NewGuid();
         }
 
         /// <inheritdoc />
@@ -54,7 +45,7 @@ namespace AD.ApiExtensions.Logging
                 return;
             }
 
-            _logger.Log(logLevel, eventId, state, exception, (s, ex) => $"[{DateTime.Now:s}]: {clean(s, ex)}");
+            Console.WriteLine($"[{DateTime.Now:s}]: {clean(state, exception)}");
 
             if (!(state is ValueTuple<string, IPAddress> tuple))
             {
@@ -78,13 +69,13 @@ namespace AD.ApiExtensions.Logging
         /// <inheritdoc />
         public bool IsEnabled(LogLevel logLevel)
         {
-            return _logger.IsEnabled(logLevel);
+            return logLevel != LogLevel.None;
         }
 
         /// <inheritdoc />
         public IDisposable BeginScope<TState>(TState state)
         {
-            return _logger.BeginScope(state);
+            return NullScope.Instance;
         }
 
         private Func<TState, Exception, string> Clean<TState>(Func<TState, Exception, string> formatter)
