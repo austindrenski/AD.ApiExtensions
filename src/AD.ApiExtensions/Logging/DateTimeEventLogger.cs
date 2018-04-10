@@ -10,7 +10,7 @@ namespace AD.ApiExtensions.Logging
     /// Represents a logger that includes date and time information.
     /// </summary>
     [PublicAPI]
-    public class DateTimeEventLogger<T> : IEventLogger<T>
+    public class DateTimeEventLogger : IEventLogger
     {
         private readonly Guid _sessionId = Guid.NewGuid();
 
@@ -45,25 +45,7 @@ namespace AD.ApiExtensions.Logging
         }
 
         /// <inheritdoc />
-        /// <summary>
-        /// Creates a new logger instance from the factory.
-        /// </summary>
-        /// <param name="loggerFactory">
-        /// The factory used to construct the internal logger instance.
-        /// </param>
-        /// <param name="context">
-        /// The <see cref="ILogContext"/> to which log entries are saved.
-        /// </param>
-        /// <returns>
-        /// A new logger instance.
-        /// </returns>
-        public DateTimeEventLogger([NotNull] ILoggerFactory loggerFactory, [NotNull] ILogContext context)
-            : this(new Logger<T>(loggerFactory), context)
-        {
-        }
-
-        /// <inheritdoc />
-        void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             Func<TState, Exception, string> clean = Clean(formatter);
 
@@ -94,13 +76,13 @@ namespace AD.ApiExtensions.Logging
         }
 
         /// <inheritdoc />
-        bool ILogger.IsEnabled(LogLevel logLevel)
+        public bool IsEnabled(LogLevel logLevel)
         {
             return _logger.IsEnabled(logLevel);
         }
 
         /// <inheritdoc />
-        IDisposable ILogger.BeginScope<TState>(TState state)
+        public IDisposable BeginScope<TState>(TState state)
         {
             return _logger.BeginScope(state);
         }

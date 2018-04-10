@@ -1,6 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace AD.ApiExtensions.Logging
@@ -12,10 +13,10 @@ namespace AD.ApiExtensions.Logging
     public static class DateTimeEventLoggerExtensions
     {
         /// <summary>
-        /// Adds a date-time logger for a scoped service of <see cref="IEventLogger{T}" />.
+        /// Adds a date-time logger for a scoped service of <see cref="IEventLogger" />.
         /// </summary>
         /// <param name="builder">
-        /// The <see cref="ILoggingBuilder"/> to which the <see cref="DateTimeEventLogger{T}"/> is added.
+        /// The <see cref="ILoggingBuilder"/> to which the <see cref="DateTimeEventLogger"/> is added.
         /// </param>
         /// <param name="implementationFactory">
         /// The factory that creates the service.
@@ -38,16 +39,16 @@ namespace AD.ApiExtensions.Logging
 
             builder.Services
                    .AddScoped<ILogContext>(implementationFactory)
-                   .AddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
+                   .AddScoped<IEventLogger, DateTimeEventLogger>();
 
             return builder;
         }
 
         /// <summary>
-        /// Adds a date-time logger for a scoped service of <see cref="IEventLogger{T}" />.
+        /// Adds a date-time logger for a scoped service of <see cref="IEventLogger" />.
         /// </summary>
         /// <param name="builder">
-        /// The <see cref="ILoggingBuilder"/> to which the <see cref="DateTimeEventLogger{T}"/> is added.
+        /// The <see cref="ILoggingBuilder"/> to which the <see cref="DateTimeEventLogger"/> is added.
         /// </param>
         /// <typeparam name="T">
         /// A type implementing <see cref="ILogContext"/>.
@@ -60,9 +61,11 @@ namespace AD.ApiExtensions.Logging
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DateTimeEventLoggerProvider>());
+
             builder.Services
                    .AddScoped<ILogContext, T>()
-                   .AddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
+                   .AddScoped<IEventLogger, DateTimeEventLogger>();
 
             return builder;
         }
