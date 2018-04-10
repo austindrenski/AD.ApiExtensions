@@ -10,28 +10,28 @@ namespace AD.ApiExtensions.Logging
     /// Represents a logger that includes date and time information.
     /// </summary>
     [PublicAPI]
-    public static class DateTimeLogger
+    public static class DateTimeEventLoggerExtensions
     {
         /// <summary>
-        /// Adds a date-time logger for a singleton service of <see cref="T:Microsoft.Extensions.Logging.ILogger{T}" />.
+        /// Adds a date-time logger for a scoped service of <see cref="IEventLogger{T}" />.
         /// </summary>
         /// <param name="services">
         /// The service collection to override.
         /// </param>
-        /// <param name="configure">
-        /// 
-        /// </param>
-        public static IServiceCollection AddDateTimeEventLogger(this IServiceCollection services, Action<DateTimeEventLoggerOptions> configure)
+        /// <typeparam name="T">
+        /// The implementation type of the <see cref="ILogContext"/>.
+        /// </typeparam>
+        [NotNull]
+        public static IServiceCollection AddDateTimeEventLogger<T>(this IServiceCollection services) where T : class, ILogContext
         {
             if (services is null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
-            
-            services.AddOptions();
-            services.TryAdd(ServiceDescriptor.Singleton<ILoggerFactory, LoggerFactory>());
-            services.Replace(ServiceDescriptor.Singleton(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>)));
-            services.Configure(configure);
+
+            services.TryAddSingleton<ILoggerFactory, LoggerFactory>();
+            services.TryAddScoped<ILogContext, T>();
+            services.TryAddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
             return services;
         }
     }

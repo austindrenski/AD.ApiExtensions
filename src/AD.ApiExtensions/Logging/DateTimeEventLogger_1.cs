@@ -2,7 +2,6 @@
 using System.Net;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AD.ApiExtensions.Logging
 {
@@ -17,9 +16,7 @@ namespace AD.ApiExtensions.Logging
 
         [NotNull] private readonly ILogger _logger;
 
-        [NotNull] private readonly Func<ILoggingContext> _context;
-
-        [NotNull] private readonly Func<Guid, string, LogEntry> _logEntryConstructor;
+        [NotNull] private readonly ILogContext _context;
 
         /// <summary>
         /// Constructs a new logger that wraps an existing implementation.
@@ -27,24 +24,24 @@ namespace AD.ApiExtensions.Logging
         /// <param name="logger">
         /// The logger to be wrapped.
         /// </param>
-        /// <param name="options">
-        ///
+        /// <param name="context">
+        /// The <see cref="ILogContext"/> to which log entries are saved.
         /// </param>
         /// <exception cref="ArgumentNullException" />
-        public DateTimeEventLogger([NotNull] ILogger logger, [NotNull] IOptions<DateTimeEventLoggerOptions> options)
+        public DateTimeEventLogger([NotNull] ILogger logger, [NotNull] ILogContext context)
         {
             if (logger is null)
             {
                 throw new ArgumentNullException(nameof(logger));
             }
-            if (options is null)
+
+            if (context is null)
             {
-                throw new ArgumentNullException(nameof(options));
+                throw new ArgumentNullException(nameof(context));
             }
 
             _logger = logger;
-            _context = options.Value.Context ?? throw new ArgumentException(nameof(options.Value.Context));
-            _logEntryConstructor = options.Value.LogEntryConstructor ?? throw new ArgumentNullException(nameof(options.Value.LogEntryConstructor));
+            _context = context;
         }
 
         /// <inheritdoc />
@@ -54,17 +51,18 @@ namespace AD.ApiExtensions.Logging
         /// <param name="loggerFactory">
         /// The factory used to construct the internal logger instance.
         /// </param>
-        /// <param name="options">
-        ///
+        /// <param name="context">
+        /// The <see cref="ILogContext"/> to which log entries are saved.
         /// </param>
         /// <returns>
         /// A new logger instance.
         /// </returns>
-        public DateTimeEventLogger([NotNull] ILoggerFactory loggerFactory, IOptions<DateTimeEventLoggerOptions> options)
-            : this(new Logger<T>(loggerFactory), options)
+        public DateTimeEventLogger([NotNull] ILoggerFactory loggerFactory, [NotNull] ILogContext context)
+            : this(new Logger<T>(loggerFactory), context)
         {
         }
 
+        /// <inheritdoc />
         void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             Func<TState, Exception, string> clean = Clean(formatter);
@@ -86,16 +84,25 @@ namespace AD.ApiExtensions.Logging
             // TODO: Make this robust to connection failures with a logging queue.
             try
             {
-                using (ILoggingContext context = _context())
-                {
-                    context.AddLogEntry(_logEntryConstructor(_sessionId, json));
-                    context.SaveChanges();
-                }
+                _context.AddLogEntry(_sessionId, json);
+                _context.SaveChanges();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
+        }
+
+        /// <inheritdoc />
+        bool ILogger.IsEnabled(LogLevel logLevel)
+        {
+            return _logger.IsEnabled(logLevel);
+        }
+
+        /// <inheritdoc />
+        IDisposable ILogger.BeginScope<TState>(TState state)
+        {
+            return _logger.BeginScope(state);
         }
 
         private Func<TState, Exception, string> Clean<TState>(Func<TState, Exception, string> formatter)
@@ -106,16 +113,6 @@ namespace AD.ApiExtensions.Logging
         private string Json<TState>(Func<TState, Exception, string> formatter, TState state, Exception exception)
         {
             return formatter(state, exception).Replace("\"", "\\\"");
-        }
-
-        bool ILogger.IsEnabled(LogLevel logLevel)
-        {
-            return _logger.IsEnabled(logLevel);
-        }
-
-        IDisposable ILogger.BeginScope<TState>(TState state)
-        {
-            return _logger.BeginScope(state);
         }
     }
 }

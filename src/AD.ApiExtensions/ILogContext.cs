@@ -2,15 +2,16 @@
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Primitives;
 
 namespace AD.ApiExtensions
 {
     /// <inheritdoc />
     /// <summary>
-    /// Defines access properties to a logging database.
+    /// Defines access properties to a log database.
     /// </summary>
     [PublicAPI]
-    public interface ILoggingContext : IDisposable
+    public interface ILogContext : IDisposable
     {
         /// <summary>
         /// Identifies the current session for logging.
@@ -25,10 +26,7 @@ namespace AD.ApiExtensions
         /// <summary>
         /// Adds an entry to the log.
         /// </summary>
-        /// <param name="entry">
-        /// The entry to be added.
-        /// </param>
-        void AddLogEntry<TEntry>([NotNull] TEntry entry) where TEntry : class, ILogEntry;
+        void AddLogEntry(Guid guid, StringValues json);
 
         /// <summary>
         /// Saves all changes made in this context to the underlying database.
