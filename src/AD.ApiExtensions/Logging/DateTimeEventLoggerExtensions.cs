@@ -18,11 +18,14 @@ namespace AD.ApiExtensions.Logging
         /// <param name="services">
         /// The service collection to override.
         /// </param>
+        /// <param name="implementationFactory">
+        /// The factory that creates the service.
+        /// </param>
         /// <typeparam name="T">
         /// The implementation type of the <see cref="ILogContext"/>.
         /// </typeparam>
         [NotNull]
-        public static IServiceCollection AddDateTimeEventLogger<T>(this IServiceCollection services) where T : class, ILogContext
+        public static IServiceCollection AddDateTimeEventLogger<T>(this IServiceCollection services, Func<IServiceProvider, T> implementationFactory) where T : class, ILogContext
         {
             if (services is null)
             {
@@ -30,7 +33,7 @@ namespace AD.ApiExtensions.Logging
             }
 
             services.TryAddSingleton<ILoggerFactory, LoggerFactory>();
-            services.TryAddScoped<ILogContext, T>();
+            services.TryAddScoped(typeof(ILogContext), implementationFactory);
             services.TryAddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
             return services;
         }
