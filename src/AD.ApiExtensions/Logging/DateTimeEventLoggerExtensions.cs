@@ -1,7 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace AD.ApiExtensions.Logging
@@ -15,27 +14,57 @@ namespace AD.ApiExtensions.Logging
         /// <summary>
         /// Adds a date-time logger for a scoped service of <see cref="IEventLogger{T}" />.
         /// </summary>
-        /// <param name="services">
-        /// The service collection to override.
+        /// <param name="builder">
+        /// The <see cref="ILoggingBuilder"/> to which the <see cref="DateTimeEventLogger{T}"/> is added.
         /// </param>
         /// <param name="implementationFactory">
         /// The factory that creates the service.
         /// </param>
         /// <typeparam name="T">
-        /// The implementation type of the <see cref="ILogContext"/>.
+        /// A type implementing <see cref="ILogContext"/>.
         /// </typeparam>
         [NotNull]
-        public static IServiceCollection AddDateTimeEventLogger<T>(this IServiceCollection services, Func<IServiceProvider, T> implementationFactory) where T : class, ILogContext
+        public static ILoggingBuilder AddDateTimeEvent<T>([NotNull] this ILoggingBuilder builder, [NotNull] Func<IServiceProvider, T> implementationFactory) where T : class, ILogContext
         {
-            if (services is null)
+            if (builder is null)
             {
-                throw new ArgumentNullException(nameof(services));
+                throw new ArgumentNullException(nameof(builder));
             }
 
-            services.TryAddSingleton<ILoggerFactory, LoggerFactory>();
-            services.TryAddScoped(typeof(ILogContext), implementationFactory);
-            services.TryAddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
-            return services;
+            if (implementationFactory is null)
+            {
+                throw new ArgumentNullException(nameof(implementationFactory));
+            }
+
+            builder.Services
+                   .AddScoped<ILogContext>(implementationFactory)
+                   .AddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a date-time logger for a scoped service of <see cref="IEventLogger{T}" />.
+        /// </summary>
+        /// <param name="builder">
+        /// The <see cref="ILoggingBuilder"/> to which the <see cref="DateTimeEventLogger{T}"/> is added.
+        /// </param>
+        /// <typeparam name="T">
+        /// A type implementing <see cref="ILogContext"/>.
+        /// </typeparam>
+        [NotNull]
+        public static ILoggingBuilder AddDateTimeEvent<T>([NotNull] this ILoggingBuilder builder) where T : class, ILogContext
+        {
+            if (builder is null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.Services
+                   .AddScoped<ILogContext, T>()
+                   .AddScoped(typeof(IEventLogger<>), typeof(DateTimeEventLogger<>));
+
+            return builder;
         }
     }
 }
