@@ -61,6 +61,11 @@ namespace AD.ApiExtensions.EntityFrameworkCore
             {
                 entityTypeAnnotations.TableName = entityTypeAnnotations.TableName?.CamelCaseToSnakeCase();
             }
+            else
+            {
+                // If the name is assigned from DbSet, then it needs to be normalized.
+                entityTypeAnnotations.TableName = entityTypeAnnotations.TableName?.ToLower();
+            }
 
             foreach (IMutableProperty property in entity.GetProperties())
             {
