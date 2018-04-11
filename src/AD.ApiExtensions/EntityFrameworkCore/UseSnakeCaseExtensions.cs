@@ -18,11 +18,9 @@ namespace AD.ApiExtensions.EntityFrameworkCore
         /// <param name="builder">
         /// The builder to modify.
         /// </param>
-        /// <param name="overwrite">
-        /// True if a non-default (e.g. previously set) table name should be overwritten; otherwise false.
-        /// </param>
         /// <exception cref="ArgumentNullException"/>
-        public static ModelBuilder UseSnakeCase([NotNull] this ModelBuilder builder, bool overwrite = false)
+        [NotNull]
+        public static ModelBuilder UseSnakeCase([NotNull] this ModelBuilder builder)
         {
             if (builder is null)
             {
@@ -31,7 +29,7 @@ namespace AD.ApiExtensions.EntityFrameworkCore
 
             foreach (IMutableEntityType entity in builder.Model.GetEntityTypes())
             {
-                entity.UseSnakeCase(overwrite);
+                entity.UseSnakeCase();
             }
 
             return builder;
@@ -44,11 +42,9 @@ namespace AD.ApiExtensions.EntityFrameworkCore
         /// <param name="entity">
         /// The entity to modify.
         /// </param>
-        /// <param name="overwrite">
-        /// True if a non-default (e.g. previously set) table name should be overwritten; otherwise false.
-        /// </param>
         /// <exception cref="ArgumentNullException"/>
-        public static IMutableEntityType UseSnakeCase([NotNull] this IMutableEntityType entity, bool overwrite = false)
+        [NotNull]
+        public static IMutableEntityType UseSnakeCase([NotNull] this IMutableEntityType entity)
         {
             if (entity is null)
             {
@@ -57,15 +53,7 @@ namespace AD.ApiExtensions.EntityFrameworkCore
 
             RelationalEntityTypeAnnotations entityTypeAnnotations = entity.Relational();
 
-            if (overwrite || entityTypeAnnotations.TableName == entity.ClrType?.Name)
-            {
-                entityTypeAnnotations.TableName = entityTypeAnnotations.TableName?.CamelCaseToSnakeCase();
-            }
-            else
-            {
-                // If the name is assigned from DbSet, then it needs to be normalized.
-                entityTypeAnnotations.TableName = entityTypeAnnotations.TableName?.ToLower();
-            }
+            entityTypeAnnotations.TableName = entityTypeAnnotations.TableName?.CamelCaseToSnakeCase();
 
             foreach (IMutableProperty property in entity.GetProperties())
             {
@@ -98,6 +86,7 @@ namespace AD.ApiExtensions.EntityFrameworkCore
         /// The property to modify.
         /// </param>
         /// <exception cref="ArgumentNullException"/>
+        [NotNull]
         public static IMutableProperty UseSnakeCase([NotNull] this IMutableProperty property)
         {
             if (property is null)
@@ -123,6 +112,7 @@ namespace AD.ApiExtensions.EntityFrameworkCore
         /// The key to modify.
         /// </param>
         /// <exception cref="ArgumentNullException"/>
+        [NotNull]
         public static IMutableKey UseSnakeCase([NotNull] this IMutableKey key)
         {
             if (key is null)
@@ -144,6 +134,7 @@ namespace AD.ApiExtensions.EntityFrameworkCore
         /// The foreign key to modify.
         /// </param>
         /// <exception cref="ArgumentNullException"/>
+        [NotNull]
         public static IMutableForeignKey UseSnakeCase([NotNull] this IMutableForeignKey key)
         {
             if (key is null)
@@ -165,6 +156,7 @@ namespace AD.ApiExtensions.EntityFrameworkCore
         /// The index to modify.
         /// </param>
         /// <exception cref="ArgumentNullException"/>
+        [NotNull]
         public static IMutableIndex UseSnakeCase([NotNull] this IMutableIndex index)
         {
             if (index is null)
