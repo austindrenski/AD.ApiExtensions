@@ -17,20 +17,31 @@ namespace AD.ApiExtensions.Logging
 
         [NotNull] private readonly ILogContext _context;
 
+        [NotNull] private readonly ILogger _logger;
+
         /// <summary>
         /// Constructs a new logger that wraps an existing implementation.
         /// </summary>
+        /// <param name="logger">
+        /// The logger to be wrapped.
+        /// </param>
         /// <param name="context">
         /// The <see cref="ILogContext"/> to which log entries are saved.
         /// </param>
         /// <exception cref="ArgumentNullException" />
-        public DateTimeEventLogger([NotNull] ILogContext context)
+        public DateTimeEventLogger([NotNull] ILogger logger, [NotNull] ILogContext context)
         {
+            if (logger is null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             if (context is null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
+            _logger = logger;
             _context = context;
             _sessionId = Guid.NewGuid();
         }
@@ -45,12 +56,12 @@ namespace AD.ApiExtensions.Logging
                 return;
             }
 
-            Console.WriteLine($"[{DateTime.Now:s}]: {clean(state, exception)}");
-
             if (!(state is ValueTuple<string, IPAddress> tuple))
             {
                 return;
             }
+
+            _logger.Log(logLevel, eventId, state, exception, (s, ex) => $"[{DateTime.Now:s}]: {clean(s, ex)}");
 
             string json = $"{{ \"source\": \"Default\", \"message\": \"{Json(clean, state, exception)}\", \"ipAddress\": \"{tuple.Item2}\" }}";
 
