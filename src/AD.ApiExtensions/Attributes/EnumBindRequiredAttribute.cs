@@ -30,7 +30,7 @@ namespace AD.ApiExtensions.Attributes
             }
 
             return
-                (int) value is default
+                (int) value is 0
                     ? new ValidationResult($"Expected a non-default enumeration for {context.DisplayName}, but received: '{value}'")
                     : ValidationResult.Success;
         }
