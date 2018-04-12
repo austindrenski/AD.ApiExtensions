@@ -10,16 +10,11 @@ namespace AD.ApiExtensions.TypeConverters
 {
     /// <inheritdoc />
     /// <summary>
-    /// Represents a type converter that creates flag enums from <see cref="String"/>, <see cref="StringValues"/>, and <see cref="StringSegment"/> objects.
+    /// Represents a type converter that creates enums from <see cref="String"/>, <see cref="StringValues"/>, and <see cref="StringSegment"/> objects.
     /// </summary>
     [PublicAPI]
-    public sealed class EnumFlagTypeConverter<TEnum> : TypeConverter where TEnum : struct, IComparable, IFormattable, IConvertible
+    public sealed class EnumTypeConverter<TEnum> : TypeConverter where TEnum : struct, IComparable, IFormattable, IConvertible
     {
-        /// <summary>
-        /// Characters to split strings into enums.
-        /// </summary>
-        private static readonly char[] Splits = new char[] { ',' };
-
         /// <summary>
         /// The names of the enum members.
         /// </summary>
@@ -27,16 +22,11 @@ namespace AD.ApiExtensions.TypeConverters
 
         /// <inheritdoc />
         /// <exception cref="InvalidEnumArgumentException" />
-        public EnumFlagTypeConverter()
+        public EnumTypeConverter()
         {
             if (!typeof(TEnum).IsEnum)
             {
                 throw new InvalidEnumArgumentException($"{typeof(TEnum).Name} is not an enum.");
-            }
-
-            if (!Attribute.IsDefined(typeof(TEnum), typeof(FlagsAttribute)))
-            {
-                throw new InvalidEnumArgumentException($"{typeof(TEnum).Name} is not declared with {nameof(FlagsAttribute)}.");
             }
         }
 
@@ -56,15 +46,15 @@ namespace AD.ApiExtensions.TypeConverters
             {
                 case string s:
                 {
-                    return Parse(new StringSegment(s).Split(Splits));
+                    return Parse(s);
                 }
                 case StringValues s:
                 {
-                    return Parse(s.SelectMany(x => new StringSegment(x).Split(Splits)));
+                    return Parse(s);
                 }
                 case StringSegment s:
                 {
-                    return Parse(s.Split(Splits));
+                    return Parse(s.Value);
                 }
                 default:
                 {
@@ -74,47 +64,29 @@ namespace AD.ApiExtensions.TypeConverters
         }
 
         /// <summary>
-        /// Parses each item in the collection as <typeparamref name="TEnum"/> and performs bitwise-or combination.
+        /// Parses the item as <typeparamref name="TEnum"/>.
         /// </summary>
-        /// <param name="values">
-        /// The items to parse.
+        /// <param name="value">
+        /// The item to parse.
         /// </param>
         /// <returns>
-        /// The bitwise-or combination of the valid enums parsed from the values.
+        /// The enum parsed from the value.
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [Pure]
-        private static TEnum Parse([NotNull] IEnumerable<StringSegment> values)
-        {
-            if (values is null)
-            {
-                throw new ArgumentNullException(nameof(values));
-            }
-
-            return
-                values.Select(x => x.Value.KebabCaseToCamelCase())
-                      .Where(x => Names.Contains(x, StringComparer.OrdinalIgnoreCase))
-                      .Select(TryParse)
-                      .Aggregate(
-                          default(ulong),
-                          (current, next) => current | next,
-                          result => (TEnum) Enum.ToObject(typeof(TEnum), result));
-        }
-
-        [Pure]
-        private static ulong TryParse([NotNull] string value)
+        private static TEnum Parse([NotNull] string value)
         {
             if (value is null)
             {
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (!Enum.TryParse(value, true, out TEnum result))
+            if (!Names.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
                 throw new InvalidEnumArgumentException($"The value '{value}' is not a valid enum of '{typeof(TEnum).Name}'.");
             }
 
-            return Convert.ToUInt64(result);
+            return Enum.TryParse(value, true, out TEnum result) ? result : default;
         }
     }
 }

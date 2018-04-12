@@ -9,7 +9,7 @@ namespace AD.ApiExtensions.Attributes
     /// Requires that an int-based enum parameter be bound against a non-default value.
     /// </summary>
     [PublicAPI]
-    public class EnumBindRequiredAttribute : ValidationAttribute
+    public sealed class EnumBindRequiredAttribute : ValidationAttribute
     {
         /// <inheritdoc />
         protected override ValidationResult IsValid([NotNull] object value, [NotNull] ValidationContext context)
@@ -30,7 +30,7 @@ namespace AD.ApiExtensions.Attributes
             }
 
             return
-                (int) value is 0
+                (int) value is default
                     ? new ValidationResult($"Expected a non-default enumeration for {context.DisplayName}, but received: '{value}'")
                     : ValidationResult.Success;
         }
