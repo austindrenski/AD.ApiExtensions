@@ -9,7 +9,7 @@ namespace AD.ApiExtensions.Attributes
     /// Requires that an int-based enum parameter be bound against a non-default value.
     /// </summary>
     [PublicAPI]
-    public sealed class EnumBindRequiredAttribute : ValidationAttribute
+    public sealed class EnumRequiredAttribute : ValidationAttribute
     {
         /// <inheritdoc />
         protected override ValidationResult IsValid([NotNull] object value, [NotNull] ValidationContext context)
