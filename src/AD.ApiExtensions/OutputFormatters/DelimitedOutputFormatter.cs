@@ -63,37 +63,11 @@ namespace AD.ApiExtensions.OutputFormatters
 
             char delimiter = SupportedMediaTypes[MediaTypeHeaderValue.Parse(context.ContentType)];
 
-            string text =
-                GetDelimited(context.Object, delimiter);
+            string text = GetDelimited(context.Object, delimiter);
 
             context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
             context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
             await context.HttpContext.Response.WriteAsync(text);
-
-//            IReadOnlyList<object> results =
-//                context.Object as IReadOnlyList<object> ??
-//                (context.Object as IEnumerable<object>)?.ToArray() ??
-//                new object[] { context.Object };
-//
-//            string headers =
-//                results.DefaultIfEmpty(new object())
-//                       .First()
-//                       .GetType()
-//                       .GetProperties()
-//                       .Select(x => x.Name)
-//                       .ToDelimited(delimiter);
-//
-//            string delimited = results.ToDelimited(delimiter);
-//
-//            using (StringWriter writer = new StringWriter())
-//            {
-//                await writer.WriteLineAsync(headers);
-//                await writer.WriteLineAsync(delimited);
-//
-//                context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-//                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
-//                await context.HttpContext.Response.WriteAsync(writer.ToString());
-//            }
         }
 
         /// <summary>
@@ -114,19 +88,23 @@ namespace AD.ApiExtensions.OutputFormatters
                 }
                 case XDocument document:
                 {
-                    return document.ToDelimited(true, delimiter) ?? string.Empty;
+                    return document.ToDelimited(true, delimiter);
+                }
+                case XElement element:
+                {
+                    return new XElement[] { element }.ToDelimited(true, delimiter);
                 }
                 case IEnumerable<XElement> elements:
                 {
-                    return elements.ToDelimited(true, delimiter) ?? string.Empty;
+                    return elements.ToDelimited(true, delimiter);
                 }
                 case IEnumerable<object> enumerable:
                 {
-                    return enumerable.ToDelimited(true, delimiter) ?? string.Empty;
+                    return enumerable.ToDelimited(true, delimiter);
                 }
                 default:
                 {
-                    return new object[] { value }.ToDelimited(true, delimiter) ?? string.Empty;
+                    return new object[] { value }.ToDelimited(true, delimiter);
                 }
             }
         }
