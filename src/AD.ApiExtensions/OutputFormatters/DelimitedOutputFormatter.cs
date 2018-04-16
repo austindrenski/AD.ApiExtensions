@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -65,9 +64,11 @@ namespace AD.ApiExtensions.OutputFormatters
 
             string text = GetDelimited(context.Object, delimiter);
 
+            context.HttpContext.Response.Headers.Add("header", "present");
+            context.HttpContext.Response.Headers.Add("charset", "UTF-8");
             context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-            context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
-            await context.HttpContext.Response.WriteAsync(text);
+            context.HttpContext.Response.StatusCode = StatusCodes.Status200OK;
+            await context.HttpContext.Response.WriteAsync(text, context.HttpContext.RequestAborted);
         }
 
         /// <summary>
