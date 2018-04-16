@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using AD.Xml;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
@@ -56,7 +57,15 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.Object is IEnumerable<object> collection)
+            if (context.Object is IEnumerable<XElement> elements)
+            {
+                await context.HttpContext.Response.WriteAsync(new XDocument(new XElement("root", elements)).ToString());
+            }
+            else if (context.Object is XDocument document)
+            {
+                await context.HttpContext.Response.WriteAsync(document.ToString());
+            }
+            else if (context.Object is IEnumerable<object> collection)
             {
                 await context.HttpContext.Response.WriteAsync(collection.ToXmlString());
             }
