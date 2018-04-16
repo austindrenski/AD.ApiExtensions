@@ -110,12 +110,12 @@ namespace AD.ApiExtensions.OutputFormatters
         {
             if (value is IEnumerable<object> enumerable)
             {
-                return enumerable.ToDelimited();
+                return enumerable.ToDelimited(delimiter);
             }
 
             if (value is XDocument document)
             {
-                return document.ToDelimited();
+                return document.ToDelimited(delimiter);
             }
 
             object[] results = new object[] { value };
