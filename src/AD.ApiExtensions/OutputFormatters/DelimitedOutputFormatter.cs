@@ -9,7 +9,6 @@ using AD.IO;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace AD.ApiExtensions.OutputFormatters
@@ -24,7 +23,7 @@ namespace AD.ApiExtensions.OutputFormatters
         /// <summary>
         /// The collection of supported media types.
         /// </summary>
-        [NotNull] private static readonly IReadOnlyList<MediaTypeHeaderValue> SupportedMediaTypes;
+        [NotNull] private static readonly Dictionary<MediaTypeHeaderValue, char> SupportedMediaTypes;
 
         /// <summary>
         /// Initializes static resources.
@@ -32,11 +31,11 @@ namespace AD.ApiExtensions.OutputFormatters
         static DelimitedOutputFormatter()
         {
             SupportedMediaTypes =
-                new MediaTypeHeaderValue[]
+                new Dictionary<MediaTypeHeaderValue, char>
                 {
-                    MediaTypeHeaderValue.Parse("text/csv"),
-                    MediaTypeHeaderValue.Parse("text/psv"),
-                    MediaTypeHeaderValue.Parse("text/tsv")
+                    [MediaTypeHeaderValue.Parse("text/csv")] = ',',
+                    [MediaTypeHeaderValue.Parse("text/psv")] = '|',
+                    [MediaTypeHeaderValue.Parse("text/tab-separated-values")] = '\t'
                 };
         }
 
@@ -50,7 +49,7 @@ namespace AD.ApiExtensions.OutputFormatters
             }
 
             return
-                SupportedMediaTypes.Contains(MediaTypeHeaderValue.Parse(context.ContentType)) ||
+                SupportedMediaTypes.Keys.Contains(MediaTypeHeaderValue.Parse(context.ContentType)) ||
                 context.HttpContext.Request.Headers["user-agent"].Any(x => x?.StartsWith("Stata") ?? false);
         }
 
@@ -62,8 +61,7 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            char delimiter =
-                GetDelimiter(context.ContentType);
+            char delimiter = SupportedMediaTypes[MediaTypeHeaderValue.Parse(context.ContentType)];
 
             string text =
                 GetDelimited(context.Object, delimiter);
@@ -114,48 +112,21 @@ namespace AD.ApiExtensions.OutputFormatters
                 {
                     return string.Empty;
                 }
-                case IEnumerable<object> enumerable:
-                {
-                    return enumerable.ToDelimited(true, delimiter) ?? string.Empty;
-                }
                 case XDocument document:
                 {
                     return document.ToDelimited(true, delimiter) ?? string.Empty;
                 }
+                case IEnumerable<XElement> elements:
+                {
+                    return elements.ToDelimited(true, delimiter) ?? string.Empty;
+                }
+                case IEnumerable<object> enumerable:
+                {
+                    return enumerable.ToDelimited(true, delimiter) ?? string.Empty;
+                }
                 default:
                 {
                     return new object[] { value }.ToDelimited(true, delimiter) ?? string.Empty;
-                }
-            }
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="value">
-        ///
-        /// </param>
-        /// <returns>
-        ///
-        /// </returns>
-        [Pure]
-        private static char GetDelimiter(StringSegment value)
-        {
-            MediaType mediaType = new MediaType(value);
-            switch (mediaType.SubType.Value)
-            {
-                case "psv":
-                {
-                    return '|';
-                }
-                case "tsv":
-                {
-                    return '\t';
-                }
-                case "csv":
-                default:
-                {
-                    return ',';
                 }
             }
         }

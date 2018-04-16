@@ -33,8 +33,7 @@ namespace AD.ApiExtensions.OutputFormatters
             SupportedMediaTypes =
                 new MediaTypeHeaderValue[]
                 {
-                    MediaTypeHeaderValue.Parse("application/xml"),
-                    MediaTypeHeaderValue.Parse("text/xml")
+                    MediaTypeHeaderValue.Parse("application/xml")
                 };
         }
 
@@ -57,6 +56,9 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
+            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+            context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
+
             if (context.Object is IEnumerable<XElement> elements)
             {
                 await context.HttpContext.Response.WriteAsync(elements.ToXDocument().ToString());
@@ -73,9 +75,6 @@ namespace AD.ApiExtensions.OutputFormatters
             {
                 await context.HttpContext.Response.WriteAsync(new object[] { context.Object }.ToXmlString());
             }
-
-            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-            context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
         }
     }
 }
