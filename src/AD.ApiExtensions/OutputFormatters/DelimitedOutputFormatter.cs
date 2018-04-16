@@ -105,32 +105,28 @@ namespace AD.ApiExtensions.OutputFormatters
         /// <param name="delimiter"></param>
         /// <returns></returns>
         [Pure]
-        [CanBeNull]
+        [NotNull]
         private static string GetDelimited([CanBeNull] object value, char delimiter)
         {
-            if (value is IEnumerable<object> enumerable)
+            switch (value)
             {
-                return enumerable.ToDelimited(delimiter);
+                case null:
+                {
+                    return string.Empty;
+                }
+                case IEnumerable<object> enumerable:
+                {
+                    return enumerable.ToDelimited(true, delimiter) ?? string.Empty;
+                }
+                case XDocument document:
+                {
+                    return document.ToDelimited(true, delimiter) ?? string.Empty;
+                }
+                default:
+                {
+                    return new object[] { value }.ToDelimited(true, delimiter) ?? string.Empty;
+                }
             }
-
-            if (value is XDocument document)
-            {
-                return document.ToDelimited(delimiter);
-            }
-
-            object[] results = new object[] { value };
-
-            string headers =
-                results.DefaultIfEmpty(new object())
-                       .First()
-                       .GetType()
-                       .GetProperties()
-                       .Select(x => x.Name)
-                       .ToDelimited(delimiter);
-
-            string delimited = results.ToDelimited(delimiter);
-
-            return string.Join(Environment.NewLine, headers, delimited);
         }
 
         /// <summary>
