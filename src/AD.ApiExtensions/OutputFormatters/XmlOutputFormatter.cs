@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -57,21 +56,17 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            using (StringWriter writer = new StringWriter())
+            if (context.Object is IEnumerable<object> collection)
             {
-                if (context.Object is IEnumerable<object> collection)
-                {
-                    await writer.WriteAsync(collection.ToXmlString());
-                }
-                else
-                {
-                    await writer.WriteAsync(new object[] { context.Object }.ToXmlString());
-                }
-
-                context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
-                await context.HttpContext.Response.WriteAsync(writer.ToString());
+                await context.HttpContext.Response.WriteAsync(collection.ToXmlString());
             }
+            else
+            {
+                await context.HttpContext.Response.WriteAsync(new object[] { context.Object }.ToXmlString());
+            }
+
+            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+            context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
         }
     }
 }

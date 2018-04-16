@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using AD.IO;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
@@ -65,10 +65,60 @@ namespace AD.ApiExtensions.OutputFormatters
             char delimiter =
                 GetDelimiter(context.ContentType);
 
-            IReadOnlyList<object> results =
-                context.Object as IReadOnlyList<object> ??
-                (context.Object as IEnumerable<object>)?.ToArray() ??
-                new object[] { context.Object };
+            string text =
+                GetDelimited(context.Object, delimiter);
+
+            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+            context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
+            await context.HttpContext.Response.WriteAsync(text);
+
+//            IReadOnlyList<object> results =
+//                context.Object as IReadOnlyList<object> ??
+//                (context.Object as IEnumerable<object>)?.ToArray() ??
+//                new object[] { context.Object };
+//
+//            string headers =
+//                results.DefaultIfEmpty(new object())
+//                       .First()
+//                       .GetType()
+//                       .GetProperties()
+//                       .Select(x => x.Name)
+//                       .ToDelimited(delimiter);
+//
+//            string delimited = results.ToDelimited(delimiter);
+//
+//            using (StringWriter writer = new StringWriter())
+//            {
+//                await writer.WriteLineAsync(headers);
+//                await writer.WriteLineAsync(delimited);
+//
+//                context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+//                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
+//                await context.HttpContext.Response.WriteAsync(writer.ToString());
+//            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="delimiter"></param>
+        /// <returns></returns>
+        [Pure]
+        [CanBeNull]
+        private static string GetDelimited([CanBeNull] object value, char delimiter)
+        {
+            if (value is IEnumerable<object> enumerable)
+            {
+                return enumerable.ToDelimited();
+            }
+
+            if (value is XDocument document)
+            {
+                return document.ToDelimited();
+            }
+
+            object[] results = new object[] { value };
 
             string headers =
                 results.DefaultIfEmpty(new object())
@@ -80,15 +130,7 @@ namespace AD.ApiExtensions.OutputFormatters
 
             string delimited = results.ToDelimited(delimiter);
 
-            using (StringWriter writer = new StringWriter())
-            {
-                await writer.WriteLineAsync(headers);
-                await writer.WriteLineAsync(delimited);
-
-                context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
-                await context.HttpContext.Response.WriteAsync(writer.ToString());
-            }
+            return string.Join(Environment.NewLine, headers, delimited);
         }
 
         /// <summary>
