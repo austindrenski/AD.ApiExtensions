@@ -59,7 +59,7 @@ namespace AD.ApiExtensions.OutputFormatters
 
             if (context.Object is IEnumerable<XElement> elements)
             {
-                await context.HttpContext.Response.WriteAsync(new XDocument(new XElement("root", elements)).ToString());
+                await context.HttpContext.Response.WriteAsync(elements.ToXDocument().ToString());
             }
             else if (context.Object is XDocument document)
             {
