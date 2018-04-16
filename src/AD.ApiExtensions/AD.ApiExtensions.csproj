@@ -20,7 +20,7 @@
     <Version>1.1.0</Version>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AD.IO" Version="1.5.29" />
+    <PackageReference Include="AD.IO" Version="1.5.30" />
     <PackageReference Include="AD.Xml" Version="1.4.13" />
     <PackageReference Include="JetBrains.Annotations" Version="11.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.0.0" />
