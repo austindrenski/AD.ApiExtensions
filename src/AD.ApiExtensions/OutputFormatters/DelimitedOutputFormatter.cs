@@ -41,12 +41,14 @@ namespace AD.ApiExtensions.OutputFormatters
         }
 
         /// <inheritdoc />
+        [Pure]
         public bool CanWriteResult([NotNull] OutputFormatterCanWriteContext context)
         {
             if (context is null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
+
             return
                 SupportedMediaTypes.Contains(MediaTypeHeaderValue.Parse(context.ContentType)) ||
                 context.HttpContext.Request.Headers["user-agent"].Any(x => x?.StartsWith("Stata") ?? false);
@@ -60,7 +62,7 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            string delimiter =
+            char delimiter =
                 GetDelimiter(context.ContentType);
 
             IReadOnlyList<object> results =
@@ -99,24 +101,23 @@ namespace AD.ApiExtensions.OutputFormatters
         ///
         /// </returns>
         [Pure]
-        [NotNull]
-        private static string GetDelimiter(StringSegment value)
+        private static char GetDelimiter(StringSegment value)
         {
             MediaType mediaType = new MediaType(value);
             switch (mediaType.SubType.Value)
             {
                 case "psv":
                 {
-                    return "|";
+                    return '|';
                 }
                 case "tsv":
                 {
-                    return "\t";
+                    return '\t';
                 }
                 case "csv":
                 default:
                 {
-                    return ",";
+                    return ',';
                 }
             }
         }
