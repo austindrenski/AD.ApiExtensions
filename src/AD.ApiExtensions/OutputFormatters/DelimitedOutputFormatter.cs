@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.OutputFormatters
         /// The collection of supported media types.
         /// </summary>
         [NotNull]
-        public IDictionary<MediaType, char> SupportedMediaTypes { get; }
+        public ISet<(MediaType MediaType, char Delimiter)> SupportedMediaTypes { get; }
 
         /// <summary>
         /// Initializes static resources.
@@ -32,11 +32,11 @@ namespace AD.ApiExtensions.OutputFormatters
         public DelimitedOutputFormatter()
         {
             SupportedMediaTypes =
-                new Dictionary<MediaType, char>
+                new HashSet<(MediaType, char)>
                 {
-                    [new MediaType("text/csv")] = ',',
-                    [new MediaType("text/psv")] = '|',
-                    [new MediaType("text/tab-separated-values")] = '\t'
+                    (new MediaType("text/csv"), ','),
+                    (new MediaType("text/psv"), '|'),
+                    (new MediaType("text/tab-separated-values"), '\t')
                 };
         }
 
@@ -55,7 +55,7 @@ namespace AD.ApiExtensions.OutputFormatters
 
             MediaType mediaType = new MediaType(contentType);
 
-            return SupportedMediaTypes.Keys.Where(x => CanWriteResult(x, mediaType)).Select(x => $"{x.Type}/{x.SubType}").ToArray();
+            return SupportedMediaTypes.Where(x => CanWriteResult(x.MediaType, mediaType)).Select(x => $"{x.MediaType.Type}/{x.MediaType.SubType}").ToArray();
         }
 
         /// <inheritdoc />
@@ -90,7 +90,7 @@ namespace AD.ApiExtensions.OutputFormatters
         private char GetDelimiter(StringSegment contentType)
         {
             MediaType mediaType = new MediaType(contentType);
-            return SupportedMediaTypes.First(x => x.Key.IsSubsetOf(mediaType) || mediaType.IsSubsetOf(x.Key)).Value;
+            return SupportedMediaTypes.First(x => x.MediaType.IsSubsetOf(mediaType) || mediaType.IsSubsetOf(x.MediaType)).Delimiter;
         }
 
         /// <summary>
