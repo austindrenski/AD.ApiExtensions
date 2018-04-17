@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using AD.IO;
@@ -9,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Primitives;
-using Microsoft.Net.Http.Headers;
 
 namespace AD.ApiExtensions.OutputFormatters
 {
@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.OutputFormatters
         /// The collection of supported media types.
         /// </summary>
         [NotNull]
-        public IDictionary<string, char> SupportedMediaTypes { get; }
+        public IDictionary<MediaType, char> SupportedMediaTypes { get; }
 
         /// <summary>
         /// Initializes static resources.
@@ -32,11 +32,11 @@ namespace AD.ApiExtensions.OutputFormatters
         public DelimitedOutputFormatter()
         {
             SupportedMediaTypes =
-                new Dictionary<string, char>
+                new Dictionary<MediaType, char>
                 {
-                    ["text/csv; charset=utf-8"] = ',',
-                    ["text/psv; charset=utf-8"] = '|',
-                    ["text/tab-separated-values; charset=utf-8"] = '\t'
+                    [new MediaType("text/csv")] = ',',
+                    [new MediaType("text/psv")] = '|',
+                    [new MediaType("text/tab-separated-values")] = '\t'
                 };
         }
 
@@ -53,68 +53,9 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(objectType));
             }
 
-            if (!SupportedMediaTypes.Any())
-            {
-                throw new InvalidOperationException($"{nameof(DelimitedOutputFormatter)} does not support any media types.");
-            }
+            MediaType mediaType = new MediaType(contentType);
 
-            List<MediaType> results = new List<MediaType>();
-
-            MediaType contentMediaType = new MediaType(contentType);
-
-            foreach ((string mediaType, char _) in SupportedMediaTypes)
-            {
-                MediaType supportedMediaType = new MediaType(mediaType);
-
-                if (supportedMediaType.HasWildcard && contentMediaType.IsSubsetOf(supportedMediaType))
-                {
-                    results.Add(contentMediaType);
-                }
-                else if (supportedMediaType.IsSubsetOf(contentMediaType))
-                {
-                    results.Add(supportedMediaType);
-                }
-            }
-
-            return results.Select(x => $"{x.Type}/{x.SubType}").ToArray();
-        }
-
-        /// <summary>
-        /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
-        /// </summary>
-        /// <param name="contentType">
-        /// The content type to check.
-        /// </param>
-        /// <returns>
-        /// True if the formatter can write the response; otherwise, false.
-        /// </returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        [Pure]
-        public bool CanWriteResult(StringSegment contentType)
-        {
-            if (!SupportedMediaTypes.Any())
-            {
-                throw new InvalidOperationException($"{nameof(DelimitedOutputFormatter)} does not support any media types.");
-            }
-
-            MediaType contentMediaType = new MediaType(contentType);
-
-            foreach ((string mediaType, char _) in SupportedMediaTypes)
-            {
-                MediaType supportedMediaType = new MediaType(mediaType);
-
-                if (supportedMediaType.HasWildcard && contentMediaType.IsSubsetOf(supportedMediaType))
-                {
-                    return true;
-                }
-
-                if (supportedMediaType.IsSubsetOf(contentMediaType))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return SupportedMediaTypes.Keys.Where(x => CanWriteResult(x, mediaType)).Select(x => $"{x.Type}/{x.SubType}").ToArray();
         }
 
         /// <inheritdoc />
@@ -126,9 +67,7 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return
-                CanWriteResult(context.ContentType) ||
-                context.HttpContext.Request.Headers["user-agent"].Any(x => x?.StartsWith("Stata") ?? false);
+            return CanWriteResult(new MediaType(context.ContentType));
         }
 
         /// <inheritdoc />
@@ -139,13 +78,19 @@ namespace AD.ApiExtensions.OutputFormatters
                 throw new ArgumentNullException(nameof(context));
             }
 
-            MediaType headerValue = new MediaType(context.ContentType.Value);
-            string text = GetDelimited(context.Object, SupportedMediaTypes[context.ContentType.Value]);
+            string text = GetDelimited(context.Object, GetDelimiter(context.ContentType));
 
-            context.HttpContext.Response.ContentType = context.ContentType.Value;
+            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
             context.HttpContext.Response.Headers.Add("header", "present");
-            context.HttpContext.Response.Headers.Add("charset", headerValue.Encoding.WebName);
-            await context.HttpContext.Response.WriteAsync(text, headerValue.Encoding, context.HttpContext.RequestAborted);
+            context.HttpContext.Response.Headers.Add("charset", Encoding.UTF8.WebName);
+            await context.HttpContext.Response.WriteAsync(text, Encoding.UTF8, context.HttpContext.RequestAborted);
+        }
+
+        [Pure]
+        private char GetDelimiter(StringSegment contentType)
+        {
+            MediaType mediaType = new MediaType(contentType);
+            return SupportedMediaTypes.First(x => x.Key.IsSubsetOf(mediaType) || mediaType.IsSubsetOf(x.Key)).Value;
         }
 
         /// <summary>
@@ -188,6 +133,54 @@ namespace AD.ApiExtensions.OutputFormatters
                     return new object[] { value }.ToDelimited(true, delimiter);
                 }
             }
+        }
+
+        /// <summary>
+        /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
+        /// </summary>
+        /// <param name="supportedType">
+        /// The content type that is supported.
+        /// </param>
+        /// <param name="contentType">
+        /// The content type to check.
+        /// </param>
+        /// <returns>
+        /// True if the formatter can write the response; otherwise, false.
+        /// </returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        [Pure]
+        private static bool CanWriteResult(MediaType supportedType, MediaType contentType)
+        {
+            if (supportedType.HasWildcard && contentType.IsSubsetOf(supportedType))
+            {
+                return true;
+            }
+
+            return supportedType.IsSubsetOf(contentType);
+        }
+
+        /// <summary>
+        /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
+        /// </summary>
+        /// <param name="contentType">
+        /// The content type to check.
+        /// </param>
+        /// <returns>
+        /// True if the formatter can write the response; otherwise, false.
+        /// </returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        [Pure]
+        private bool CanWriteResult(MediaType contentType)
+        {
+            foreach ((MediaType supportedType, char _) in SupportedMediaTypes)
+            {
+                if (CanWriteResult(supportedType, contentType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

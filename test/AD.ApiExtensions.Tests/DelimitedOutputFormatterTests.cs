@@ -15,10 +15,10 @@ namespace AD.ApiExtensions.Tests
     public class DelimitedOutputFormatterTests
     {
         [Theory]
-        [InlineData("text/csv", "utf-8", ',')]
-        [InlineData("text/psv", "utf-8", '|')]
-        [InlineData("text/tab-separated-values", "utf-8", '\t')]
-        public void Test0(string contentType, string charset, char delimiter)
+        [InlineData("text/csv", ',')]
+        [InlineData("text/psv", '|')]
+        [InlineData("text/tab-separated-values", '\t')]
+        public void Test0(string contentType, char delimiter)
         {
             HttpContext context =
                 GetHttpContext(("Content-Type", contentType));
@@ -42,8 +42,8 @@ namespace AD.ApiExtensions.Tests
             formatter.WriteAsync(outputContext).Wait();
 
             // Did the formatter set the response headers?
-            Assert.Equal($"{contentType}; charset={charset}", context.Response.Headers["Content-Type"]);
-            Assert.Equal(charset, context.Response.Headers["charset"]);
+            Assert.Equal($"{contentType}; charset={Encoding.UTF8.WebName}", context.Response.ContentType);
+            Assert.Equal(Encoding.UTF8.WebName, context.Response.Headers["charset"]);
             Assert.Equal("present", context.Response.Headers["header"]);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
 
