@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.OutputFormatters
         /// The collection of supported media types.
         /// </summary>
         [NotNull]
-        public ISet<(MediaType MediaType, char Delimiter)> SupportedMediaTypes { get; }
+        public IList<(MediaType MediaType, char Delimiter)> SupportedMediaTypes { get; }
 
         /// <summary>
         /// Initializes static resources.
@@ -32,7 +32,7 @@ namespace AD.ApiExtensions.OutputFormatters
         public DelimitedOutputFormatter()
         {
             SupportedMediaTypes =
-                new HashSet<(MediaType, char)>
+                new List<(MediaType, char)>
                 {
                     (new MediaType("text/csv"), ','),
                     (new MediaType("text/psv"), '|'),
