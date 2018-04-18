@@ -29,7 +29,7 @@ namespace AD.ApiExtensions.Logging
         /// The <see cref="ILogContext"/> to which log entries are saved.
         /// </param>
         /// <exception cref="ArgumentNullException" />
-        public DateTimeEventLogger([NotNull] ILogger logger, [NotNull] ILogContext context)
+        public DateTimeEventLogger([NotNull] ILogger<DateTimeEventLogger> logger, [NotNull] ILogContext context)
         {
             if (logger is null)
             {
