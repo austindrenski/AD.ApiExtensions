@@ -21,7 +21,7 @@ namespace AD.ApiExtensions.Conventions
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (context.PropertyAttributes.OfType<RequiredAttribute>().Any())
+            if (context.PropertyAttributes?.OfType<RequiredAttribute>().Any() ?? false)
             {
                 context.BindingMetadata.IsBindingRequired = true;
             }
