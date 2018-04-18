@@ -18,10 +18,28 @@ namespace AD.ApiExtensions.Filters
           IExceptionFilter,
           IOrderedFilter
         where TException : Exception
-        where TResult : StatusCodeResult, new()
+        where TResult : IActionResult, new()
     {
         /// <inheritdoc />
-        public int Order { get; set; }
+        public int Order { get; }
+
+        /// <summary>
+        /// Constructs a <see cref="MapExceptionFilter{TException,TResult}"/>.
+        /// </summary>
+        public MapExceptionFilter()
+        {
+        }
+
+        /// <summary>
+        /// Constructs a <see cref="MapExceptionFilter{TException,TResult}"/> with the specified order value.
+        /// </summary>
+        /// <param name="order">
+        /// The order value for determining the order of execution of filters.
+        /// </param>
+        public MapExceptionFilter(int order)
+        {
+            Order = order;
+        }
 
         /// <inheritdoc />
         public virtual void OnException([NotNull] ExceptionContext context)
