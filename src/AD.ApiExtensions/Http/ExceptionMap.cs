@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace AD.ApiExtensions.Http
 {
@@ -10,12 +12,13 @@ namespace AD.ApiExtensions.Http
     /// Handles a <typeparamref name="TException"/> by returning an HTTP status code response.
     /// </summary>
     [PublicAPI]
-    public class ExceptionMap<TException> : IMiddleware where TException : Exception
+    public class ExceptionMap<TException> : IMiddleware, IApiResponseMetadataProvider where TException : Exception
     {
-        /// <summary>
-        /// The HTTP status code.
-        /// </summary>
-        public int HttpStatusCode { get; }
+        /// <inheritdoc />
+        public Type Type { get; } = typeof(void);
+
+        /// <inheritdoc />
+        public int StatusCode { get; }
 
         /// <summary>
         /// Constructs a <see cref="ExceptionMap{TException}"/> with the specified order value.
@@ -25,7 +28,16 @@ namespace AD.ApiExtensions.Http
         /// </param>
         public ExceptionMap(int httpStatusCode)
         {
-            HttpStatusCode = httpStatusCode;
+            StatusCode = httpStatusCode;
+        }
+
+        /// <inheritdoc />
+        public void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
+        {
+            if (contentTypes is null)
+            {
+                throw new ArgumentNullException(nameof(contentTypes));
+            }
         }
 
         /// <inheritdoc />
@@ -53,7 +65,7 @@ namespace AD.ApiExtensions.Http
                     throw;
                 }
 
-                context.Response.StatusCode = HttpStatusCode;
+                context.Response.StatusCode = StatusCode;
             }
         }
     }
