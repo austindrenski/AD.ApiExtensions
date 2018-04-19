@@ -2,7 +2,9 @@
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
@@ -18,12 +20,19 @@ namespace AD.ApiExtensions.Mvc
     public class ExceptionFilter<TException, TResult>
         : IAsyncExceptionFilter,
           IExceptionFilter,
-          IOrderedFilter
+          IOrderedFilter,
+          IApiResponseMetadataProvider
         where TException : Exception
         where TResult : StatusCodeResult, new()
     {
         /// <inheritdoc />
         public int Order { get; }
+
+        /// <inheritdoc />
+        public Type Type => typeof(TResult);
+
+        /// <inheritdoc />
+        public int StatusCode => new TResult().StatusCode;
 
         /// <summary>
         /// Constructs a <see cref="ExceptionFilter{TException,TResult}"/>.
@@ -41,6 +50,15 @@ namespace AD.ApiExtensions.Mvc
         public ExceptionFilter(int order)
         {
             Order = order;
+        }
+
+        /// <inheritdoc />
+        public virtual void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
+        {
+            if (contentTypes is null)
+            {
+                throw new ArgumentNullException(nameof(contentTypes));
+            }
         }
 
         /// <inheritdoc />
