@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.Mvc
         private readonly bool _objectResult;
 
         /// <inheritdoc />
-        public Type Type { get; } = typeof(Dictionary<string, string>);
+        public Type Type { get; } = typeof(Dictionary<string, string[]>);
 
         /// <inheritdoc />
         public int StatusCode { get; } = StatusCodes.Status400BadRequest;
