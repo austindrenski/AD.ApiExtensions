@@ -1,5 +1,4 @@
 ﻿using System;
-using AD.ApiExtensions.Filters;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -35,7 +34,7 @@ namespace AD.ApiExtensions.Mvc
                 throw new ArgumentNullException(nameof(options));
             }
 
-            options.Filters.Add(new MapExceptionFilter<TException, TResult>(order));
+            options.Filters.Add(new BaseExceptionFilter<TException, TResult>(order));
             return options;
         }
     }

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
-namespace AD.ApiExtensions.Filters
+namespace AD.ApiExtensions.Mvc
 {
     /// <inheritdoc cref="IAsyncActionFilter"/>
     /// <inheritdoc cref="IExceptionFilter"/>
@@ -15,7 +15,7 @@ namespace AD.ApiExtensions.Filters
     /// Handles a <typeparamref name="TException"/> by returning a <see cref="TResult"/>.
     /// </summary>
     [PublicAPI]
-    public class MapExceptionFilter<TException, TResult>
+    public class BaseExceptionFilter<TException, TResult>
         : IAsyncExceptionFilter,
           IExceptionFilter,
           IOrderedFilter
@@ -26,19 +26,19 @@ namespace AD.ApiExtensions.Filters
         public int Order { get; }
 
         /// <summary>
-        /// Constructs a <see cref="MapExceptionFilter{TException,TResult}"/>.
+        /// Constructs a <see cref="BaseExceptionFilter{TException,TResult}"/>.
         /// </summary>
-        public MapExceptionFilter()
+        public BaseExceptionFilter()
         {
         }
 
         /// <summary>
-        /// Constructs a <see cref="MapExceptionFilter{TException,TResult}"/> with the specified order value.
+        /// Constructs a <see cref="BaseExceptionFilter{TException,TResult}"/> with the specified order value.
         /// </summary>
         /// <param name="order">
         /// The order value for determining the order of execution of filters.
         /// </param>
-        public MapExceptionFilter(int order)
+        public BaseExceptionFilter(int order)
         {
             Order = order;
         }
