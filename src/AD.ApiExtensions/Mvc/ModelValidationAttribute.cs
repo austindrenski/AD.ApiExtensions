@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace AD.ApiExtensions.Mvc
 {
@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.Mvc
         private readonly bool _objectResult;
 
         /// <inheritdoc />
-        public Type Type { get; } = typeof(ModelStateDictionary);
+        public Type Type { get; } = typeof(Dictionary<string, string>);
 
         /// <inheritdoc />
         public int StatusCode { get; } = StatusCodes.Status400BadRequest;
