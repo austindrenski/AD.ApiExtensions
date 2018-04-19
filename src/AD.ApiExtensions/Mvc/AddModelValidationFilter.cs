@@ -9,7 +9,7 @@ namespace AD.ApiExtensions.Mvc
     /// Provides extensions to configure <see cref="MvcOptions"/>.
     /// </summary>
     [PublicAPI]
-    public static class AddExceptionFilterExtensions
+    public static class AddModelValidationExtensions
     {
         /// <summary>
         /// Adds an <see cref="IExceptionFilter"/> to the <see cref="MvcOptions"/>.
@@ -17,24 +17,22 @@ namespace AD.ApiExtensions.Mvc
         /// <param name="options">
         /// The options to modify.
         /// </param>
-        /// <param name="order">
-        /// The order value for determining the order of execution of filters.
+        /// <param name="objectResult">
+        /// True to return a <see cref="BadRequestObjectResult"/>; otherwise false to return a <see cref="BadRequestResult"/>.
         /// </param>
         /// <returns>
         /// The <see cref="MvcOptions"/>.
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [NotNull]
-        public static MvcOptions AddExceptionFilter<TException, TResult>([NotNull] this MvcOptions options, int order = default)
-            where TException : Exception
-            where TResult : StatusCodeResult, new()
+        public static MvcOptions AddModelValidation([NotNull] this MvcOptions options, bool objectResult = true)
         {
             if (options is null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            options.Filters.Add(new ExceptionFilter<TException, TResult>(order));
+            options.Filters.Add(new ModelValidationAttribute(objectResult));
             return options;
         }
     }

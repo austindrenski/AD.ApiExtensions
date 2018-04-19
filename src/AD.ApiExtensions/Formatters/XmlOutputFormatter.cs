@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Net.Http.Headers;
 
-namespace AD.ApiExtensions.OutputFormatters
+namespace AD.ApiExtensions.Formatters
 {
     /// <inheritdoc />
     /// <summary>

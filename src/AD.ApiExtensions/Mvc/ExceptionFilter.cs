@@ -15,7 +15,7 @@ namespace AD.ApiExtensions.Mvc
     /// Handles a <typeparamref name="TException"/> by returning a <see cref="TResult"/>.
     /// </summary>
     [PublicAPI]
-    public class BaseExceptionFilter<TException, TResult>
+    public class ExceptionFilter<TException, TResult>
         : IAsyncExceptionFilter,
           IExceptionFilter,
           IOrderedFilter
@@ -26,19 +26,19 @@ namespace AD.ApiExtensions.Mvc
         public int Order { get; }
 
         /// <summary>
-        /// Constructs a <see cref="BaseExceptionFilter{TException,TResult}"/>.
+        /// Constructs a <see cref="ExceptionFilter{TException,TResult}"/>.
         /// </summary>
-        public BaseExceptionFilter()
+        public ExceptionFilter()
         {
         }
 
         /// <summary>
-        /// Constructs a <see cref="BaseExceptionFilter{TException,TResult}"/> with the specified order value.
+        /// Constructs a <see cref="ExceptionFilter{TException,TResult}"/> with the specified order value.
         /// </summary>
         /// <param name="order">
         /// The order value for determining the order of execution of filters.
         /// </param>
-        public BaseExceptionFilter(int order)
+        public ExceptionFilter(int order)
         {
             Order = order;
         }

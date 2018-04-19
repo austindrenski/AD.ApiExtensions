@@ -1,5 +1,5 @@
 ﻿using System;
-using AD.ApiExtensions.OutputFormatters;
+using AD.ApiExtensions.Formatters;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 

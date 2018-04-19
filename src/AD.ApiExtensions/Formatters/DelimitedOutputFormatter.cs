@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Primitives;
 
-namespace AD.ApiExtensions.OutputFormatters
+namespace AD.ApiExtensions.Formatters
 {
     /// <inheritdoc cref="IOutputFormatter"/>
     /// <summary>

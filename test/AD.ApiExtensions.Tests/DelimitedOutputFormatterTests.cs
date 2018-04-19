@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Xml.Linq;
-using AD.ApiExtensions.OutputFormatters;
+using AD.ApiExtensions.Formatters;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
