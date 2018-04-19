@@ -53,7 +53,6 @@ namespace AD.ApiExtensions.Http
                     throw;
                 }
 
-                context.Response.Clear();
                 context.Response.StatusCode = HttpStatusCode;
             }
         }
