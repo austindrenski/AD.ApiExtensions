@@ -25,18 +25,23 @@ namespace AD.ApiExtensions.Http
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [NotNull]
-        public static IApplicationBuilder UseServerHeader([NotNull] this IApplicationBuilder builder, [CanBeNull] string server = default)
+        public static IApplicationBuilder UseServerHeader([NotNull] this IApplicationBuilder builder, [NotNull] string server)
         {
             if (builder is null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
+            if (server is null)
+            {
+                throw new ArgumentNullException(nameof(server));
+            }
+
             return
                 builder.Use(
                     async (context, next) =>
                     {
-                        context.Response.Headers.Add("Server", server ?? string.Empty);
+                        context.Response.Headers.Add("Server", server);
                         await next();
                     });
         }
