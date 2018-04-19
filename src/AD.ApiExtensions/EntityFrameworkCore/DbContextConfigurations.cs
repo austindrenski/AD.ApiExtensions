@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AD.ApiExtensions.Configuration
+namespace AD.ApiExtensions.EntityFrameworkCore
 {
     /// <summary>
     /// Provides extensions to configure <see cref="DbContext"/> instances.
