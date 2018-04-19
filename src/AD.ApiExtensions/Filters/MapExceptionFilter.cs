@@ -4,6 +4,8 @@ using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+
 namespace AD.ApiExtensions.Filters
 {
     /// <inheritdoc cref="IAsyncActionFilter"/>
@@ -18,7 +20,7 @@ namespace AD.ApiExtensions.Filters
           IExceptionFilter,
           IOrderedFilter
         where TException : Exception
-        where TResult : IActionResult, new()
+        where TResult : StatusCodeResult, new()
     {
         /// <inheritdoc />
         public int Order { get; }

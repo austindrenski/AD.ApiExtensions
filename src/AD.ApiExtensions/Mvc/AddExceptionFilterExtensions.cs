@@ -28,7 +28,7 @@ namespace AD.ApiExtensions.Mvc
         [NotNull]
         public static MvcOptions AddExceptionFilter<TException, TResult>([NotNull] this MvcOptions options, int order = default)
             where TException : Exception
-            where TResult : IActionResult, new()
+            where TResult : StatusCodeResult, new()
         {
             if (options is null)
             {
