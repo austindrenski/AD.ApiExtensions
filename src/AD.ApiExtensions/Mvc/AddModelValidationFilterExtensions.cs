@@ -1,7 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace AD.ApiExtensions.Mvc
 {
@@ -9,10 +8,10 @@ namespace AD.ApiExtensions.Mvc
     /// Provides extensions to configure <see cref="MvcOptions"/>.
     /// </summary>
     [PublicAPI]
-    public static class AddModelValidationExtensions
+    public static class AddModelValidationFilterExtensions
     {
         /// <summary>
-        /// Adds an <see cref="IExceptionFilter"/> to the <see cref="MvcOptions"/>.
+        /// Adds an <see cref="ModelValidationAttribute"/> to the <see cref="MvcOptions"/>.
         /// </summary>
         /// <param name="options">
         /// The options to modify.
@@ -25,7 +24,7 @@ namespace AD.ApiExtensions.Mvc
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [NotNull]
-        public static MvcOptions AddModelValidation([NotNull] this MvcOptions options, bool objectResult = true)
+        public static MvcOptions AddModelValidationFilter([NotNull] this MvcOptions options, bool objectResult = true)
         {
             if (options is null)
             {
