@@ -206,7 +206,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
         public override string ToString()
         {
             return $"{Key}({string.Join(",", _values ?? DefaultValuesArray)})";
@@ -325,14 +324,14 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals([CanBeNull] IGrouping<TKey, TValue> other)
+        public bool Equals(IGrouping<TKey, TValue> other)
         {
             return other != null && Key.Equals(other.Key) && this.SequenceEqual(other);
         }
 
         /// <inheritdoc />
         [Pure]
-        public override bool Equals([CanBeNull] object obj)
+        public override bool Equals(object obj)
         {
             return obj is Grouping<TKey, TValue> values && Equals(values);
         }
@@ -447,7 +446,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
         IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
         {
             if (_values is null)
@@ -463,7 +461,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable<TValue>) this).GetEnumerator();

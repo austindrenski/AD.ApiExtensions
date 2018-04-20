@@ -6,49 +6,43 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
-// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
-
 namespace AD.ApiExtensions.Mvc
 {
     /// <inheritdoc cref="IAsyncActionFilter"/>
     /// <inheritdoc cref="IExceptionFilter"/>
     /// <inheritdoc cref="IOrderedFilter"/>
     /// <summary>
-    /// Handles a <typeparamref name="TException"/> by returning a <see cref="TResult"/>.
+    /// Handles a <typeparamref name="TException"/> by returning a <see cref="StatusCodeResult"/>.
     /// </summary>
     [PublicAPI]
-    public class ExceptionFilter<TException, TResult>
+    public class ExceptionFilter<TException>
         : IAsyncExceptionFilter,
           IExceptionFilter,
           IOrderedFilter,
           IApiResponseMetadataProvider
         where TException : Exception
-        where TResult : StatusCodeResult, new()
     {
         /// <inheritdoc />
         public int Order { get; }
 
         /// <inheritdoc />
-        public Type Type => typeof(TResult);
+        public int StatusCode { get; }
 
         /// <inheritdoc />
-        public int StatusCode => new TResult().StatusCode;
+        public virtual Type Type => typeof(void);
 
         /// <summary>
-        /// Constructs a <see cref="ExceptionFilter{TException,TResult}"/>.
+        /// Constructs a <see cref="ExceptionFilter{TException}"/> with the specified HTTP status code.
         /// </summary>
-        public ExceptionFilter()
-        {
-        }
-
-        /// <summary>
-        /// Constructs a <see cref="ExceptionFilter{TException,TResult}"/> with the specified order value.
-        /// </summary>
-        /// <param name="order">
-        /// The order value for determining the order of execution of filters.
+        /// <param name="httpStatusCode">
+        /// The HTTP status code of the result.
         /// </param>
-        public ExceptionFilter(int order)
+        /// <param name="order">
+        /// The value determining the execution order of the filter.
+        /// </param>
+        public ExceptionFilter(int httpStatusCode, int order)
         {
+            StatusCode = httpStatusCode;
             Order = order;
         }
 
@@ -75,7 +69,7 @@ namespace AD.ApiExtensions.Mvc
             }
 
             context.ExceptionHandled = true;
-            context.Result = new TResult();
+            context.Result = new StatusCodeResult(StatusCode);
         }
 
         /// <inheritdoc />
