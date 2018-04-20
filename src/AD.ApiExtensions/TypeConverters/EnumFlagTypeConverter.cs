@@ -93,7 +93,9 @@ namespace AD.ApiExtensions.TypeConverters
 
             return
                 values.Select(x => x.Value.KebabCaseToCamelCase())
-                      .Where(x => Names.Contains(x, StringComparer.OrdinalIgnoreCase))
+                      // TODO: verify that the ignore case condition isn't needed.
+                      // ReSharper disable once PossibleUnintendedLinearSearchInSet
+                      .Where(x => Names.Contains(x) || Names.Contains(x, StringComparer.OrdinalIgnoreCase))
                       .Select(TryParse)
                       .Aggregate(
                           default(ulong),

@@ -28,7 +28,7 @@ namespace AD.ApiExtensions.Expressions
         static TypeDefinition()
         {
             ModuleBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(AnonymousAssemblyName), AssemblyBuilderAccess.Run).DefineDynamicModule(AnonymousAssemblyName);
-            BaseConstructorInfo = typeof(object).GetConstructor(Type.EmptyTypes);
+            BaseConstructorInfo = typeof(object).GetEmptyConstructor();
         }
 
         internal TypeDefinition([NotNull] IEnumerable<PropertyInfo> properties)

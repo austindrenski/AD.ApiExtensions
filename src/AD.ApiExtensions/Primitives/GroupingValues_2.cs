@@ -335,7 +335,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
         public override string ToString()
         {
             return _groupings is null ? _grouping.ToString() : string.Join(",", _groupings);
@@ -481,19 +480,19 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public bool Equals(IEnumerable<IGrouping<TKey, TValue>> other)
         {
-            return this.SequenceEqual(other);
+            return !(other is null) && this.SequenceEqual(other);
         }
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals([CanBeNull] IGrouping<TKey, TValue> other)
+        public bool Equals(IGrouping<TKey, TValue> other)
         {
             return !ReferenceEquals(null, other) && (_grouping.Equals(other) || _groupings?.Length == 1 && _groupings[0].Equals(other));
         }
 
         /// <inheritdoc />
         [Pure]
-        public override bool Equals([CanBeNull] object obj)
+        public override bool Equals(object obj)
         {
             return !ReferenceEquals(null, obj) && obj is GroupingValues<TKey, TValue> values && Equals(values);
         }
@@ -536,7 +535,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
         IEnumerator<IGrouping<TKey, TValue>> IEnumerable<IGrouping<TKey, TValue>>.GetEnumerator()
         {
             if (_grouping != default)
@@ -559,7 +557,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
         IEnumerator IEnumerable.GetEnumerator()
         {
             return (this as IEnumerable<IGrouping<TKey, TValue>>).GetEnumerator();
@@ -588,7 +585,6 @@ namespace AD.ApiExtensions.Primitives
             public override ExpressionType NodeType { get; } = ExpressionType.Conditional;
 
             /// <inheritdoc />
-            [NotNull]
             public override Type Type { get; } = typeof(TValue);
 
             /// <inheritdoc />
@@ -678,7 +674,6 @@ namespace AD.ApiExtensions.Primitives
 
             /// <inheritdoc />
             [Pure]
-            [NotNull]
             public override Expression Reduce()
             {
                 return _expression;

@@ -17,6 +17,7 @@ namespace AD.ApiExtensions.Visitors
         /// <summary>
         /// Gets the query provider associated with the data source.
         /// </summary>
+        [NotNull]
         IQueryProvider Provider { get; }
 
         /// <summary>
@@ -28,6 +29,7 @@ namespace AD.ApiExtensions.Visitors
         /// <returns>
         /// The modified expression, if it or any subexpression was modified; otherwise, returns the original expression.
         /// </returns>
+        [NotNull]
         Expression Visit(Expression node);
     }
 }

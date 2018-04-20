@@ -81,7 +81,9 @@ namespace AD.ApiExtensions.TypeConverters
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (!Names.Contains(value, StringComparer.OrdinalIgnoreCase))
+            // TODO: verify that the ignore case condition isn't needed.
+            // ReSharper disable once PossibleUnintendedLinearSearchInSet
+            if (!Names.Contains(value) || !Names.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
                 throw new InvalidEnumArgumentException($"The value '{value}' is not a valid enum of '{typeof(TEnum).Name}'.");
             }

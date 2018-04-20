@@ -34,8 +34,7 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitLambda<T>([NotNull] Expression<T> node)
+        protected override Expression VisitLambda<T>(Expression<T> node)
         {
             if (node is null)
             {
@@ -48,15 +47,17 @@ namespace AD.ApiExtensions.Visitors
                     .Cast<ParameterExpression>()
                     .ToArray();
 
-            Expression body = Visit(node.Body);
+            if (!(Visit(node.Body) is Expression body))
+            {
+                throw new ArgumentNullException(nameof(body));
+            }
 
             return Expression.Lambda(body, parameterExpression);
         }
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitMember([NotNull] MemberExpression node)
+        protected override Expression VisitMember(MemberExpression node)
         {
             if (node is null)
             {
@@ -66,19 +67,27 @@ namespace AD.ApiExtensions.Visitors
             // TODO: take another look at this.
             if (node.Expression is MemberExpression innerMemberExpression)
             {
+                if (!(innerMemberExpression.Member.DeclaringType is Type type))
+                {
+                    throw new ArgumentNullException(nameof(type));
+                }
+
                 return
-                    _cache.TryGetParameter(innerMemberExpression.Member.DeclaringType, out ParameterExpression test)
+                    _cache.TryGetParameter(type, out ParameterExpression test)
                         ? Expression.PropertyOrField(
-                            Expression.PropertyOrField(
-                                test,
-                                innerMemberExpression.Member.Name),
+                            Expression.PropertyOrField(test, innerMemberExpression.Member.Name),
                             node.Member.Name)
                         : base.VisitMember(node);
             }
             else
             {
+                if (!(node.Member.DeclaringType is Type type))
+                {
+                    throw new ArgumentNullException(nameof(type));
+                }
+
                 return
-                    _cache.TryGetParameter(node.Member.DeclaringType, out ParameterExpression test)
+                    _cache.TryGetParameter(type, out ParameterExpression test)
                         ? Expression.PropertyOrField(test, node.Member.Name)
                         : base.VisitMember(node);
             }
@@ -86,8 +95,7 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitMethodCall([NotNull] MethodCallExpression node)
+        protected override Expression VisitMethodCall(MethodCallExpression node)
         {
             if (node is null)
             {
@@ -114,14 +122,14 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitNew([NotNull] NewExpression node)
+        protected override Expression VisitNew(NewExpression node)
         {
             if (node is null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
-            if (node.Arguments is null || node.Arguments.Count is 0)
+
+            if (node.Arguments.Count is 0)
             {
                 return node;
             }
@@ -135,7 +143,7 @@ namespace AD.ApiExtensions.Visitors
 
             if (assignments.Length == node.Arguments.Count)
             {
-                if (!assignments.Any(x => _cache.ContainsKey(x.Member.DeclaringType)))
+                if (!assignments.Any(x => x.Member.DeclaringType is Type type && _cache.ContainsKey(type)))
                 {
                     if (assignments.Zip(node.Arguments, (x, y) => x.Argument == y).All(x => x))
                     {
@@ -159,14 +167,13 @@ namespace AD.ApiExtensions.Visitors
 
             return
                 Expression.MemberInit(
-                    Expression.New(next.GetConstructor(Type.EmptyTypes)),
-                    assignments.Select(x => Expression.Bind(next.GetProperty(x.Member.Name, BindingFlags.Instance | BindingFlags.Public), x.Argument)));
+                    Expression.New(next.GetEmptyConstructor()),
+                    assignments.Select(x => Expression.Bind(next.GetPropertyInfo(x.Member), x.Argument)));
         }
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitParameter([NotNull] ParameterExpression node)
+        protected override Expression VisitParameter(ParameterExpression node)
         {
             if (node is null)
             {
@@ -178,8 +185,7 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitUnary([NotNull] UnaryExpression node)
+        protected override Expression VisitUnary(UnaryExpression node)
         {
             if (node is null)
             {
@@ -190,9 +196,14 @@ namespace AD.ApiExtensions.Visitors
 
             // TODO: Is this universal? Recursive?
             // Lifting results that are double quoted.
-            if (node is UnaryExpression unary && unary.NodeType == ExpressionType.Quote)
+            if (node is UnaryExpression unary && unary.NodeType is ExpressionType.Quote)
             {
                 operand = Visit(unary.Operand);
+            }
+
+            if (operand is null)
+            {
+                throw new ArgumentNullException(nameof(operand));
             }
 
             return Expression.MakeUnary(node.NodeType, operand, node.Type, node.Method);

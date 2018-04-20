@@ -9,23 +9,29 @@ namespace AD.ApiExtensions.Visitors
 {
     /// <inheritdoc />
     /// <summary>
-    /// Represents an expression visitor which reduces conditional statements dependant upon constant values. 
+    /// Represents an expression visitor which reduces conditional statements dependant upon constant values.
     /// </summary>
     [PublicAPI]
     public sealed class ConditionalExpressionVisitor : ExpressionVisitor
     {
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitBinary([NotNull] BinaryExpression node)
+        protected override Expression VisitBinary(BinaryExpression node)
         {
             if (node is null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
 
-            Expression left = Visit(node.Left);
-            Expression right = Visit(node.Right);
+            if (!(Visit(node.Left) is Expression left))
+            {
+                throw new ArgumentNullException(nameof(left));
+            }
+
+            if (!(Visit(node.Right) is Expression right))
+            {
+                throw new ArgumentNullException(nameof(right));
+            }
 
             switch (node.NodeType)
             {
@@ -194,8 +200,7 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitMethodCall([NotNull] MethodCallExpression node)
+        protected override Expression VisitMethodCall(MethodCallExpression node)
         {
             if (node is null)
             {
@@ -256,68 +261,68 @@ namespace AD.ApiExtensions.Visitors
                 switch (arguments[0])
                 {
                     case UnaryExpression u
-                    when u.Operand is ConstantExpression c && c.Value is ICollection<string> cc && arguments[1] is UnaryExpression uu && uu.Operand is MethodCallExpression m:
+                        when u.Operand is ConstantExpression c &&
+                             c.Value is ICollection<string> cc &&
+                             arguments[1] is UnaryExpression uu &&
+                             uu.Operand is MethodCallExpression m:
                     {
-                        MethodInfo methodInfo = (MethodInfo) ((ConstantExpression) m.Object).Value;
+                        if (!(m.Object is ConstantExpression obj))
+                        {
+                            throw new ArgumentNullException(nameof(obj));
+                        }
+
+                        MethodInfo methodInfo = (MethodInfo) obj.Value;
 
                         return
-                            cc.Select(
-                                  x =>
-                                      Expression.Call(
-                                          m.Arguments[1],
-                                          methodInfo,
-                                          Expression.Constant(x)))
-                              .Aggregate(
-                                  (Expression) Expression.Constant(false),
-                                  Expression.Or);
+                            cc.Select(x => Expression.Call(m.Arguments[1], methodInfo, Expression.Constant(x)))
+                              .Aggregate((Expression) Expression.Constant(false), Expression.Or);
                     }
                     case UnaryExpression u
-                    when u.Operand is ConstantExpression c && c.Value is ICollection<string> collection && arguments[1] is MethodCallExpression m:
+                        when u.Operand is ConstantExpression c &&
+                             c.Value is ICollection<string> cc &&
+                             arguments[1] is MethodCallExpression m:
                     {
-                        MethodInfo methodInfo = (MethodInfo) ((ConstantExpression) m.Object).Value;
+                        if (!(m.Object is ConstantExpression obj))
+                        {
+                            throw new ArgumentNullException(nameof(obj));
+                        }
+
+                        MethodInfo methodInfo = (MethodInfo) obj.Value;
 
                         return
-                            collection.Select(
-                                          x =>
-                                              Expression.Call(
-                                                  m.Arguments[1],
-                                                  methodInfo,
-                                                  Expression.Constant(x)))
-                                      .Aggregate(
-                                          (Expression) Expression.Constant(false),
-                                          Expression.Or);
+                            cc.Select(x => Expression.Call(m.Arguments[1], methodInfo, Expression.Constant(x)))
+                              .Aggregate((Expression) Expression.Constant(false), Expression.Or);
                     }
                     case ConstantExpression c
-                    when c.Value is ICollection<string> cc && arguments[1] is UnaryExpression uu && uu.Operand is MethodCallExpression m:
+                        when c.Value is ICollection<string> cc &&
+                             arguments[1] is UnaryExpression uu &&
+                             uu.Operand is MethodCallExpression m:
                     {
-                        MethodInfo methodInfo = (MethodInfo) ((ConstantExpression) m.Object).Value;
+                        if (!(m.Object is ConstantExpression obj))
+                        {
+                            throw new ArgumentNullException(nameof(obj));
+                        }
+
+                        MethodInfo methodInfo = (MethodInfo) obj.Value;
 
                         return
-                            cc.Select(
-                                  x =>
-                                      Expression.Call(
-                                          m.Arguments[1],
-                                          methodInfo,
-                                          Expression.Constant(x)))
-                              .Aggregate(
-                                  (Expression) Expression.Constant(false),
-                                  Expression.Or);
+                            cc.Select(x => Expression.Call(m.Arguments[1], methodInfo, Expression.Constant(x)))
+                              .Aggregate((Expression) Expression.Constant(false), Expression.Or);
                     }
                     case ConstantExpression c
-                    when c.Value is ICollection<string> cc && arguments[1] is MethodCallExpression m:
+                        when c.Value is ICollection<string> cc &&
+                             arguments[1] is MethodCallExpression m:
                     {
-                        MethodInfo methodInfo = (MethodInfo) ((ConstantExpression) m.Object).Value;
+                        if (!(m.Object is ConstantExpression obj))
+                        {
+                            throw new ArgumentNullException(nameof(obj));
+                        }
+
+                        MethodInfo methodInfo = (MethodInfo) obj.Value;
 
                         return
-                            cc.Select(
-                                  x =>
-                                      Expression.Call(
-                                          m.Arguments[1],
-                                          methodInfo,
-                                          Expression.Constant(x)))
-                              .Aggregate(
-                                  (Expression) Expression.Constant(false),
-                                  Expression.Or);
+                            cc.Select(x => Expression.Call(m.Arguments[1], methodInfo, Expression.Constant(x)))
+                              .Aggregate((Expression) Expression.Constant(false), Expression.Or);
                     }
                 }
             }
@@ -327,17 +332,27 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitConditional([NotNull] ConditionalExpression node)
+        protected override Expression VisitConditional(ConditionalExpression node)
         {
             if (node is null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
 
-            Expression test = Visit(node.Test);
-            Expression ifTrue = Visit(node.IfTrue);
-            Expression ifFalse = Visit(node.IfFalse);
+            if (!(Visit(node.Test) is Expression test))
+            {
+                throw new ArgumentNullException(nameof(test));
+            }
+
+            if (!(Visit(node.IfTrue) is Expression ifTrue))
+            {
+                throw new ArgumentNullException(nameof(ifTrue));
+            }
+
+            if (!(Visit(node.IfFalse) is Expression ifFalse))
+            {
+                throw new ArgumentNullException(nameof(ifFalse));
+            }
 
             switch (test)
             {
@@ -358,8 +373,7 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitMember([NotNull] MemberExpression node)
+        protected override Expression VisitMember(MemberExpression node)
         {
             if (node is null)
             {
@@ -389,32 +403,120 @@ namespace AD.ApiExtensions.Visitors
 
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override Expression VisitUnary([NotNull] UnaryExpression node)
+        protected override Expression VisitUnary(UnaryExpression node)
         {
             if (node is null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
 
-            Expression operand = Visit(node.Operand);
-
-            // ReSharper disable once ConvertIfStatementToSwitchStatement
-            if (node.NodeType == ExpressionType.ArrayLength)
+            if (!(Visit(node.Operand) is Expression operand))
             {
-                return Expression.Constant(Expression.Lambda<Func<int>>(node).Compile()(), typeof(int));
+                throw new ArgumentNullException(nameof(operand));
             }
 
-            if (node.NodeType == ExpressionType.Not && operand is ConstantExpression constant && constant.Value is bool value)
+            switch (node.NodeType)
             {
-                return Expression.Constant(!value, typeof(bool));
+                case ExpressionType.ArrayLength:
+                {
+                    return Expression.Constant(Expression.Lambda<Func<int>>(node).Compile()(), typeof(int));
+                }
+                case ExpressionType.Add:
+                case ExpressionType.AddAssign:
+                case ExpressionType.AddAssignChecked:
+                case ExpressionType.AddChecked:
+                case ExpressionType.And:
+                case ExpressionType.AndAlso:
+                case ExpressionType.AndAssign:
+                case ExpressionType.ArrayIndex:
+                case ExpressionType.Assign:
+                case ExpressionType.Block:
+                case ExpressionType.Call:
+                case ExpressionType.Coalesce:
+                case ExpressionType.Conditional:
+                case ExpressionType.Constant:
+                case ExpressionType.Convert:
+                case ExpressionType.ConvertChecked:
+                case ExpressionType.DebugInfo:
+                case ExpressionType.Decrement:
+                case ExpressionType.Default:
+                case ExpressionType.Divide:
+                case ExpressionType.DivideAssign:
+                case ExpressionType.Dynamic:
+                case ExpressionType.Equal:
+                case ExpressionType.ExclusiveOr:
+                case ExpressionType.ExclusiveOrAssign:
+                case ExpressionType.Extension:
+                case ExpressionType.Goto:
+                case ExpressionType.GreaterThan:
+                case ExpressionType.GreaterThanOrEqual:
+                case ExpressionType.Increment:
+                case ExpressionType.Index:
+                case ExpressionType.Invoke:
+                case ExpressionType.IsFalse:
+                case ExpressionType.IsTrue:
+                case ExpressionType.Label:
+                case ExpressionType.Lambda:
+                case ExpressionType.LeftShift:
+                case ExpressionType.LeftShiftAssign:
+                case ExpressionType.LessThan:
+                case ExpressionType.LessThanOrEqual:
+                case ExpressionType.ListInit:
+                case ExpressionType.Loop:
+                case ExpressionType.MemberAccess:
+                case ExpressionType.MemberInit:
+                case ExpressionType.Modulo:
+                case ExpressionType.ModuloAssign:
+                case ExpressionType.Multiply:
+                case ExpressionType.MultiplyAssign:
+                case ExpressionType.MultiplyAssignChecked:
+                case ExpressionType.MultiplyChecked:
+                case ExpressionType.Negate:
+                case ExpressionType.NegateChecked:
+                case ExpressionType.New:
+                case ExpressionType.NewArrayBounds:
+                case ExpressionType.NewArrayInit:
+                case ExpressionType.Not when operand is ConstantExpression constant && constant.Value is bool value:
+                {
+                    return Expression.Constant(!value, typeof(bool));
+                }
+                case ExpressionType.NotEqual:
+                case ExpressionType.OnesComplement:
+                case ExpressionType.Or:
+                case ExpressionType.OrAssign:
+                case ExpressionType.OrElse:
+                case ExpressionType.Parameter:
+                case ExpressionType.PostDecrementAssign:
+                case ExpressionType.PostIncrementAssign:
+                case ExpressionType.Power:
+                case ExpressionType.PowerAssign:
+                case ExpressionType.PreDecrementAssign:
+                case ExpressionType.PreIncrementAssign:
+                case ExpressionType.Quote:
+                case ExpressionType.RightShift:
+                case ExpressionType.RightShiftAssign:
+                case ExpressionType.RuntimeVariables:
+                case ExpressionType.Subtract:
+                case ExpressionType.SubtractAssign:
+                case ExpressionType.SubtractAssignChecked:
+                case ExpressionType.SubtractChecked:
+                case ExpressionType.Switch:
+                case ExpressionType.Throw:
+                case ExpressionType.Try:
+                case ExpressionType.TypeAs:
+                case ExpressionType.TypeEqual:
+                case ExpressionType.TypeIs:
+                case ExpressionType.UnaryPlus:
+                case ExpressionType.Unbox:
+                default:
+                {
+                    return Expression.MakeUnary(node.NodeType, operand, node.Type);
+                }
             }
-
-            return Expression.MakeUnary(node.NodeType, operand, node.Type);
         }
 
         /// <summary>
-        /// Immediately executes a boolean expression and returns the result as a constant expression. 
+        /// Immediately executes a boolean expression and returns the result as a constant expression.
         /// </summary>
         /// <param name="expression">
         /// The expression returning a boolean value

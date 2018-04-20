@@ -1,62 +1,37 @@
 ﻿using System;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace AD.ApiExtensions.Mvc
 {
-    /// <inheritdoc cref="IAsyncActionFilter"/>
-    /// <inheritdoc cref="IExceptionFilter"/>
-    /// <inheritdoc cref="IOrderedFilter"/>
+    /// <inheritdoc cref="ExceptionFilter{TException}"/>
     /// <summary>
-    /// Handles a <typeparamref name="TException"/> by returning a <see cref="StatusCodeResult"/>.
+    /// Handles a <typeparamref name="TException"/> by returning a <see cref="TResult"/>.
     /// </summary>
     [PublicAPI]
-    public class ExceptionFilter<TException>
-        : IAsyncExceptionFilter,
-          IExceptionFilter,
-          IOrderedFilter,
-          IApiResponseMetadataProvider
+    public class ExceptionFilter<TException, TResult> : ExceptionFilter<TException>
         where TException : Exception
+        where TResult : StatusCodeResult, new()
     {
-        /// <inheritdoc />
-        public int Order { get; }
+        private static readonly TResult Result = new TResult();
 
         /// <inheritdoc />
-        public int StatusCode { get; }
+        public override Type Type => typeof(TResult);
 
         /// <inheritdoc />
-        public virtual Type Type => typeof(void);
-
         /// <summary>
-        /// Constructs a <see cref="ExceptionFilter{TException}"/> with the specified HTTP status code.
+        /// Constructs a <see cref="T:AD.ApiExtensions.Mvc.ExceptionFilter`2" /> with the specified order value.
         /// </summary>
-        /// <param name="httpStatusCode">
-        /// The HTTP status code of the result.
-        /// </param>
         /// <param name="order">
-        /// The value determining the execution order of the filter.
+        /// The order value for determining the order of execution of filters.
         /// </param>
-        public ExceptionFilter(int httpStatusCode, int order)
+        public ExceptionFilter(int order) : base(Result.StatusCode, order)
         {
-            StatusCode = httpStatusCode;
-            Order = order;
         }
 
         /// <inheritdoc />
-        public virtual void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
-        {
-            if (contentTypes is null)
-            {
-                throw new ArgumentNullException(nameof(contentTypes));
-            }
-        }
-
-        /// <inheritdoc />
-        public virtual void OnException([NotNull] ExceptionContext context)
+        public override void OnException(ExceptionContext context)
         {
             if (context is null)
             {
@@ -69,20 +44,7 @@ namespace AD.ApiExtensions.Mvc
             }
 
             context.ExceptionHandled = true;
-            context.Result = new StatusCodeResult(StatusCode);
-        }
-
-        /// <inheritdoc />
-        public virtual Task OnExceptionAsync([NotNull] ExceptionContext context)
-        {
-            if (context is null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            OnException(context);
-
-            return Task.CompletedTask;
+            context.Result = new TResult();
         }
     }
 }
