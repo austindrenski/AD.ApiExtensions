@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,11 +37,12 @@ namespace AD.ApiExtensions.Mvc
                 throw new ArgumentNullException(nameof(httpMethod));
             }
 
-            services.TryAddEnumerable(
-                ServiceDescriptor.Transient<IApiDescriptionProvider, ExceptionProvider<TException>>(
-                    x => new ExceptionProvider<TException>(httpMethod, httpStautsCode, providerOrder, filterOrder)));
+            ExceptionProvider<TException> provider =
+                new ExceptionProvider<TException>(httpMethod, httpStautsCode, providerOrder, filterOrder);
 
-            return services;
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<IApiDescriptionProvider>(provider));
+
+            return services.Configure<MvcOptions>(x => x.Filters.Add(provider.ExceptionFilter));
         }
     }
 }
