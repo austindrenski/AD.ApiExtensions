@@ -7,7 +7,7 @@ namespace AD.ApiExtensions.Mvc
 {
     /// <inheritdoc cref="ExceptionFilter{TException}"/>
     /// <summary>
-    /// Handles a <typeparamref name="TException"/> by returning a <see cref="TResult"/>.
+    /// Handles a <typeparamref name="TException"/> by returning a <typeparamref name="TResult"/>.
     /// </summary>
     [PublicAPI]
     public class ExceptionFilter<TException, TResult> : ExceptionFilter<TException>

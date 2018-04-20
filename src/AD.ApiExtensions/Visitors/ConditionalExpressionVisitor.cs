@@ -421,6 +421,10 @@ namespace AD.ApiExtensions.Visitors
                 {
                     return Expression.Constant(Expression.Lambda<Func<int>>(node).Compile()(), typeof(int));
                 }
+                case ExpressionType.Not when operand is ConstantExpression constant && constant.Value is bool value:
+                {
+                    return Expression.Constant(!value, typeof(bool));
+                }
                 case ExpressionType.Add:
                 case ExpressionType.AddAssign:
                 case ExpressionType.AddAssignChecked:
@@ -476,10 +480,6 @@ namespace AD.ApiExtensions.Visitors
                 case ExpressionType.New:
                 case ExpressionType.NewArrayBounds:
                 case ExpressionType.NewArrayInit:
-                case ExpressionType.Not when operand is ConstantExpression constant && constant.Value is bool value:
-                {
-                    return Expression.Constant(!value, typeof(bool));
-                }
                 case ExpressionType.NotEqual:
                 case ExpressionType.OnesComplement:
                 case ExpressionType.Or:
