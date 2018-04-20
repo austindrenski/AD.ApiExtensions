@@ -20,8 +20,8 @@ namespace AD.ApiExtensions.Mvc
         : IAsyncExceptionFilter,
           IExceptionFilter,
           IOrderedFilter,
-          IApiResponseMetadataProvider
-        where TException : Exception
+          IApiResponseMetadataProvider,
+          IEquatable<ApiResponseType> where TException : Exception
     {
         /// <inheritdoc />
         public int Order { get; }
@@ -30,7 +30,7 @@ namespace AD.ApiExtensions.Mvc
         public int StatusCode { get; }
 
         /// <inheritdoc />
-        public virtual Type Type => typeof(void);
+        public virtual Type Type { get; }
 
         /// <summary>
         /// Constructs a <see cref="ExceptionFilter{TException}"/> with the specified HTTP status code.
@@ -45,6 +45,7 @@ namespace AD.ApiExtensions.Mvc
         {
             StatusCode = httpStatusCode;
             Order = order;
+            Type = typeof(void);
         }
 
         /// <inheritdoc />
@@ -84,6 +85,18 @@ namespace AD.ApiExtensions.Mvc
             OnException(context);
 
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        [Pure]
+        public bool Equals(ApiResponseType other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            return Type == other.Type && StatusCode == other.StatusCode;
         }
     }
 }
