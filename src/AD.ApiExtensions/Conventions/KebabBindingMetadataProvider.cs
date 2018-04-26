@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 
 namespace AD.ApiExtensions.Conventions
@@ -17,6 +18,11 @@ namespace AD.ApiExtensions.Conventions
                 throw new ArgumentNullException(nameof(context));
             }
 
+            if (IsController(context.Key.ContainerType))
+            {
+                return;
+            }
+
             if (context.BindingMetadata.BinderModelName is null)
             {
                 context.BindingMetadata.BinderModelName = context.Key.Name?.CamelCaseToKebabCase();
@@ -31,10 +37,33 @@ namespace AD.ApiExtensions.Conventions
                 throw new ArgumentNullException(nameof(context));
             }
 
+            if (IsController(context.Key.ContainerType))
+            {
+                return;
+            }
+
             if (context.DisplayMetadata.DisplayName is null)
             {
                 context.DisplayMetadata.DisplayName = () => context.Key.Name?.CamelCaseToKebabCase();
             }
+        }
+
+        /// <summary>
+        /// Tests if the type has or inherits a <see cref="ControllerAttribute"/>.
+        /// </summary>
+        /// <param name="type">
+        /// The type to test.
+        /// </param>
+        /// <returns>
+        /// True if the type has or inherits a <see cref="ControllerAttribute"/>; otherwise, false.
+        /// </returns>
+        /// <remarks>
+        /// ASP.NET Core 2.0 introduces controller members to this middleware.
+        /// Altering controller members interferes with dependency injection.
+        /// </remarks>
+        private static bool IsController([CanBeNull] Type type)
+        {
+            return type != null && type.IsDefined(typeof(ControllerAttribute), true);
         }
     }
 }
