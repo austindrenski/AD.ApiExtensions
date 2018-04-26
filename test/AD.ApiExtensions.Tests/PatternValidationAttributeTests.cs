@@ -14,7 +14,10 @@ namespace AD.ApiExtensions.Tests
             [PatternValidation("^[A-z]{3}$")]
             public string Name { get; set; }
 
-            public void Validate() => Validator.ValidateObject(this, new ValidationContext(this), true);
+            public void Validate()
+            {
+                Validator.ValidateObject(this, new ValidationContext(this), true);
+            }
         }
 
         [Theory]
