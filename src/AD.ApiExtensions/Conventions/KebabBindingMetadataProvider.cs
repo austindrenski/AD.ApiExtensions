@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
@@ -18,7 +19,7 @@ namespace AD.ApiExtensions.Conventions
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (IsController(context.Key.ContainerType))
+            if (IsController(context.Key.ContainerType) || !context.Attributes.OfType<FromQueryAttribute>().Any())
             {
                 return;
             }
@@ -37,7 +38,7 @@ namespace AD.ApiExtensions.Conventions
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (IsController(context.Key.ContainerType))
+            if (IsController(context.Key.ContainerType) || !context.Attributes.OfType<FromQueryAttribute>().Any())
             {
                 return;
             }
