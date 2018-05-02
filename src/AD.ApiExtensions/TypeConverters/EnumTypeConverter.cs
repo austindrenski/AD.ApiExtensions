@@ -18,7 +18,7 @@ namespace AD.ApiExtensions.TypeConverters
         /// <summary>
         /// The names of the enum members.
         /// </summary>
-        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(TEnum)));
+        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(TEnum)), StringComparer.OrdinalIgnoreCase);
 
         /// <inheritdoc />
         /// <exception cref="InvalidEnumArgumentException" />
@@ -81,9 +81,7 @@ namespace AD.ApiExtensions.TypeConverters
                 throw new ArgumentNullException(nameof(value));
             }
 
-            // TODO: verify that the ignore case condition isn't needed.
-            // ReSharper disable once PossibleUnintendedLinearSearchInSet
-            if (!Names.Contains(value) || !Names.Contains(value, StringComparer.OrdinalIgnoreCase))
+            if (!Names.Contains(value))
             {
                 throw new InvalidEnumArgumentException($"The value '{value}' is not a valid enum of '{typeof(TEnum).Name}'.");
             }
