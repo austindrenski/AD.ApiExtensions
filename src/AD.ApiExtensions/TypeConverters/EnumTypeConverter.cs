@@ -16,9 +16,21 @@ namespace AD.ApiExtensions.TypeConverters
     public sealed class EnumTypeConverter<TEnum> : TypeConverter where TEnum : struct, IComparable, IFormattable, IConvertible
     {
         /// <summary>
+        /// The supported types from which to convert.
+        /// </summary>
+        private static readonly HashSet<Type> Types =
+            new HashSet<Type>
+            {
+                typeof(string),
+                typeof(StringValues),
+                typeof(StringSegment)
+            };
+
+        /// <summary>
         /// The names of the enum members.
         /// </summary>
-        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(TEnum)), StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> Names =
+            new HashSet<string>(Enum.GetNames(typeof(TEnum)), StringComparer.OrdinalIgnoreCase);
 
         /// <inheritdoc />
         /// <exception cref="InvalidEnumArgumentException" />
@@ -34,7 +46,7 @@ namespace AD.ApiExtensions.TypeConverters
         [Pure]
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            return sourceType == typeof(string) || sourceType == typeof(StringValues) || sourceType == typeof(StringSegment);
+            return Types.Contains(sourceType);
         }
 
         /// <inheritdoc />
@@ -81,12 +93,14 @@ namespace AD.ApiExtensions.TypeConverters
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (!Names.Contains(value))
+            string normalized = value.KebabCaseToCamelCase();
+
+            if (!Names.Contains(normalized))
             {
-                throw new InvalidEnumArgumentException($"The value '{value}' is not a valid enum of '{typeof(TEnum).Name}'.");
+                throw new InvalidEnumArgumentException($"The value '{normalized}' is not a valid enum of '{typeof(TEnum).Name}'.");
             }
 
-            return Enum.TryParse(value, true, out TEnum result) ? result : default;
+            return Enum.TryParse(normalized, true, out TEnum result) ? result : default;
         }
     }
 }

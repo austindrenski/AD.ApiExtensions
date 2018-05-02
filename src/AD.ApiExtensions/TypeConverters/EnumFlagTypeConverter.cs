@@ -21,9 +21,21 @@ namespace AD.ApiExtensions.TypeConverters
         private static readonly char[] Splits = new char[] { ',' };
 
         /// <summary>
+        /// The supported types from which to convert.
+        /// </summary>
+        private static readonly HashSet<Type> Types =
+            new HashSet<Type>
+            {
+                typeof(string),
+                typeof(StringValues),
+                typeof(StringSegment)
+            };
+
+        /// <summary>
         /// The names of the enum members.
         /// </summary>
-        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(TEnum)), StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> Names =
+            new HashSet<string>(Enum.GetNames(typeof(TEnum)), StringComparer.OrdinalIgnoreCase);
 
         /// <inheritdoc />
         /// <exception cref="InvalidEnumArgumentException" />
@@ -44,7 +56,7 @@ namespace AD.ApiExtensions.TypeConverters
         [Pure]
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
-            return sourceType == typeof(string) || sourceType == typeof(StringValues) || sourceType == typeof(StringSegment);
+            return Types.Contains(sourceType);
         }
 
         /// <inheritdoc />
