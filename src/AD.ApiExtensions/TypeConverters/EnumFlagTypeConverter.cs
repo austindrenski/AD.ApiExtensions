@@ -23,7 +23,7 @@ namespace AD.ApiExtensions.TypeConverters
         /// <summary>
         /// The names of the enum members.
         /// </summary>
-        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(TEnum)));
+        private static readonly HashSet<string> Names = new HashSet<string>(Enum.GetNames(typeof(TEnum)), StringComparer.OrdinalIgnoreCase);
 
         /// <inheritdoc />
         /// <exception cref="InvalidEnumArgumentException" />
@@ -93,9 +93,7 @@ namespace AD.ApiExtensions.TypeConverters
 
             return
                 values.Select(x => x.Value.KebabCaseToCamelCase())
-                      // TODO: verify that the ignore case condition isn't needed.
-                      // ReSharper disable once PossibleUnintendedLinearSearchInSet
-                      .Where(x => Names.Contains(x) || Names.Contains(x, StringComparer.OrdinalIgnoreCase))
+                      .Where(x => Names.Contains(x))
                       .Select(TryParse)
                       .Aggregate(
                           default(ulong),
