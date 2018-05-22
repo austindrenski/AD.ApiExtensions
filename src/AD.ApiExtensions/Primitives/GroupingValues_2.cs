@@ -594,10 +594,10 @@ namespace AD.ApiExtensions.Primitives
             static GroupsExpression()
             {
                 ContainsMethodInfo =
-                    new Func<IEnumerable<object>, object, bool>(Enumerable.Contains)
-                        .GetMethodInfo()
-                        .GetGenericMethodDefinition()
-                        .MakeGenericMethod(typeof(TValue));
+                    typeof(Enumerable)
+                        .GetRuntimeMethod(
+                            nameof(Enumerable.Contains),
+                            new Type[] { typeof(IEnumerable<TValue>), typeof(TValue) });
             }
 
             /// <inheritdoc />
@@ -644,7 +644,10 @@ namespace AD.ApiExtensions.Primitives
                 {
                     Expression conditional =
                         Condition(
-                            Call(ContainsMethodInfo, Constant(validGroups.Individuals, typeof(IGrouping<TKey, TValue>)), expression.Body),
+                            Call(
+                                ContainsMethodInfo,
+                                Constant(validGroups.Individuals.AsEnumerable(), typeof(IEnumerable<TValue>)),
+                                expression.Body),
                             expression.Body,
                             defaultExpression);
 
@@ -656,7 +659,10 @@ namespace AD.ApiExtensions.Primitives
                 {
                     Expression conditional =
                         Condition(
-                            Call(ContainsMethodInfo, Constant(group, typeof(IGrouping<TKey, TValue>)), expression.Body),
+                            Call(
+                                ContainsMethodInfo,
+                                Constant(group.AsEnumerable(), typeof(IEnumerable<TValue>)),
+                                expression.Body),
                             Constant(group.Key, typeof(TKey)),
                             conditions.Any() ? conditions.Pop() : defaultExpression);
 
