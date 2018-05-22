@@ -644,7 +644,7 @@ namespace AD.ApiExtensions.Primitives
                 if (!validGroups.Individuals.IsEmpty)
                 {
                     Expression conditional =
-                        Condition(
+                        Conditional(
                             Contains(validGroups.Individuals.ToArray(), expression.Body),
                             expression.Body,
                             defaultExpression);
@@ -656,7 +656,7 @@ namespace AD.ApiExtensions.Primitives
                 foreach (Grouping<TKey, TValue> group in validGroups.AsGrouping().Where(x => x.IsCommon))
                 {
                     Expression conditional =
-                        Condition(
+                        Conditional(
                             Contains(group.ToArray(), expression.Body),
                             Constant(group.Key, typeof(TKey)),
                             conditions.Any() ? conditions.Pop() : defaultExpression);
@@ -681,24 +681,80 @@ namespace AD.ApiExtensions.Primitives
             }
 
             /// <summary>
-            /// Returns a <see cref="MethodCallExpression"/> representing <see cref="ContainsMethodInfo"/> and the parameters.
+            /// Returns an <see cref="Expression"/> representing <see cref="ContainsMethodInfo"/> and the parameters.
             /// </summary>
             /// <param name="array">The source collection.</param>
             /// <param name="body">The expression to test.</param>
             /// <returns>
-            /// A <see cref="MethodCallExpression"/> representing <see cref="ContainsMethodInfo"/>.
+            /// An <see cref="Expression"/> representing <see cref="ContainsMethodInfo"/> and the parameters.
             /// </returns>
             /// <exception cref="ArgumentNullException" />
             [Pure]
             [NotNull]
-            private static MethodCallExpression Contains([NotNull] TValue[] array, Expression body)
+            private static Expression Contains([NotNull] TValue[] array, Expression body)
             {
                 if (array is null)
                 {
                     throw new ArgumentNullException(nameof(array));
                 }
 
-                return Call(ContainsMethodInfo, Constant(array, typeof(TValue[])), body);
+                switch (array.Length)
+                {
+                    case 0:
+                    {
+                        return Constant(false, typeof(bool));
+                    }
+                    case 1:
+                    {
+                        return Equal(Constant(array[0], typeof(TValue)), body);
+                    }
+                    default:
+                    {
+                        return Call(ContainsMethodInfo, Constant(array, typeof(IEnumerable<TValue>)), body);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Returns an <see cref="Expression"/> representing a conditional statement.
+            /// </summary>
+            /// <param name="test">The test condition.</param>
+            /// <param name="ifTrue">The result when true.</param>
+            /// <param name="ifFalse">The result when false.</param>
+            /// <returns>
+            /// An <see cref="Expression"/> representing a conditional statement.
+            /// </returns>
+            /// <exception cref="ArgumentNullException" />
+            [Pure]
+            [NotNull]
+            private static Expression Conditional([NotNull] Expression test, [NotNull] Expression ifTrue, [NotNull] Expression ifFalse)
+            {
+                if (test is null)
+                {
+                    throw new ArgumentNullException(nameof(test));
+                }
+
+                if (ifTrue is null)
+                {
+                    throw new ArgumentNullException(nameof(ifTrue));
+                }
+
+                if (ifFalse is null)
+                {
+                    throw new ArgumentNullException(nameof(ifFalse));
+                }
+
+                switch (test)
+                {
+                    case ConstantExpression c when c.Value is bool b:
+                    {
+                        return b ? ifTrue : ifFalse;
+                    }
+                    default:
+                    {
+                        return Condition(test, ifTrue, ifFalse);
+                    }
+                }
             }
         }
     }
