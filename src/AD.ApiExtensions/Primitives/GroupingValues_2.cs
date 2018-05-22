@@ -595,9 +595,10 @@ namespace AD.ApiExtensions.Primitives
             {
                 ContainsMethodInfo =
                     typeof(Enumerable)
-                        .GetRuntimeMethod(
-                            nameof(Enumerable.Contains),
-                            new Type[] { typeof(IEnumerable<TValue>), typeof(TValue) });
+                        .GetRuntimeMethods()
+                        .Where(x => x.Name == nameof(Enumerable.Contains))
+                        .Single(x => x.GetParameters().Length == 2)
+                        .MakeGenericMethod(typeof(string));
             }
 
             /// <inheritdoc />
@@ -644,10 +645,7 @@ namespace AD.ApiExtensions.Primitives
                 {
                     Expression conditional =
                         Condition(
-                            Call(
-                                ContainsMethodInfo,
-                                Constant(validGroups.Individuals.AsEnumerable(), typeof(IEnumerable<TValue>)),
-                                expression.Body),
+                            Contains(validGroups.Individuals.ToArray(), expression.Body),
                             expression.Body,
                             defaultExpression);
 
@@ -659,10 +657,7 @@ namespace AD.ApiExtensions.Primitives
                 {
                     Expression conditional =
                         Condition(
-                            Call(
-                                ContainsMethodInfo,
-                                Constant(group.AsEnumerable(), typeof(IEnumerable<TValue>)),
-                                expression.Body),
+                            Contains(group.ToArray(), expression.Body),
                             Constant(group.Key, typeof(TKey)),
                             conditions.Any() ? conditions.Pop() : defaultExpression);
 
@@ -683,6 +678,27 @@ namespace AD.ApiExtensions.Primitives
             public override Expression Reduce()
             {
                 return _expression;
+            }
+
+            /// <summary>
+            /// Returns a <see cref="MethodCallExpression"/> representing <see cref="ContainsMethodInfo"/> and the parameters.
+            /// </summary>
+            /// <param name="array">The source collection.</param>
+            /// <param name="body">The expression to test.</param>
+            /// <returns>
+            /// A <see cref="MethodCallExpression"/> representing <see cref="ContainsMethodInfo"/>.
+            /// </returns>
+            /// <exception cref="ArgumentNullException" />
+            [Pure]
+            [NotNull]
+            private static MethodCallExpression Contains([NotNull] TValue[] array, Expression body)
+            {
+                if (array is null)
+                {
+                    throw new ArgumentNullException(nameof(array));
+                }
+
+                return Call(ContainsMethodInfo, Constant(array, typeof(TValue[])), body);
             }
         }
     }
