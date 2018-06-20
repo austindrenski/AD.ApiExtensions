@@ -260,17 +260,11 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        public TValue Express(Expression<Func<TValue>> argument)
-        {
-            throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
-        }
+        public TValue Express(Expression<Func<TValue>> argument) => throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
 
         /// <inheritdoc />
         [Pure]
-        public object Express(Expression argument)
-        {
-            throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
-        }
+        public object Express(Expression argument) => throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
 
         /// <inheritdoc />
         [Pure]
@@ -315,10 +309,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if the collection contains the value; otherwise false.
         /// </returns>
         [Pure]
-        public bool Contains([NotNull] TValue value)
-        {
-            return _groupings?.Any(x => x.Contains(value)) ?? _grouping.Contains(value);
-        }
+        public bool Contains([NotNull] TValue value) => _groupings?.Any(x => x.Contains(value)) ?? _grouping.Contains(value);
 
         /// <summary>
         /// Returns the values as an array.
@@ -328,17 +319,11 @@ namespace AD.ApiExtensions.Primitives
         /// </returns>
         [Pure]
         [NotNull]
-        public TValue[] ToArray()
-        {
-            return _groupings?.SelectMany(x => x).ToArray() ?? _grouping.ToArray();
-        }
+        public TValue[] ToArray() => _groupings?.SelectMany(x => x).ToArray() ?? _grouping.ToArray();
 
         /// <inheritdoc />
         [Pure]
-        public override string ToString()
-        {
-            return _groupings is null ? _grouping.ToString() : string.Join(",", _groupings);
-        }
+        public override string ToString() => _groupings is null ? _grouping.ToString() : string.Join(",", _groupings);
 
         /// <summary>
         /// Processes the values into groups and items.
@@ -471,31 +456,19 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(GroupingValues<TKey, TValue> other)
-        {
-            return this.SequenceEqual(other);
-        }
+        public bool Equals(GroupingValues<TKey, TValue> other) => this.SequenceEqual(other);
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(IEnumerable<IGrouping<TKey, TValue>> other)
-        {
-            return !(other is null) && this.SequenceEqual(other);
-        }
+        public bool Equals(IEnumerable<IGrouping<TKey, TValue>> other) => !(other is null) && this.SequenceEqual(other);
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(IGrouping<TKey, TValue> other)
-        {
-            return !ReferenceEquals(null, other) && (_grouping.Equals(other) || _groupings?.Length == 1 && _groupings[0].Equals(other));
-        }
+        public bool Equals(IGrouping<TKey, TValue> other) => !ReferenceEquals(null, other) && (_grouping.Equals(other) || _groupings?.Length == 1 && _groupings[0].Equals(other));
 
         /// <inheritdoc />
         [Pure]
-        public override bool Equals(object obj)
-        {
-            return !ReferenceEquals(null, obj) && obj is GroupingValues<TKey, TValue> values && Equals(values);
-        }
+        public override bool Equals(object obj) => !ReferenceEquals(null, obj) && obj is GroupingValues<TKey, TValue> values && Equals(values);
 
         /// <summary>
         /// Compares two values.
@@ -510,10 +483,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator ==(GroupingValues<TKey, TValue> left, GroupingValues<TKey, TValue> right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(GroupingValues<TKey, TValue> left, GroupingValues<TKey, TValue> right) => left.Equals(right);
 
         /// <summary>
         /// Compares two values.
@@ -528,10 +498,7 @@ namespace AD.ApiExtensions.Primitives
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator !=(GroupingValues<TKey, TValue> left, GroupingValues<TKey, TValue> right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(GroupingValues<TKey, TValue> left, GroupingValues<TKey, TValue> right) => !left.Equals(right);
 
         /// <inheritdoc />
         [Pure]
@@ -557,10 +524,7 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return (this as IEnumerable<IGrouping<TKey, TValue>>).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<IGrouping<TKey, TValue>>).GetEnumerator();
 
         /// <inheritdoc />
         /// <summary>
@@ -591,15 +555,12 @@ namespace AD.ApiExtensions.Primitives
             /// <summary>
             /// Initializes static resources.
             /// </summary>
-            static GroupsExpression()
-            {
-                ContainsMethodInfo =
-                    typeof(Enumerable)
-                        .GetRuntimeMethods()
-                        .Where(x => x.Name == nameof(Enumerable.Contains))
-                        .Single(x => x.GetParameters().Length == 2)
-                        .MakeGenericMethod(typeof(string));
-            }
+            static GroupsExpression() => ContainsMethodInfo =
+                                             typeof(Enumerable)
+                                                .GetRuntimeMethods()
+                                                .Where(x => x.Name == nameof(Enumerable.Contains))
+                                                .Single(x => x.GetParameters().Length == 2)
+                                                .MakeGenericMethod(typeof(string));
 
             /// <inheritdoc />
             /// <summary>
@@ -667,6 +628,15 @@ namespace AD.ApiExtensions.Primitives
                 // If the stack is empty, take the default expression; otherwise pop the current item.
                 _expression = conditions.Any() ? conditions.Pop() : defaultExpression;
 
+                // TODO: This might not be necessary because of the earlier check in conditional. Needs testing.
+                if (_expression is ConditionalExpression conditionalResult)
+                {
+                    if (conditionalResult.IfTrue == conditionalResult.IfFalse)
+                    {
+                        _expression = conditionalResult.IfTrue;
+                    }
+                }
+
                 if (conditions.Any())
                 {
                     throw new InvalidOperationException($"Failed to completely aggregate to the {nameof(GroupsExpression)}.");
@@ -675,10 +645,7 @@ namespace AD.ApiExtensions.Primitives
 
             /// <inheritdoc />
             [Pure]
-            public override Expression Reduce()
-            {
-                return _expression;
-            }
+            public override Expression Reduce() => _expression;
 
             /// <summary>
             /// Returns an <see cref="Expression"/> representing <see cref="ContainsMethodInfo"/> and the parameters.
@@ -752,7 +719,7 @@ namespace AD.ApiExtensions.Primitives
                     }
                     default:
                     {
-                        return Condition(test, ifTrue, ifFalse);
+                        return ifTrue == ifFalse ? ifTrue : Condition(test, ifTrue, ifFalse);
                     }
                 }
             }

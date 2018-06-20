@@ -30,15 +30,13 @@ namespace AD.ApiExtensions.Formatters
         /// Initializes static resources.
         /// </summary>
         public DelimitedOutputFormatter()
-        {
-            SupportedMediaTypes =
-                new List<(MediaType, char)>
-                {
-                    (new MediaType("text/csv"), ','),
-                    (new MediaType("text/psv"), '|'),
-                    (new MediaType("text/tab-separated-values"), '\t')
-                };
-        }
+            => SupportedMediaTypes =
+                   new List<(MediaType, char)>
+                   {
+                       (new MediaType("text/csv"), ','),
+                       (new MediaType("text/psv"), '|'),
+                       (new MediaType("text/tab-separated-values"), '\t')
+                   };
 
         /// <inheritdoc />
         public IReadOnlyList<string> GetSupportedContentTypes([NotNull] string contentType, [NotNull] Type objectType)
