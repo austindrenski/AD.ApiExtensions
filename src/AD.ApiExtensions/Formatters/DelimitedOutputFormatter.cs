@@ -42,14 +42,10 @@ namespace AD.ApiExtensions.Formatters
         public IReadOnlyList<string> GetSupportedContentTypes([NotNull] string contentType, [NotNull] Type objectType)
         {
             if (contentType is null)
-            {
                 throw new ArgumentNullException(nameof(contentType));
-            }
 
             if (objectType is null)
-            {
                 throw new ArgumentNullException(nameof(objectType));
-            }
 
             MediaType mediaType = new MediaType(contentType);
 
@@ -61,9 +57,7 @@ namespace AD.ApiExtensions.Formatters
         public bool CanWriteResult([NotNull] OutputFormatterCanWriteContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             return CanWriteResult(new MediaType(context.ContentType));
         }
@@ -72,9 +66,7 @@ namespace AD.ApiExtensions.Formatters
         public async Task WriteAsync([NotNull] OutputFormatterWriteContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             string text = GetDelimited(context.Object, GetDelimiter(context.ContentType));
 
@@ -85,7 +77,7 @@ namespace AD.ApiExtensions.Formatters
         }
 
         [Pure]
-        private char GetDelimiter(StringSegment contentType)
+        char GetDelimiter(StringSegment contentType)
         {
             MediaType mediaType = new MediaType(contentType);
             return SupportedMediaTypes.First(x => x.MediaType.IsSubsetOf(mediaType) || mediaType.IsSubsetOf(x.MediaType)).Delimiter;
@@ -102,34 +94,27 @@ namespace AD.ApiExtensions.Formatters
         /// </param>
         [Pure]
         [NotNull]
-        private static string GetDelimited([CanBeNull] object value, char delimiter)
+        static string GetDelimited([CanBeNull] object value, char delimiter)
         {
             switch (value)
             {
                 case null:
-                {
                     return string.Empty;
-                }
+
                 case XDocument document:
-                {
-                    return document.ToDelimited(true, delimiter);
-                }
+                    return document.ToDelimited(delimiter);
+
                 case XElement element:
-                {
                     return new XElement[] { element }.ToDelimited(true, delimiter);
-                }
+
                 case IEnumerable<XElement> elements:
-                {
                     return elements.ToDelimited(true, delimiter);
-                }
+
                 case IEnumerable<object> enumerable:
-                {
                     return enumerable.ToDelimited(true, delimiter);
-                }
+
                 default:
-                {
                     return new object[] { value }.ToDelimited(true, delimiter);
-                }
             }
         }
 
@@ -147,12 +132,10 @@ namespace AD.ApiExtensions.Formatters
         /// </returns>
         /// <exception cref="InvalidOperationException"></exception>
         [Pure]
-        private static bool CanWriteResult(MediaType supportedType, MediaType contentType)
+        static bool CanWriteResult(MediaType supportedType, MediaType contentType)
         {
             if (supportedType.HasWildcard && contentType.IsSubsetOf(supportedType))
-            {
                 return true;
-            }
 
             return supportedType.IsSubsetOf(contentType);
         }
@@ -168,14 +151,12 @@ namespace AD.ApiExtensions.Formatters
         /// </returns>
         /// <exception cref="InvalidOperationException"></exception>
         [Pure]
-        private bool CanWriteResult(MediaType contentType)
+        bool CanWriteResult(MediaType contentType)
         {
             foreach ((MediaType supportedType, char _) in SupportedMediaTypes)
             {
                 if (CanWriteResult(supportedType, contentType))
-                {
                     return true;
-                }
             }
 
             return false;
