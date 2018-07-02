@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -110,8 +111,8 @@ namespace AD.ApiExtensions.Formatters
                 case IEnumerable<XElement> elements:
                     return elements.ToDelimited(true, delimiter);
 
-                case IEnumerable<object> enumerable:
-                    return enumerable.ToDelimited(true, delimiter);
+                case IEnumerable enumerable:
+                    return enumerable.Cast<object>().ToDelimited(true, delimiter);
 
                 default:
                     return new object[] { value }.ToDelimited(true, delimiter);
