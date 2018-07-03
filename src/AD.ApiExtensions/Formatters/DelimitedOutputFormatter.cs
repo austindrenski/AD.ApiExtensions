@@ -134,12 +134,8 @@ namespace AD.ApiExtensions.Formatters
         /// <exception cref="InvalidOperationException"></exception>
         [Pure]
         static bool CanWriteResult(MediaType supportedType, MediaType contentType)
-        {
-            if (supportedType.HasWildcard && contentType.IsSubsetOf(supportedType))
-                return true;
-
-            return supportedType.IsSubsetOf(contentType);
-        }
+            => supportedType.HasWildcard && contentType.IsSubsetOf(supportedType) ||
+               supportedType.IsSubsetOf(contentType);
 
         /// <summary>
         /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
