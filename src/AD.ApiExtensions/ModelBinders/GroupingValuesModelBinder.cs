@@ -14,20 +14,17 @@ namespace AD.ApiExtensions.ModelBinders
     public sealed class GroupingValuesModelBinder : IModelBinder
     {
         /// <inheritdoc />
+        [NotNull]
         public Task BindModelAsync([NotNull] ModelBindingContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             ValueProviderResult valueProviderResult =
                 context.ValueProvider.GetValue(context.ModelName);
 
             if (valueProviderResult == ValueProviderResult.None)
-            {
                 return Task.CompletedTask;
-            }
 
             context.ModelState.SetModelValue(context.ModelName, valueProviderResult);
 

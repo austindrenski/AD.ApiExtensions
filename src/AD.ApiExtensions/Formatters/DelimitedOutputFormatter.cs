@@ -40,6 +40,7 @@ namespace AD.ApiExtensions.Formatters
                    };
 
         /// <inheritdoc />
+        [NotNull]
         public IReadOnlyList<string> GetSupportedContentTypes([NotNull] string contentType, [NotNull] Type objectType)
         {
             if (contentType is null)

@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.Tests
         [InlineData("blue", Colors.Blue)]
         [InlineData("yelloW", Colors.Yellow)]
         [InlineData("red,blue,yellow", Colors.Red | Colors.Blue | Colors.Yellow)]
-        public static void Test0(string value, Colors expected)
+        public static void Test0([NotNull] string value, Colors expected)
         {
             EnumFlagTypeConverter<Colors> converter = new EnumFlagTypeConverter<Colors>();
 

@@ -57,7 +57,7 @@ namespace AD.ApiExtensions.Tests
 
         [Pure]
         [NotNull]
-        public static HttpContext GetHttpContext(string httpMethod, params (string Header, string Value)[] headers)
+        public static HttpContext GetHttpContext(string httpMethod, [NotNull] params (string Header, string Value)[] headers)
         {
             DefaultHttpContext context = new DefaultHttpContext();
 

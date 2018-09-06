@@ -155,7 +155,10 @@ namespace AD.ApiExtensions.Expressions
         /// </returns>
         /// <exception cref="T:System.ArgumentNullException" />
         [Pure]
-        public bool IsLogicallyDefault(MemberInfo memberInfo, Expression expression, [NotNull] IDictionary<string, MemberInfo> unavailable)
+        public bool IsLogicallyDefault(
+            [NotNull] MemberInfo memberInfo,
+            [NotNull] Expression expression,
+            [NotNull] IDictionary<string, MemberInfo> unavailable)
         {
             if (memberInfo is null)
             {
@@ -243,11 +246,11 @@ namespace AD.ApiExtensions.Expressions
                 return;
             }
 
-            Type recursedType = RecurseType(result);
+            Type recurseType = RecurseType(result);
 
             ParameterExpression parameter =
-                _parameters.Values.FirstOrDefault(x => x.Type == recursedType)
-                ?? Expression.Parameter(recursedType, $"param_{recursedType.Name}");
+                _parameters.Values.FirstOrDefault(x => x.Type == recurseType)
+                ?? Expression.Parameter(recurseType, $"param_{recurseType.Name}");
 
             _types.Add(type, parameter.Type);
             _parameters.Add(type, parameter);
@@ -284,7 +287,7 @@ namespace AD.ApiExtensions.Expressions
         /// <exception cref="ArgumentNullException" />
         [
             Pure]
-        public bool TryGetParameter([NotNull] Type type, out ParameterExpression result)
+        public bool TryGetParameter([NotNull] Type type, [CanBeNull] out ParameterExpression result)
         {
             if (type is null)
             {

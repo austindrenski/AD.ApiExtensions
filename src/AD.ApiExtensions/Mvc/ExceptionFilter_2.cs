@@ -14,9 +14,10 @@ namespace AD.ApiExtensions.Mvc
         where TException : Exception
         where TResult : StatusCodeResult, new()
     {
-        private static readonly TResult Result = new TResult();
+        static readonly TResult Result = new TResult();
 
         /// <inheritdoc />
+        [NotNull]
         public override Type Type => typeof(TResult);
 
         /// <inheritdoc />

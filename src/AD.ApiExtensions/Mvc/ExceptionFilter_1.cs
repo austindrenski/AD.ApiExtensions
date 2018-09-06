@@ -52,35 +52,29 @@ namespace AD.ApiExtensions.Mvc
         public virtual void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
         {
             if (contentTypes is null)
-            {
                 throw new ArgumentNullException(nameof(contentTypes));
-            }
         }
 
         /// <inheritdoc />
         public virtual void OnException([NotNull] ExceptionContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (!(context.Exception is TException))
-            {
                 return;
-            }
 
             context.ExceptionHandled = true;
             context.Result = new StatusCodeResult(StatusCode);
         }
 
         /// <inheritdoc />
+        [NotNull]
         public virtual Task OnExceptionAsync([NotNull] ExceptionContext context)
         {
             if (context is null)
-            {
+
                 throw new ArgumentNullException(nameof(context));
-            }
 
             OnException(context);
 
@@ -89,14 +83,6 @@ namespace AD.ApiExtensions.Mvc
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(ApiResponseType other)
-        {
-            if (other is null)
-            {
-                return false;
-            }
-
-            return Type == other.Type && StatusCode == other.StatusCode;
-        }
+        public bool Equals(ApiResponseType other) => other != null && Type == other.Type && StatusCode == other.StatusCode;
     }
 }
