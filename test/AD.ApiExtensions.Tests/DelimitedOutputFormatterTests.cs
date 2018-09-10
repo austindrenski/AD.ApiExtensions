@@ -51,11 +51,8 @@ namespace AD.ApiExtensions.Tests
             Assert.Equal("present", context.Response.Headers["header"]);
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
 
-            string expected =
-                string.Join(Environment.NewLine,
-                    $"a{delimiter}b{delimiter}c",
-                    $"1{delimiter}2{delimiter}3",
-                    $"2{delimiter}4{delimiter}6");
+            string eol = Environment.NewLine;
+            string expected = $"a{delimiter}b{delimiter}c{eol}1{delimiter}2{delimiter}3{eol}2{delimiter}4{delimiter}6{eol}";
 
             Assert.Equal(expected, GetBodyString(context.Response));
         }
@@ -92,11 +89,8 @@ namespace AD.ApiExtensions.Tests
             Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
 
             // Did the formatter write the response to the body?
-            string expected =
-                string.Join(Environment.NewLine,
-                    $"a{delimiter}b{delimiter}c",
-                    $"1{delimiter}2{delimiter}3",
-                    $"2{delimiter}4{delimiter}6");
+            string eol = Environment.NewLine;
+            string expected = $"a{delimiter}b{delimiter}c{eol}1{delimiter}2{delimiter}3{eol}2{delimiter}4{delimiter}6{eol}";
 
             Assert.Equal(expected, GetBodyString(context.Response));
         }

@@ -8,9 +8,9 @@
     <DocumentationFile>bin/Release/$(TargetFramework)/AD.ApiExtensions.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyVersion/>
-    <FileVersion/>
-    <Version/>
+    <AssemblyVersion />
+    <FileVersion />
+    <Version />
   </PropertyGroup>
   <PropertyGroup>
     <Authors>Austin Drenski</Authors>
@@ -24,15 +24,15 @@
     <RepositoryUrl>https://github.com/austindrenski/AD.ApiExtensions</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AD.IO" Version="1.5.40" PrivateAssets="None"/>
-    <PackageReference Include="AD.Xml" Version="1.4.18" PrivateAssets="None"/>
-    <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.1.1" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.ApiExplorer" Version="2.1.2" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.1.2" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.2" PrivateAssets="All"/>
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.1.1" PrivateAssets="All"/>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="3.0.0" PrivateAssets="All"/>
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" PrivateAssets="All"/>
+    <PackageReference Include="AD.IO" Version="2.0.0.2" PrivateAssets="None" />
+    <PackageReference Include="AD.Xml" Version="2.0.0.21" PrivateAssets="None" />
+    <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.1.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.ApiExplorer" Version="2.1.2" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.1.2" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.2" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.1.1" PrivateAssets="All" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="3.0.0" PrivateAssets="All" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" PrivateAssets="All" />
   </ItemGroup>
 </Project>
