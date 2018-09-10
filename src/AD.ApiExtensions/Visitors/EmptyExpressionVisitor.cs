@@ -68,12 +68,10 @@ namespace AD.ApiExtensions.Visitors
             if (node.Expression is MemberExpression innerMemberExpression)
             {
                 if (!(innerMemberExpression.Member.DeclaringType is Type type))
-                {
                     throw new ArgumentNullException(nameof(type));
-                }
 
                 return
-                    _cache.TryGetParameter(type, out ParameterExpression test)
+                    _cache.TryGetParameter(type, out ParameterExpression test) && test != null
                         ? Expression.PropertyOrField(
                             Expression.PropertyOrField(test, innerMemberExpression.Member.Name),
                             node.Member.Name)
@@ -87,7 +85,7 @@ namespace AD.ApiExtensions.Visitors
                 }
 
                 return
-                    _cache.TryGetParameter(type, out ParameterExpression test)
+                    _cache.TryGetParameter(type, out ParameterExpression test) && test != null
                         ? Expression.PropertyOrField(test, node.Member.Name)
                         : base.VisitMember(node);
             }
@@ -108,11 +106,11 @@ namespace AD.ApiExtensions.Visitors
                 node.Arguments
                     .Select(Visit)
                     .Select(
-                        x =>
-                        {
-                            _cache.Register(x.Type, x.Type);
-                            return _cache.GetParameterOrInput(x);
-                        })
+                         x =>
+                         {
+                             _cache.Register(x.Type, x.Type);
+                             return _cache.GetParameterOrInput(x);
+                         })
                     .ToArray();
 
             MethodInfo method = _cache.GetMethodInfoOrInput(node.Method);
@@ -180,7 +178,7 @@ namespace AD.ApiExtensions.Visitors
                 throw new ArgumentNullException(nameof(node));
             }
 
-            return _cache.TryGetParameter(node.Type, out ParameterExpression result) ? result : base.VisitParameter(node);
+            return _cache.TryGetParameter(node.Type, out ParameterExpression result) && result != null ? result : base.VisitParameter(node);
         }
 
         /// <inheritdoc />

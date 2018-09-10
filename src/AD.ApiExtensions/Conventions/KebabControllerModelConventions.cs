@@ -15,12 +15,12 @@ namespace AD.ApiExtensions.Conventions
         /// <summary>
         /// The string for the controller referencing the server itself.
         /// </summary>
-        [NotNull] private readonly string _home;
+        [NotNull] readonly string _home;
 
         /// <summary>
         /// The string for the controller action referencing the controller itself.
         /// </summary>
-        [NotNull] private readonly string _index;
+        [NotNull] readonly string _index;
 
         /// <summary>
         /// Initializes the <see cref="KebabBindingMetadataProvider"/>
@@ -34,14 +34,10 @@ namespace AD.ApiExtensions.Conventions
         public KebabControllerModelConvention([NotNull] string home = "Home", [NotNull] string index = "Index")
         {
             if (home is null)
-            {
                 throw new ArgumentNullException(nameof(home));
-            }
 
             if (index is null)
-            {
                 throw new ArgumentNullException(nameof(index));
-            }
 
             _home = home;
             _index = index;
@@ -51,26 +47,20 @@ namespace AD.ApiExtensions.Conventions
         public void Apply([NotNull] ControllerModel controller)
         {
             if (controller is null)
-            {
                 throw new ArgumentNullException(nameof(controller));
-            }
 
             foreach (SelectorModel selector in controller.Selectors)
             {
                 if (selector.AttributeRouteModel is null)
-                {
                     selector.AttributeRouteModel = new AttributeRouteModel();
-                }
 
                 if (selector.AttributeRouteModel.Template != null)
-                {
                     continue;
-                }
 
                 selector.AttributeRouteModel.Template =
                     controller.ControllerName.Equals(_home, StringComparison.Ordinal)
                         ? string.Empty
-                        : controller.ControllerName.CamelCaseToKebabCase();
+                        : controller.ControllerName.ConvertToKebabCase();
             }
 
             foreach (ActionModel action in controller.Actions)
@@ -78,31 +68,16 @@ namespace AD.ApiExtensions.Conventions
                 foreach (SelectorModel selector in action.Selectors)
                 {
                     if (selector.AttributeRouteModel is null)
-                    {
                         selector.AttributeRouteModel = new AttributeRouteModel();
-                    }
 
                     if (selector.AttributeRouteModel.Template != null)
-                    {
                         continue;
-                    }
 
                     selector.AttributeRouteModel.Template =
                         action.ActionName.Equals(_index, StringComparison.Ordinal)
                             ? string.Empty
-                            : action.ActionName.CamelCaseToPathCase();
+                            : action.ActionName.ConvertToPathCase();
                 }
-
-// TODO: is there any good case for this?
-//                foreach (ParameterModel parameter in action.Parameters)
-//                {
-//                    if (parameter.BindingInfo is null)
-//                    {
-//                        parameter.BindingInfo = new BindingInfo();
-//                    }
-//
-//                    parameter.BindingInfo.BinderModelName = parameter.ParameterName.CamelCaseToKebabCase();
-//                }
             }
         }
     }

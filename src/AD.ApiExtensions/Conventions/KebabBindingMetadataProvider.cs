@@ -15,38 +15,26 @@ namespace AD.ApiExtensions.Conventions
         public void CreateBindingMetadata([NotNull] BindingMetadataProviderContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (IsController(context.Key.ContainerType) || !context.Attributes.OfType<FromQueryAttribute>().Any())
-            {
                 return;
-            }
 
             if (context.BindingMetadata.BinderModelName is null)
-            {
-                context.BindingMetadata.BinderModelName = context.Key.Name?.CamelCaseToKebabCase();
-            }
+                context.BindingMetadata.BinderModelName = context.Key.Name?.ConvertToKebabCase();
         }
 
         /// <inheritdoc />
         public void CreateDisplayMetadata([NotNull] DisplayMetadataProviderContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (IsController(context.Key.ContainerType) || !context.Attributes.OfType<FromQueryAttribute>().Any())
-            {
                 return;
-            }
 
             if (context.DisplayMetadata.DisplayName is null)
-            {
-                context.DisplayMetadata.DisplayName = () => context.Key.Name?.CamelCaseToKebabCase();
-            }
+                context.DisplayMetadata.DisplayName = () => context.Key.Name?.ConvertToKebabCase();
         }
 
         /// <summary>
@@ -62,9 +50,7 @@ namespace AD.ApiExtensions.Conventions
         /// ASP.NET Core 2.0 introduces controller members to this middleware.
         /// Altering controller members interferes with dependency injection.
         /// </remarks>
-        private static bool IsController([CanBeNull] Type type)
-        {
-            return type != null && type.IsDefined(typeof(ControllerAttribute), true);
-        }
+        static bool IsController([CanBeNull] Type type)
+            => type != null && type.IsDefined(typeof(ControllerAttribute), true);
     }
 }

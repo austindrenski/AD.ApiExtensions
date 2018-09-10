@@ -1,5 +1,4 @@
-﻿using System;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Newtonsoft.Json.Serialization;
 
 namespace AD.ApiExtensions.Conventions
@@ -13,15 +12,7 @@ namespace AD.ApiExtensions.Conventions
     {
         /// <inheritdoc />
         [Pure]
-        [NotNull]
-        protected override string ResolvePropertyName([NotNull] string name)
-        {
-            if (name is null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            return name.CamelCaseToKebabCase();
-        }
+        [CanBeNull]
+        protected override string ResolvePropertyName([CanBeNull] string name) => name.ConvertToKebabCase();
     }
 }
