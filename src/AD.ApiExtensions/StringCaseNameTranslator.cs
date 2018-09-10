@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
-using Npgsql.NameTranslation;
 
 namespace AD.ApiExtensions
 {
@@ -16,14 +15,12 @@ namespace AD.ApiExtensions
         /// Converts a string to its snake-case equivalent.
         /// </summary>
         /// <param name="name">The name to convert.</param>
-        /// <param name="npgsql">True to use <see cref="NpgsqlSnakeCaseNameTranslator"/>; otherwise false.</param>
         /// <returns>
         /// The name converted to snake case.
         /// </returns>
         [Pure]
         [CanBeNull]
-        public static string ConvertToSnakeCase([CanBeNull] this string name, bool npgsql = true)
-            => npgsql ? NpgsqlSnakeCaseNameTranslator.ConvertToSnakeCase(name) : ConvertToCase(name, '_');
+        public static string ConvertToSnakeCase([CanBeNull] this string name) => ConvertToCase(name, '_');
 
         /// <summary>
         /// Converts a string to its kebab-case equivalent.
