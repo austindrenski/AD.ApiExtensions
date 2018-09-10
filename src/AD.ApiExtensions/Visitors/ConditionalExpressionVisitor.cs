@@ -19,19 +19,13 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitBinary(BinaryExpression node)
         {
             if (node is null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             if (!(Visit(node.Left) is Expression left))
-            {
                 throw new ArgumentNullException(nameof(left));
-            }
 
             if (!(Visit(node.Right) is Expression right))
-            {
                 throw new ArgumentNullException(nameof(right));
-            }
 
             switch (node.NodeType)
             {
@@ -335,39 +329,27 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitConditional(ConditionalExpression node)
         {
             if (node is null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             if (!(Visit(node.Test) is Expression test))
-            {
                 throw new ArgumentNullException(nameof(test));
-            }
 
             if (!(Visit(node.IfTrue) is Expression ifTrue))
-            {
                 throw new ArgumentNullException(nameof(ifTrue));
-            }
 
             if (!(Visit(node.IfFalse) is Expression ifFalse))
-            {
                 throw new ArgumentNullException(nameof(ifFalse));
-            }
 
             switch (test)
             {
                 case UnaryExpression unary when unary.Operand is ConstantExpression constant && constant.Value is bool value:
-                {
                     return value ? ifTrue : ifFalse;
-                }
+
                 case ConstantExpression constant when constant.Value is bool value:
-                {
                     return value ? ifTrue : ifFalse;
-                }
+
                 default:
-                {
                     return Expression.Condition(test, ifTrue, ifFalse);
-                }
             }
         }
 
@@ -376,28 +358,21 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitMember(MemberExpression node)
         {
             if (node is null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             switch (node.Member)
             {
                 case FieldInfo f when f.IsStatic:
-                {
                     return Expression.Constant(f.GetValue(f.DeclaringType), node.Type);
-                }
+
                 case FieldInfo f when node.Expression is ConstantExpression c:
-                {
                     return Expression.Constant(f.GetValue(c.Value), node.Type);
-                }
+
                 case PropertyInfo p when node.Expression is MemberExpression m && m.Member is FieldInfo f && m.Expression is ConstantExpression c:
-                {
                     return Expression.Constant(p.GetValue(f.GetValue(c.Value)), node.Type);
-                }
+
                 default:
-                {
                     return base.VisitMember(node);
-                }
             }
         }
 
@@ -406,25 +381,19 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitUnary(UnaryExpression node)
         {
             if (node is null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             if (!(Visit(node.Operand) is Expression operand))
-            {
                 throw new ArgumentNullException(nameof(operand));
-            }
 
             switch (node.NodeType)
             {
                 case ExpressionType.ArrayLength:
-                {
                     return Expression.Constant(Expression.Lambda<Func<int>>(node).Compile()(), typeof(int));
-                }
+
                 case ExpressionType.Not when operand is ConstantExpression constant && constant.Value is bool value:
-                {
                     return Expression.Constant(!value, typeof(bool));
-                }
+
                 case ExpressionType.Add:
                 case ExpressionType.AddAssign:
                 case ExpressionType.AddAssignChecked:
@@ -509,9 +478,7 @@ namespace AD.ApiExtensions.Visitors
                 case ExpressionType.UnaryPlus:
                 case ExpressionType.Unbox:
                 default:
-                {
                     return Expression.MakeUnary(node.NodeType, operand, node.Type);
-                }
             }
         }
 
@@ -526,12 +493,11 @@ namespace AD.ApiExtensions.Visitors
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [Pure]
-        private static ConstantExpression CompileToBool([NotNull] Expression expression)
+        [NotNull]
+        static ConstantExpression CompileToBool([NotNull] Expression expression)
         {
             if (expression is null)
-            {
                 throw new ArgumentNullException(nameof(expression));
-            }
 
             return Expression.Constant(Expression.Lambda<Func<bool>>(expression).Compile()(), typeof(bool));
         }

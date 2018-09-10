@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Primitives;
 
 namespace AD.ApiExtensions.Hosting
 {
@@ -18,36 +17,23 @@ namespace AD.ApiExtensions.Hosting
         /// <param name="builder">
         /// The builder to modify.
         /// </param>
-        /// <param name="commandLineArguments">
-        /// Command line arguments to add to the <see cref="IConfiguration"/>.
-        /// </param>
-        /// <param name="optionalUserSecrets">
-        /// True if configuration options from user secrets are optional; otherwise false.
-        /// </param>
-        /// <param name="optionalHostingFile">
-        /// True if configuration options from hosting.json are optional; otherwise false.
-        /// </param>
-        /// <typeparam name="T">
-        /// The <see cref="IStartup"/> to add to the <see cref="IWebHostBuilder"/>.
-        /// </typeparam>
+        /// <param name="args">Command line arguments to add to the <see cref="IConfiguration"/>.</param>
+        /// <typeparam name="T">The <see cref="IStartup"/> to add to the <see cref="IWebHostBuilder"/>.</typeparam>
         /// <returns>
         /// The <see cref="IWebHostBuilder"/> with the <see cref="IConfiguration"/> and <see cref="IStartup"/> added.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="builder"/></exception>
         [Pure]
         [NotNull]
-        public static IWebHostBuilder UseStartup<T>([NotNull] this IWebHostBuilder builder, StringValues commandLineArguments, bool optionalUserSecrets = true, bool optionalHostingFile = true) where T : class, IStartup
+        public static IWebHostBuilder UseStartup<T>([NotNull] this IWebHostBuilder builder, [NotNull] string[] args) where T : class, IStartup
         {
             if (builder is null)
-            {
                 throw new ArgumentNullException(nameof(builder));
-            }
 
             IConfiguration configuration =
                 new ConfigurationBuilder()
-                    .AddJsonFile("hosting.json", optionalHostingFile)
-                    .AddUserSecrets<T>(optionalUserSecrets)
-                    .AddCommandLine(commandLineArguments)
-                    .Build();
+                   .AddCommandLine(args)
+                   .Build();
 
             return
                 builder.UseConfiguration(configuration)

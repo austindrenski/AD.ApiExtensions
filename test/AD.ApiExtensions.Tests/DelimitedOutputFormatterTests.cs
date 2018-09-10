@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.Tests
                 GetHttpContext(("Content-Type", contentType));
 
             OutputFormatterWriteContext outputContext =
-                GetOutputFormatterWriteContext(
+                GetOutputWriteContext(
                     context,
                     new XElement[]
                     {
@@ -70,7 +70,7 @@ namespace AD.ApiExtensions.Tests
                 GetHttpContext(("Content-Type", contentType));
 
             OutputFormatterWriteContext outputContext =
-                GetOutputFormatterWriteContext(
+                GetOutputWriteContext(
                     context,
                     new[]
                     {
@@ -103,7 +103,7 @@ namespace AD.ApiExtensions.Tests
 
         [Pure]
         [NotNull]
-        public static HttpContext GetHttpContext(params (string Header, string Value)[] headers)
+        static HttpContext GetHttpContext([NotNull] params (string Header, string Value)[] headers)
         {
             DefaultHttpContext context = new DefaultHttpContext();
 
@@ -119,17 +119,15 @@ namespace AD.ApiExtensions.Tests
 
         [Pure]
         [NotNull]
-        public static OutputFormatterWriteContext GetOutputFormatterWriteContext<T>([NotNull] HttpContext context, [NotNull] T value)
+        static OutputFormatterWriteContext GetOutputWriteContext<T>(
+            [NotNull] HttpContext context,
+            [NotNull] T value)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (value == null)
-            {
                 throw new ArgumentNullException(nameof(value));
-            }
 
             return
                 new OutputFormatterWriteContext(context, (s, e) => new StreamWriter(s, e), typeof(T), value)
@@ -149,17 +147,13 @@ namespace AD.ApiExtensions.Tests
         /// </returns>
         /// <exception cref="ArgumentNullException" />
         [NotNull]
-        public static string GetBodyString([NotNull] HttpResponse response)
+        static string GetBodyString([NotNull] HttpResponse response)
         {
             if (response is null)
-            {
                 throw new ArgumentNullException(nameof(response));
-            }
 
             if (response.Body.CanSeek)
-            {
                 response.Body.Seek(default, SeekOrigin.Begin);
-            }
 
             Encoding encoding = MediaTypeHeaderValue.Parse(response.ContentType).Encoding;
 

@@ -400,6 +400,7 @@ namespace AD.ApiExtensions.Primitives
         /// The contained groupings.
         /// </returns>
         /// <exception cref="T:System.InvalidCastException" />
+        [NotNull]
         [Pure]
         public static implicit operator Grouping<TKey, TValue>[](GroupingValues<TKey, TValue> groupingValues)
         {
@@ -422,7 +423,7 @@ namespace AD.ApiExtensions.Primitives
         /// </returns>
         /// <exception cref="T:System.InvalidCastException" />
         [Pure]
-        public static implicit operator GroupingValues<TKey, TValue>(Grouping<TKey, TValue>[] collection)
+        public static implicit operator GroupingValues<TKey, TValue>([NotNull] Grouping<TKey, TValue>[] collection)
         {
             if (collection is null)
             {
@@ -575,7 +576,7 @@ namespace AD.ApiExtensions.Primitives
             /// <exception cref="T:System.ArgumentNullException" />
             /// <exception cref="T:System.InvalidOperationException" />
             [PublicAPI]
-            internal GroupsExpression([NotNull] Expression<Func<TValue>> expression, IEnumerable<IGrouping<TKey, TValue>> groups)
+            internal GroupsExpression([NotNull] Expression<Func<TValue>> expression, [NotNull] IEnumerable<IGrouping<TKey, TValue>> groups)
             {
                 if (expression is null)
                 {

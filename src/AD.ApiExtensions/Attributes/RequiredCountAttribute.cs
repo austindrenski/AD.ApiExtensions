@@ -37,7 +37,7 @@ namespace AD.ApiExtensions.Attributes
         }
 
         /// <inheritdoc />
-        public override void OnActionExecuting(ActionExecutingContext actionContext)
+        public override void OnActionExecuting([NotNull] ActionExecutingContext actionContext)
         {
             KeyValuePair<string, StringValues>[] parameters =
                 actionContext.HttpContext

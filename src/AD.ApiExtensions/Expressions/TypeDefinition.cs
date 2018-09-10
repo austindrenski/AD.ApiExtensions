@@ -11,7 +11,7 @@ namespace AD.ApiExtensions.Expressions
     /// <summary>
     /// Private structure to construct a new type.
     /// </summary>
-    internal readonly struct TypeDefinition
+    readonly struct TypeDefinition
     {
         [NotNull] private const string AnonymousAssemblyName = "AD.ApiExtensions.Anonymous";
 

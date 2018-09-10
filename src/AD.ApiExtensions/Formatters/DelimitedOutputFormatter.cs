@@ -40,6 +40,7 @@ namespace AD.ApiExtensions.Formatters
                    };
 
         /// <inheritdoc />
+        [NotNull]
         public IReadOnlyList<string> GetSupportedContentTypes([NotNull] string contentType, [NotNull] Type objectType)
         {
             if (contentType is null)
@@ -87,12 +88,8 @@ namespace AD.ApiExtensions.Formatters
         /// <summary>
         /// Gets the delimited string representation of the value.
         /// </summary>
-        /// <param name="value">
-        /// The value to serialize as a delimited string.
-        /// </param>
-        /// <param name="delimiter">
-        /// The delimiter character.
-        /// </param>
+        /// <param name="value">The value to serialize as a delimited string.</param>
+        /// <param name="delimiter">The delimiter character.</param>
         [Pure]
         [NotNull]
         static string GetDelimited([CanBeNull] object value, char delimiter)
@@ -122,41 +119,25 @@ namespace AD.ApiExtensions.Formatters
         /// <summary>
         /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
         /// </summary>
-        /// <param name="supportedType">
-        /// The content type that is supported.
-        /// </param>
-        /// <param name="contentType">
-        /// The content type to check.
-        /// </param>
+        /// <param name="supportedType">The content type that is supported.</param>
+        /// <param name="contentType">The content type to check.</param>
         /// <returns>
         /// True if the formatter can write the response; otherwise, false.
         /// </returns>
         /// <exception cref="InvalidOperationException"></exception>
         [Pure]
         static bool CanWriteResult(MediaType supportedType, MediaType contentType)
-            => supportedType.HasWildcard && contentType.IsSubsetOf(supportedType) ||
-               supportedType.IsSubsetOf(contentType);
+            => supportedType.HasWildcard && contentType.IsSubsetOf(supportedType) || supportedType.IsSubsetOf(contentType);
 
         /// <summary>
         /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
         /// </summary>
-        /// <param name="contentType">
-        /// The content type to check.
-        /// </param>
+        /// <param name="contentType">The content type to check.</param>
         /// <returns>
         /// True if the formatter can write the response; otherwise, false.
         /// </returns>
         /// <exception cref="InvalidOperationException"></exception>
         [Pure]
-        bool CanWriteResult(MediaType contentType)
-        {
-            foreach ((MediaType supportedType, char _) in SupportedMediaTypes)
-            {
-                if (CanWriteResult(supportedType, contentType))
-                    return true;
-            }
-
-            return false;
-        }
+        bool CanWriteResult(MediaType contentType) => SupportedMediaTypes.Any(x => CanWriteResult(x.MediaType, contentType));
     }
 }

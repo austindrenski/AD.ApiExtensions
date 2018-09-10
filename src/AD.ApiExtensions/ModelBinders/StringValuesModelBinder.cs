@@ -16,6 +16,7 @@ namespace AD.ApiExtensions.ModelBinders
     public sealed class StringValuesModelBinder : IModelBinder
     {
         /// <inheritdoc />
+        [NotNull]
         public Task BindModelAsync([NotNull] ModelBindingContext context)
         {
             if (context is null)
