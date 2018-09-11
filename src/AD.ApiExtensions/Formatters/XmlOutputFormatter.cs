@@ -27,8 +27,7 @@ namespace AD.ApiExtensions.Formatters
         [NotNull]
         public IList<MediaType> SupportedMediaTypes { get; } = new List<MediaType>
         {
-            new MediaType("application/xml"),
-            new MediaType("text/xml")
+            new MediaType("application/xml")
         };
 
         /// <inheritdoc />
