@@ -16,6 +16,26 @@ namespace AD.ApiExtensions
         /// Applies snake case conventions to relational annotations for
         /// table names, columns, keys, foreign keys, and indexes.
         /// </summary>
+        /// <param name="builder">The <see cref="ModelBuilder"/> to mutate.</param>
+        /// <returns>
+        /// The mutated <see cref="ModelBuilder"/>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="builder"/></exception>
+        [NotNull]
+        public static ModelBuilder UseSnakeCase([NotNull] this ModelBuilder builder)
+        {
+            if (builder is null)
+                throw new ArgumentNullException(nameof(builder));
+
+            builder.Model.UseSnakeCase();
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Applies snake case conventions to relational annotations for
+        /// table names, columns, keys, foreign keys, and indexes.
+        /// </summary>
         /// <param name="annotatable">The annotatable to mutate.</param>
         /// <exception cref="ArgumentNullException"><paramref name="annotatable"/></exception>
         [NotNull]
