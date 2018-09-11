@@ -15,6 +15,7 @@ using Microsoft.Extensions.Primitives;
 namespace AD.ApiExtensions.Formatters
 {
     /// <inheritdoc cref="IOutputFormatter"/>
+    /// <inheritdoc cref="IApiResponseTypeMetadataProvider"/>
     /// <summary>
     /// Writes an object in delimited format to the output stream.
     /// </summary>
@@ -25,33 +26,24 @@ namespace AD.ApiExtensions.Formatters
         /// The collection of supported media types.
         /// </summary>
         [NotNull]
-        public IList<(MediaType MediaType, char Delimiter)> SupportedMediaTypes { get; }
-
-        /// <summary>
-        /// Initializes static resources.
-        /// </summary>
-        public DelimitedOutputFormatter()
-            => SupportedMediaTypes =
-                   new List<(MediaType, char)>
-                   {
-                       (new MediaType("text/csv"), ','),
-                       (new MediaType("text/psv"), '|'),
-                       (new MediaType("text/tab-separated-values"), '\t')
-                   };
+        public IList<(MediaType MediaType, char Delimiter)> SupportedMediaTypes { get; } = new List<(MediaType, char)>
+        {
+            (new MediaType("text/csv"), ','),
+            (new MediaType("text/psv"), '|'),
+            (new MediaType("text/tab-separated-values"), '\t')
+        };
 
         /// <inheritdoc />
+        [Pure]
         [NotNull]
-        public IReadOnlyList<string> GetSupportedContentTypes([NotNull] string contentType, [NotNull] Type objectType)
+        public IReadOnlyList<string> GetSupportedContentTypes([CanBeNull] string contentType, [CanBeNull] Type objectType)
         {
-            if (contentType is null)
-                throw new ArgumentNullException(nameof(contentType));
+            MediaType mediaType = contentType != null ? new MediaType(contentType) : default;
 
-            if (objectType is null)
-                throw new ArgumentNullException(nameof(objectType));
-
-            MediaType mediaType = new MediaType(contentType);
-
-            return SupportedMediaTypes.Where(x => CanWriteResult(x.MediaType, mediaType)).Select(x => $"{x.MediaType.Type}/{x.MediaType.SubType}").ToArray();
+            return
+                SupportedMediaTypes.Where(x => CanWriteResult(x.MediaType, mediaType))
+                                   .Select(x => $"{x.MediaType.Type}/{x.MediaType.SubType}")
+                                   .ToArray();
         }
 
         /// <inheritdoc />
@@ -61,7 +53,9 @@ namespace AD.ApiExtensions.Formatters
             if (context is null)
                 throw new ArgumentNullException(nameof(context));
 
-            return CanWriteResult(new MediaType(context.ContentType));
+            MediaType mediaType = new MediaType(context.ContentType);
+
+            return SupportedMediaTypes.Any(x => CanWriteResult(x.MediaType, mediaType));
         }
 
         /// <inheritdoc />
@@ -79,7 +73,7 @@ namespace AD.ApiExtensions.Formatters
         }
 
         [Pure]
-        char GetDelimiter(StringSegment contentType)
+        char GetDelimiter(in StringSegment contentType)
         {
             MediaType mediaType = new MediaType(contentType);
             return SupportedMediaTypes.First(x => x.MediaType.IsSubsetOf(mediaType) || mediaType.IsSubsetOf(x.MediaType)).Delimiter;
@@ -124,20 +118,8 @@ namespace AD.ApiExtensions.Formatters
         /// <returns>
         /// True if the formatter can write the response; otherwise, false.
         /// </returns>
-        /// <exception cref="InvalidOperationException"></exception>
         [Pure]
-        static bool CanWriteResult(MediaType supportedType, MediaType contentType)
+        static bool CanWriteResult(in MediaType supportedType, in MediaType contentType)
             => supportedType.HasWildcard && contentType.IsSubsetOf(supportedType) || supportedType.IsSubsetOf(contentType);
-
-        /// <summary>
-        /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
-        /// </summary>
-        /// <param name="contentType">The content type to check.</param>
-        /// <returns>
-        /// True if the formatter can write the response; otherwise, false.
-        /// </returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        [Pure]
-        bool CanWriteResult(MediaType contentType) => SupportedMediaTypes.Any(x => CanWriteResult(x.MediaType, contentType));
     }
 }

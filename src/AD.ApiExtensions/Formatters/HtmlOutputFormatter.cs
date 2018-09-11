@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Net.Http.Headers;
 
 namespace AD.ApiExtensions.Formatters
 {
@@ -31,42 +30,31 @@ namespace AD.ApiExtensions.Formatters
         /// <summary>
         /// The collection of supported media types.
         /// </summary>
-        [NotNull] private static readonly IReadOnlyList<MediaTypeHeaderValue> SupportedMediaTypes;
+        [NotNull]
+        public IList<MediaType> SupportedMediaTypes { get; } = new List<MediaType>
+        {
+            new MediaType("text/html"),
+            new MediaType("text/xhtml")
+        };
 
         /// <summary>
         /// The view path.
         /// </summary>
-        [NotNull] private readonly string _view;
+        [NotNull] readonly string _view;
 
         /// <summary>
         /// The delegate returning a model.
         /// </summary>
-        [NotNull] private readonly Func<HttpContext, object, T> _modelFactory;
-
-        /// <summary>
-        /// Initializes static resources.
-        /// </summary>
-        static HtmlOutputFormatter()
-        {
-            SupportedMediaTypes =
-                new MediaTypeHeaderValue[]
-                {
-                    MediaTypeHeaderValue.Parse("text/html"),
-                    MediaTypeHeaderValue.Parse("text/xhtml")
-                };
-        }
+        [NotNull] readonly Func<HttpContext, object, T> _modelFactory;
 
         /// <inheritdoc />
         public HtmlOutputFormatter([NotNull] [PathReference] string view, [NotNull] Func<HttpContext, object, T> modelFactory)
         {
             if (view is null)
-            {
                 throw new ArgumentNullException(nameof(view));
-            }
+
             if (modelFactory is null)
-            {
                 throw new ArgumentNullException(nameof(modelFactory));
-            }
 
             _view = view;
             _modelFactory = modelFactory;
@@ -76,20 +64,16 @@ namespace AD.ApiExtensions.Formatters
         public bool CanWriteResult([NotNull] OutputFormatterCanWriteContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
-            return SupportedMediaTypes.Contains(MediaTypeHeaderValue.Parse(context.ContentType));
+            return SupportedMediaTypes.Contains(new MediaType(context.ContentType));
         }
 
         /// <inheritdoc />
         public async Task WriteAsync([NotNull] OutputFormatterWriteContext context)
         {
             if (context is null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             ActionContext actionContext =
                 new ActionContext(
