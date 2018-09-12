@@ -34,7 +34,7 @@ namespace AD.ApiExtensions.Mvc
         /// <inheritdoc />
         public override void OnException(ExceptionContext context)
         {
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }

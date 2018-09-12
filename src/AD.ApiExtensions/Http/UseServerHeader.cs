@@ -27,12 +27,12 @@ namespace AD.ApiExtensions.Http
         [NotNull]
         public static IApplicationBuilder UseServerHeader([NotNull] this IApplicationBuilder builder, [NotNull] string server)
         {
-            if (builder is null)
+            if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (server is null)
+            if (server == null)
             {
                 throw new ArgumentNullException(nameof(server));
             }

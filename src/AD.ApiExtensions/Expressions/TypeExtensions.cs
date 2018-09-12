@@ -24,7 +24,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public static ConstructorInfo GetEmptyConstructor([NotNull] this Type type)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -54,12 +54,12 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public static PropertyInfo GetPropertyInfo([NotNull] this Type type, [NotNull] MemberInfo memberInfo, BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (memberInfo is null)
+            if (memberInfo == null)
             {
                 throw new ArgumentNullException(nameof(memberInfo));
             }

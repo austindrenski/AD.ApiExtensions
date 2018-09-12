@@ -51,14 +51,14 @@ namespace AD.ApiExtensions.Mvc
         /// <inheritdoc />
         public virtual void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
         {
-            if (contentTypes is null)
+            if (contentTypes == null)
                 throw new ArgumentNullException(nameof(contentTypes));
         }
 
         /// <inheritdoc />
         public virtual void OnException([NotNull] ExceptionContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
             if (!(context.Exception is TException))
@@ -72,7 +72,7 @@ namespace AD.ApiExtensions.Mvc
         [NotNull]
         public virtual Task OnExceptionAsync([NotNull] ExceptionContext context)
         {
-            if (context is null)
+            if (context == null)
 
                 throw new ArgumentNullException(nameof(context));
 

@@ -29,7 +29,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public static Type CreateNew([NotNull] [ItemNotNull] this IEnumerable<PropertyInfo> properties)
         {
-            if (properties is null)
+            if (properties == null)
             {
                 throw new ArgumentNullException(nameof(properties));
             }
@@ -57,7 +57,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public static Type CreateNew([NotNull] this IEnumerable<(string Name, Type Type)> properties)
         {
-            if (properties is null)
+            if (properties == null)
             {
                 throw new ArgumentNullException(nameof(properties));
             }

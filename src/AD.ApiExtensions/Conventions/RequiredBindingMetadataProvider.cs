@@ -16,7 +16,7 @@ namespace AD.ApiExtensions.Conventions
         /// <inheritdoc />
         public void CreateBindingMetadata([NotNull] BindingMetadataProviderContext context)
         {
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }

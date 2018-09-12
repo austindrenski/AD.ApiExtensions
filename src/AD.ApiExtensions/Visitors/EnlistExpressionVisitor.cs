@@ -25,7 +25,7 @@ namespace AD.ApiExtensions.Visitors
         [NotNull]
         public static IQueryable Enlist<TVisitor>([NotNull] this IQueryable queryable) where TVisitor : ExpressionVisitor, new()
         {
-            if (queryable is null)
+            if (queryable == null)
             {
                 throw new ArgumentNullException(nameof(queryable));
             }
@@ -54,7 +54,7 @@ namespace AD.ApiExtensions.Visitors
         [NotNull]
         public static IQueryable<T> Enlist<T, TVisitor>([NotNull] this IQueryable<T> queryable) where TVisitor : ITypedExpressionVisitor<T>, new()
         {
-            if (queryable is null)
+            if (queryable == null)
             {
                 throw new ArgumentNullException(nameof(queryable));
             }

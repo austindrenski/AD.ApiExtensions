@@ -19,7 +19,7 @@ namespace AD.ApiExtensions.ModelBinders
         [NotNull]
         public Task BindModelAsync([NotNull] ModelBindingContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
             ValueProviderResult valueProviderResult =

@@ -1,99 +1,75 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using AD.Xml;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Net.Http.Headers;
 
 namespace AD.ApiExtensions.Formatters
 {
-    /// <inheritdoc cref="IOutputFormatter"/>
-    /// <inheritdoc cref="IApiResponseTypeMetadataProvider"/>
+    /// <inheritdoc/>
     /// <summary>
     /// Writes an object in XML format to the output stream.
     /// </summary>
     [PublicAPI]
-    public sealed class XmlOutputFormatter : IOutputFormatter, IApiResponseTypeMetadataProvider
+    public class XmlOutputFormatter : OutputFormatter
     {
         /// <summary>
-        /// The collection of supported media types.
+        /// Add a content type to the collection of supported media types.
         /// </summary>
-        [NotNull]
-        public IList<MediaType> SupportedMediaTypes { get; } = new List<MediaType>
+        /// <param name="contentType">The content type to register.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="contentType"/></exception>
+        public void Add([NotNull] string contentType)
         {
-            new MediaType("application/xml")
-        };
+            if (contentType is null)
+                throw new ArgumentNullException(nameof(contentType));
 
-        /// <inheritdoc />
-        [Pure]
-        [NotNull]
-        public IReadOnlyList<string> GetSupportedContentTypes([CanBeNull] string contentType, [CanBeNull] Type objectType)
-        {
-            MediaType mediaType = contentType != null ? new MediaType(contentType) : default;
-
-            return
-                SupportedMediaTypes.Where(x => CanWriteResult(x, mediaType))
-                                   .Select(x => $"{x.Type}/{x.SubType}")
-                                   .ToArray();
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse(contentType));
         }
 
         /// <inheritdoc />
-        [Pure]
-        public bool CanWriteResult([NotNull] OutputFormatterCanWriteContext context)
-        {
-            if (context is null)
-                throw new ArgumentNullException(nameof(context));
-
-            MediaType mediaType = new MediaType(context.ContentType);
-
-            return SupportedMediaTypes.Any(x => CanWriteResult(x, mediaType));
-        }
-
-        /// <inheritdoc />
-        public async Task WriteAsync([NotNull] OutputFormatterWriteContext context)
+        public override void WriteResponseHeaders([NotNull] OutputFormatterWriteContext context)
         {
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
-            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-            context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
+            HttpResponse response = context.HttpContext.Response;
+            response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+        }
+
+        /// <inheritdoc />
+        [NotNull]
+        public override async Task WriteResponseBodyAsync([NotNull] OutputFormatterWriteContext context)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            HttpContext httpContext = context.HttpContext;
+            HttpResponse response = httpContext.Response;
 
             switch (context.Object)
             {
-                case IEnumerable<XElement> elements:
-                    await context.HttpContext.Response.WriteAsync(elements.ToXDocument().ToString());
+                case IEnumerable<XElement> e:
+                    await response.WriteAsync(e.ToXDocument().ToString(), Encoding.UTF8, httpContext.RequestAborted);
                     return;
 
-                case XDocument document:
-                    await context.HttpContext.Response.WriteAsync(document.ToString());
+                case XDocument d:
+                    await response.WriteAsync(d.ToString(), Encoding.UTF8, httpContext.RequestAborted);
                     return;
 
-                case IEnumerable<object> collection:
-                    await context.HttpContext.Response.WriteAsync(collection.ToXmlString());
+                case IEnumerable<object> c:
+                    await response.WriteAsync(c.ToXmlString(), Encoding.UTF8, httpContext.RequestAborted);
                     return;
 
                 default:
-                    await context.HttpContext.Response.WriteAsync(new object[] { context.Object }.ToXmlString());
+                    await response.WriteAsync(new object[] { context.Object }.ToXmlString(), Encoding.UTF8, httpContext.RequestAborted);
                     return;
             }
         }
-
-        /// <summary>
-        /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
-        /// </summary>
-        /// <param name="supportedType">The content type that is supported.</param>
-        /// <param name="contentType">The content type to check.</param>
-        /// <returns>
-        /// True if the formatter can write the response; otherwise, false.
-        /// </returns>
-        [Pure]
-        static bool CanWriteResult(in MediaType supportedType, in MediaType contentType)
-            => supportedType.HasWildcard && contentType.IsSubsetOf(supportedType) || supportedType.IsSubsetOf(contentType);
     }
 }

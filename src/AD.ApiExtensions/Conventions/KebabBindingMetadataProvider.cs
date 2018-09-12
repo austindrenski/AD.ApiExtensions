@@ -14,26 +14,26 @@ namespace AD.ApiExtensions.Conventions
         /// <inheritdoc />
         public void CreateBindingMetadata([NotNull] BindingMetadataProviderContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
             if (IsController(context.Key.ContainerType) || !context.Attributes.OfType<FromQueryAttribute>().Any())
                 return;
 
-            if (context.BindingMetadata.BinderModelName is null)
+            if (context.BindingMetadata.BinderModelName == null)
                 context.BindingMetadata.BinderModelName = context.Key.Name?.ConvertToKebabCase();
         }
 
         /// <inheritdoc />
         public void CreateDisplayMetadata([NotNull] DisplayMetadataProviderContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
             if (IsController(context.Key.ContainerType) || !context.Attributes.OfType<FromQueryAttribute>().Any())
                 return;
 
-            if (context.DisplayMetadata.DisplayName is null)
+            if (context.DisplayMetadata.DisplayName == null)
                 context.DisplayMetadata.DisplayName = () => context.Key.Name?.ConvertToKebabCase();
         }
 

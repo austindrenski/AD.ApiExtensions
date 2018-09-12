@@ -40,12 +40,12 @@ namespace AD.ApiExtensions.Mvc
         [NotNull]
         public static IServiceCollection AddExceptionProvider<TException>([NotNull] this IServiceCollection services, [NotNull] string httpMethod, int httpStatusCode, int providerOrder = int.MinValue, int filterOrder = default) where TException : Exception
         {
-            if (services is null)
+            if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (httpMethod is null)
+            if (httpMethod == null)
             {
                 throw new ArgumentNullException(nameof(httpMethod));
             }

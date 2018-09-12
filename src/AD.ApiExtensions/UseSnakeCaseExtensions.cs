@@ -24,7 +24,7 @@ namespace AD.ApiExtensions
         [NotNull]
         public static ModelBuilder UseSnakeCase([NotNull] this ModelBuilder builder)
         {
-            if (builder is null)
+            if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
 
             builder.Model.UseSnakeCase();
@@ -41,7 +41,7 @@ namespace AD.ApiExtensions
         [NotNull]
         public static IMutableAnnotatable UseSnakeCase([NotNull] this IMutableAnnotatable annotatable)
         {
-            if (annotatable is null)
+            if (annotatable == null)
                 throw new ArgumentNullException(nameof(annotatable));
 
             switch (annotatable)

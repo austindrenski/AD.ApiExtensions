@@ -31,7 +31,7 @@ namespace AD.ApiExtensions.Mvc
         public static MvcOptions AddExceptionFilter<TException>([NotNull] this MvcOptions options, int httpStautsCode, int order = default)
             where TException : Exception
         {
-            if (options is null)
+            if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
@@ -58,7 +58,7 @@ namespace AD.ApiExtensions.Mvc
             where TException : Exception
             where TResult : StatusCodeResult, new()
         {
-            if (options is null)
+            if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }

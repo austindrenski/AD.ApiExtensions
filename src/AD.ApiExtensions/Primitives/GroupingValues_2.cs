@@ -39,22 +39,22 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// The default zero-length grouping array.
         /// </summary>
-        [NotNull] private static readonly Grouping<TKey, TValue>[] DefaultGroupingArray;
+        [NotNull] static readonly Grouping<TKey, TValue>[] DefaultGroupingArray = new Grouping<TKey, TValue>[0];
 
         /// <summary>
         /// The default zero-length value array.
         /// </summary>
-        [NotNull] private static readonly TValue[] DefaultValueArray;
+        [NotNull] static readonly TValue[] DefaultValueArray = new TValue[0];
 
         /// <summary>
         /// The grouping if singular; otherwise default.
         /// </summary>
-        private readonly Grouping<TKey, TValue> _grouping;
+        readonly Grouping<TKey, TValue> _grouping;
 
         /// <summary>
         /// The groupings if non-singular; otherwise null.
         /// </summary>
-        [CanBeNull] private readonly Grouping<TKey, TValue>[] _groupings;
+        [CanBeNull] readonly Grouping<TKey, TValue>[] _groupings;
 
         /// <summary>
         /// True if the groupings contain an empty group that is not a group of individuals; otherwise false.
@@ -77,12 +77,14 @@ namespace AD.ApiExtensions.Primitives
         public bool HasIndividuals => _groupings?.Any(x => x.IsIndividuals) ?? _grouping.IsIndividuals;
 
         /// <summary>
-        /// True if the collection contains values, an accumulator, or both. Equivalent to <see cref="HasAny"/> || <see cref="HasAccumulator"/>.
+        /// True if the collection contains values, an accumulator, or both.
+        /// Equivalent to <see cref="HasAny"/> || <see cref="HasAccumulator"/>.
         /// </summary>
         public bool IsActive => HasAny || HasAccumulator;
 
         /// <summary>
-        /// True if the collection contains no values, an accumulator, or both. Equivalent to !<see cref="HasAny"/> || <see cref="HasAccumulator"/>.
+        /// True if the collection contains no values, an accumulator, or both.
+        /// Equivalent to !<see cref="HasAny"/> || <see cref="HasAccumulator"/>.
         /// </summary>
         public bool IsAll => !HasAny || HasAccumulator;
 
@@ -92,28 +94,22 @@ namespace AD.ApiExtensions.Primitives
         public bool IsEmpty => _groupings?.All(x => x.IsEmpty && !x.IsAccumulator) ?? _grouping.IsEmpty && !_grouping.IsAccumulator;
 
         /// <summary>
-        /// True if the collection contains no values and no accumulator. Equivalent to !<see cref="HasAny"/> &amp;&amp; !<see cref="HasAccumulator"/>.
+        /// True if the collection contains no values and no accumulator.
+        /// Equivalent to !<see cref="HasAny"/> &amp;&amp; !<see cref="HasAccumulator"/>.
         /// </summary>
         public bool IsInactive => !HasAny && !HasAccumulator;
 
         /// <summary>
         /// The accumulator if present; otherwise the default value.
         /// </summary>
-        public Grouping<TKey, TValue> Accumulator => _groupings?.SingleOrDefault(x => x.IsAccumulator) ?? (_grouping.IsAccumulator ? _grouping : default);
+        public Grouping<TKey, TValue> Accumulator
+            => _groupings?.SingleOrDefault(x => x.IsAccumulator) ?? (_grouping.IsAccumulator ? _grouping : default);
 
         /// <summary>
         /// The group of individuals if present; otherwise the default value.
         /// </summary>
-        public Grouping<TKey, TValue> Individuals => _groupings?.SingleOrDefault(x => x.IsIndividuals) ?? (_grouping.IsIndividuals ? _grouping : default);
-
-        /// <summary>
-        /// Initializes static resources.
-        /// </summary>
-        static GroupingValues()
-        {
-            DefaultGroupingArray = new Grouping<TKey, TValue>[0];
-            DefaultValueArray = new TValue[0];
-        }
+        public Grouping<TKey, TValue> Individuals
+            => _groupings?.SingleOrDefault(x => x.IsIndividuals) ?? (_grouping.IsIndividuals ? _grouping : default);
 
         /// <summary>
         /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from a key and a value array.
@@ -132,7 +128,7 @@ namespace AD.ApiExtensions.Primitives
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (values is null)
+            if (values == null)
             {
                 throw new ArgumentNullException(nameof(values));
             }
@@ -158,7 +154,7 @@ namespace AD.ApiExtensions.Primitives
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (values is null)
+            if (values == null)
             {
                 throw new ArgumentNullException(nameof(values));
             }
@@ -168,7 +164,8 @@ namespace AD.ApiExtensions.Primitives
         }
 
         /// <summary>
-        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from an <see cref="T:System.Collections.Generic.IEnumerable{T}" /> of <see cref="T:ApiLibrary.Grouping{TKey, TValue}" />.
+        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" />
+        /// from an <see cref="T:System.Collections.Generic.IEnumerable{T}" /> of <see cref="T:ApiLibrary.Grouping{TKey, TValue}" />.
         /// </summary>
         /// <param name="grouping">
         /// The groupings to store.
@@ -176,7 +173,7 @@ namespace AD.ApiExtensions.Primitives
         /// <exception cref="T:System.ArgumentNullException" />
         public GroupingValues([NotNull] IEnumerable<Grouping<TKey, TValue>> grouping)
         {
-            if (grouping is null)
+            if (grouping == null)
             {
                 throw new ArgumentNullException(nameof(grouping));
             }
@@ -186,7 +183,8 @@ namespace AD.ApiExtensions.Primitives
         }
 
         /// <summary>
-        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from an <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
+        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" />
+        /// from an <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
         /// </summary>
         /// <param name="grouping">
         /// The grouping to store.
@@ -199,7 +197,8 @@ namespace AD.ApiExtensions.Primitives
         }
 
         /// <summary>
-        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from an <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
+        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" />
+        /// from an <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
         /// </summary>
         /// <param name="grouping">
         /// The grouping to store.
@@ -207,7 +206,7 @@ namespace AD.ApiExtensions.Primitives
         /// <exception cref="T:System.ArgumentNullException" />
         public GroupingValues([NotNull] IGrouping<TKey, TValue> grouping)
         {
-            if (grouping is null)
+            if (grouping == null)
             {
                 throw new ArgumentNullException(nameof(grouping));
             }
@@ -217,28 +216,44 @@ namespace AD.ApiExtensions.Primitives
         }
 
         /// <summary>
-        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from an <see cref="T:System.Collections.Generic.IEnumerable{T}" /> of <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
+        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" />
+        /// from an <see cref="T:System.Collections.Generic.IEnumerable{T}" /> of <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
         /// </summary>
-        /// <param name="grouping">
-        /// The groupings to store.
-        /// </param>
+        /// <param name="grouping">The groupings to store.</param>
         /// <exception cref="T:System.ArgumentNullException" />
         public GroupingValues([NotNull] [ItemNotNull] IEnumerable<IGrouping<TKey, TValue>> grouping)
         {
-            if (grouping is null)
-            {
+            if (grouping == null)
                 throw new ArgumentNullException(nameof(grouping));
-            }
 
             _grouping = default;
-            _groupings =
-                (grouping as IEnumerable<Grouping<TKey, TValue>>)?.Where(x => x != default).ToArray()
-                ??
-                grouping.Select(x => new Grouping<TKey, TValue>(x.Key, x)).ToArray();
+            _groupings = Enumerate(grouping).ToArray();
         }
 
         /// <summary>
-        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from an array of <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
+        /// Yields a collection of <see cref="Grouping{TKey,TValue}"/> from a collection of <see cref="IGrouping{TKey,TElement}"/>.
+        /// </summary>
+        /// <param name="grouping">The groupings to enumerate.</param>
+        /// <returns>
+        /// A collection of (non-default) <see cref="Grouping{TKey,TValue}"/>
+        /// </returns>
+        [Pure]
+        [NotNull]
+        [CollectionAccess(CollectionAccessType.Read)]
+        static IEnumerable<Grouping<TKey, TValue>> Enumerate([NotNull] [ItemNotNull] IEnumerable<IGrouping<TKey, TValue>> grouping)
+        {
+            foreach (IGrouping<TKey, TValue> group in grouping)
+            {
+                yield return
+                    group is Grouping<TKey, TValue> g && g != default
+                        ? g
+                        : new Grouping<TKey, TValue>(group.Key, group);
+            }
+        }
+
+        /// <summary>
+        /// Constructs a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> from an
+        /// array of <see cref="T:System.Linq.IGrouping{TKey, TValue}" />.
         /// </summary>
         /// <param name="groupings">
         /// The groupings to store.
@@ -246,34 +261,29 @@ namespace AD.ApiExtensions.Primitives
         /// <exception cref="T:System.ArgumentNullException" />
         public GroupingValues([NotNull] [ItemNotNull] params IGrouping<TKey, TValue>[] groupings)
         {
-            if (groupings is null)
-            {
+            if (groupings == null)
                 throw new ArgumentNullException(nameof(groupings));
-            }
 
             _grouping = default;
-            _groupings =
-                (groupings as Grouping<TKey, TValue>[])?.Where(x => x != default).ToArray()
-                ??
-                groupings.Select(x => new Grouping<TKey, TValue>(x.Key, x)).ToArray();
+            _groupings = (groupings as Grouping<TKey, TValue>[])?.Where(x => x != default).ToArray() ?? Enumerate(groupings).ToArray();
         }
 
         /// <inheritdoc />
         [Pure]
-        public TValue Express(Expression<Func<TValue>> argument) => throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
+        public TValue Express(Expression<Func<TValue>> argument)
+            => throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
 
         /// <inheritdoc />
         [Pure]
-        public object Express(Expression argument) => throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
+        public object Express(Expression argument)
+            => throw new NotSupportedException("This expression is not reduced and does not support evaluation.");
 
         /// <inheritdoc />
         [Pure]
         public Expression Reduce(Expression<Func<TValue>> argument)
         {
-            if (argument is null)
-            {
+            if (argument == null)
                 throw new ArgumentNullException(nameof(argument));
-            }
 
             return new GroupsExpression(argument, this).Reduce();
         }
@@ -285,17 +295,13 @@ namespace AD.ApiExtensions.Primitives
             switch (argument)
             {
                 case Expression<Func<TValue>> lambda:
-                {
                     return new GroupsExpression(lambda, this).Reduce();
-                }
+
                 case UnaryExpression unary:
-                {
                     return ((IExpressive) this).Reduce(unary.Operand);
-                }
+
                 default:
-                {
                     throw new ArgumentException(nameof(argument));
-                }
             }
         }
 
@@ -323,7 +329,7 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        public override string ToString() => _groupings is null ? _grouping.ToString() : string.Join(",", _groupings);
+        public override string ToString() => _groupings == null ? _grouping.ToString() : string.Join(",", _groupings);
 
         /// <summary>
         /// Processes the values into groups and items.
@@ -362,9 +368,7 @@ namespace AD.ApiExtensions.Primitives
             StringValues items = individuals.Except(groups.SelectMany(x => x)).ToArray();
 
             if (items.Any())
-            {
                 groups.Add(Grouping<string, string>.CreateIndividuals(items));
-            }
 
             return new GroupingValues<string, string>(groups);
         }
@@ -383,15 +387,14 @@ namespace AD.ApiExtensions.Primitives
         public static explicit operator Grouping<TKey, TValue>(GroupingValues<TKey, TValue> groupingValues)
         {
             if (groupingValues._grouping == default)
-            {
                 throw new InvalidCastException($"{nameof(groupingValues)} contains more than one grouping.");
-            }
 
             return groupingValues._grouping;
         }
 
         /// <summary>
-        /// Casts an <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> to an array of <see cref="T:ApiLibrary.Grouping{TKey, TValue}" />.
+        /// Casts an <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" /> to an array
+        /// of <see cref="T:ApiLibrary.Grouping{TKey, TValue}" />.
         /// </summary>
         /// <param name="groupingValues">
         /// The grouping values to cast.
@@ -405,15 +408,14 @@ namespace AD.ApiExtensions.Primitives
         public static implicit operator Grouping<TKey, TValue>[](GroupingValues<TKey, TValue> groupingValues)
         {
             if (groupingValues._grouping != default)
-            {
                 throw new InvalidCastException($"{nameof(groupingValues)} contains more than one grouping.");
-            }
 
             return groupingValues._groupings?.ToArray() ?? DefaultGroupingArray;
         }
 
         /// <summary>
-        /// Casts an array of <see cref="T:ApiLibrary.Grouping{TKey, TValue}" /> to a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" />.
+        /// Casts an array of <see cref="T:ApiLibrary.Grouping{TKey, TValue}" />
+        /// to a <see cref="T:ApiLibrary.GroupingValues{TKey, TValue}" />.
         /// </summary>
         /// <param name="collection">
         /// The collection to cast.
@@ -425,10 +427,8 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public static implicit operator GroupingValues<TKey, TValue>([NotNull] Grouping<TKey, TValue>[] collection)
         {
-            if (collection is null)
-            {
+            if (collection == null)
                 throw new InvalidCastException(nameof(collection));
-            }
 
             return new GroupingValues<TKey, TValue>(collection);
         }
@@ -441,10 +441,8 @@ namespace AD.ApiExtensions.Primitives
             {
                 int hash = 397 * _grouping.GetHashCode();
 
-                if (_groupings is null)
-                {
+                if (_groupings == null)
                     return hash;
-                }
 
                 for (int i = 0; i < _groupings.Length; i++)
                 {
@@ -461,15 +459,17 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(IEnumerable<IGrouping<TKey, TValue>> other) => !(other is null) && this.SequenceEqual(other);
+        public bool Equals(IEnumerable<IGrouping<TKey, TValue>> other) => other != null && this.SequenceEqual(other);
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(IGrouping<TKey, TValue> other) => !ReferenceEquals(null, other) && (_grouping.Equals(other) || _groupings?.Length == 1 && _groupings[0].Equals(other));
+        public bool Equals(IGrouping<TKey, TValue> other)
+            => !ReferenceEquals(null, other) && (_grouping.Equals(other) || _groupings?.Length == 1 && _groupings[0].Equals(other));
 
         /// <inheritdoc />
         [Pure]
-        public override bool Equals(object obj) => !ReferenceEquals(null, obj) && obj is GroupingValues<TKey, TValue> values && Equals(values);
+        public override bool Equals(object obj)
+            => !ReferenceEquals(null, obj) && obj is GroupingValues<TKey, TValue> values && Equals(values);
 
         /// <summary>
         /// Compares two values.
@@ -512,10 +512,8 @@ namespace AD.ApiExtensions.Primitives
                 yield break;
             }
 
-            if (_groupings is null)
-            {
+            if (_groupings == null)
                 yield break;
-            }
 
             for (int i = 0; i < _groupings.Length; i++)
             {
@@ -536,12 +534,12 @@ namespace AD.ApiExtensions.Primitives
             /// <summary>
             /// The method information for the constructed generic Enumerable.Contains{T}(T value) method.
             /// </summary>
-            [NotNull] private static readonly MethodInfo ContainsMethodInfo;
+            [NotNull] static readonly MethodInfo ContainsMethodInfo;
 
             /// <summary>
             /// The expression associated with this group.
             /// </summary>
-            [NotNull] private readonly Expression _expression;
+            [NotNull] readonly Expression _expression;
 
             /// <inheritdoc />
             public override bool CanReduce { get; } = false;
@@ -556,12 +554,13 @@ namespace AD.ApiExtensions.Primitives
             /// <summary>
             /// Initializes static resources.
             /// </summary>
-            static GroupsExpression() => ContainsMethodInfo =
-                                             typeof(Enumerable)
-                                                .GetRuntimeMethods()
-                                                .Where(x => x.Name == nameof(Enumerable.Contains))
-                                                .Single(x => x.GetParameters().Length == 2)
-                                                .MakeGenericMethod(typeof(string));
+            static GroupsExpression() =>
+                ContainsMethodInfo =
+                    typeof(Enumerable)
+                       .GetRuntimeMethods()
+                       .Where(x => x.Name == nameof(Enumerable.Contains))
+                       .Single(x => x.GetParameters().Length == 2)
+                       .MakeGenericMethod(typeof(string));
 
             /// <inheritdoc />
             /// <summary>
@@ -575,13 +574,10 @@ namespace AD.ApiExtensions.Primitives
             /// </param>
             /// <exception cref="T:System.ArgumentNullException" />
             /// <exception cref="T:System.InvalidOperationException" />
-            [PublicAPI]
             internal GroupsExpression([NotNull] Expression<Func<TValue>> expression, [NotNull] IEnumerable<IGrouping<TKey, TValue>> groups)
             {
-                if (expression is null)
-                {
+                if (expression == null)
                     throw new ArgumentNullException(nameof(expression));
-                }
 
                 GroupingValues<TKey, TValue> validGroups =
                     groups.AsGrouping()
@@ -633,15 +629,11 @@ namespace AD.ApiExtensions.Primitives
                 if (_expression is ConditionalExpression conditionalResult)
                 {
                     if (conditionalResult.IfTrue == conditionalResult.IfFalse)
-                    {
                         _expression = conditionalResult.IfTrue;
-                    }
                 }
 
                 if (conditions.Any())
-                {
                     throw new InvalidOperationException($"Failed to completely aggregate to the {nameof(GroupsExpression)}.");
-                }
             }
 
             /// <inheritdoc />
@@ -659,27 +651,21 @@ namespace AD.ApiExtensions.Primitives
             /// <exception cref="ArgumentNullException" />
             [Pure]
             [NotNull]
-            private static Expression Contains([NotNull] TValue[] array, Expression body)
+            static Expression Contains([NotNull] TValue[] array, Expression body)
             {
-                if (array is null)
-                {
+                if (array == null)
                     throw new ArgumentNullException(nameof(array));
-                }
 
                 switch (array.Length)
                 {
                     case 0:
-                    {
                         return Constant(false, typeof(bool));
-                    }
+
                     case 1:
-                    {
                         return Equal(Constant(array[0], typeof(TValue)), body);
-                    }
+
                     default:
-                    {
                         return Call(ContainsMethodInfo, Constant(array, typeof(IEnumerable<TValue>)), body);
-                    }
                 }
             }
 
@@ -695,33 +681,24 @@ namespace AD.ApiExtensions.Primitives
             /// <exception cref="ArgumentNullException" />
             [Pure]
             [NotNull]
-            private static Expression Conditional([NotNull] Expression test, [NotNull] Expression ifTrue, [NotNull] Expression ifFalse)
+            static Expression Conditional([NotNull] Expression test, [NotNull] Expression ifTrue, [NotNull] Expression ifFalse)
             {
-                if (test is null)
-                {
+                if (test == null)
                     throw new ArgumentNullException(nameof(test));
-                }
 
-                if (ifTrue is null)
-                {
+                if (ifTrue == null)
                     throw new ArgumentNullException(nameof(ifTrue));
-                }
 
-                if (ifFalse is null)
-                {
+                if (ifFalse == null)
                     throw new ArgumentNullException(nameof(ifFalse));
-                }
 
                 switch (test)
                 {
                     case ConstantExpression c when c.Value is bool b:
-                    {
                         return b ? ifTrue : ifFalse;
-                    }
+
                     default:
-                    {
                         return ifTrue == ifFalse ? ifTrue : Condition(test, ifTrue, ifFalse);
-                    }
                 }
             }
         }

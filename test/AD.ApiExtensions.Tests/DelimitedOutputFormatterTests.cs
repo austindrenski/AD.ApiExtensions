@@ -18,7 +18,7 @@ namespace AD.ApiExtensions.Tests
         [InlineData("text/csv", ',')]
         [InlineData("text/psv", '|')]
         [InlineData("text/tab-separated-values", '\t')]
-        public void Test0(string contentType, char delimiter)
+        public void Test0([NotNull] string contentType, char delimiter)
         {
             HttpContext context =
                 GetHttpContext(("Content-Type", contentType));
@@ -39,6 +39,7 @@ namespace AD.ApiExtensions.Tests
                     });
 
             DelimitedOutputFormatter formatter = new DelimitedOutputFormatter();
+            formatter.Add(contentType, delimiter);
 
             // Does the formatter accept the content type?
             Assert.True(formatter.CanWriteResult(outputContext));
@@ -61,7 +62,7 @@ namespace AD.ApiExtensions.Tests
         [InlineData("text/csv", ',')]
         [InlineData("text/psv", '|')]
         [InlineData("text/tab-separated-values", '\t')]
-        public void Test1(string contentType, char delimiter)
+        public void Test1([NotNull] string contentType, char delimiter)
         {
             HttpContext context =
                 GetHttpContext(("Content-Type", contentType));
@@ -76,6 +77,7 @@ namespace AD.ApiExtensions.Tests
                     });
 
             DelimitedOutputFormatter formatter = new DelimitedOutputFormatter();
+            formatter.Add(contentType, delimiter);
 
             // Does the formatter accept the content type?
             Assert.True(formatter.CanWriteResult(outputContext));
@@ -113,11 +115,9 @@ namespace AD.ApiExtensions.Tests
 
         [Pure]
         [NotNull]
-        static OutputFormatterWriteContext GetOutputWriteContext<T>(
-            [NotNull] HttpContext context,
-            [NotNull] T value)
+        static OutputFormatterWriteContext GetOutputWriteContext<T>([NotNull] HttpContext context, [NotNull] T value)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
             if (value == null)
@@ -130,20 +130,10 @@ namespace AD.ApiExtensions.Tests
                 };
         }
 
-        /// <summary>
-        /// Reads the response body with the encoding specified by the content type header.
-        /// </summary>
-        /// <param name="response">
-        /// The response from which to read.
-        /// </param>
-        /// <returns>
-        /// The string value of the response body.
-        /// </returns>
-        /// <exception cref="ArgumentNullException" />
         [NotNull]
         static string GetBodyString([NotNull] HttpResponse response)
         {
-            if (response is null)
+            if (response == null)
                 throw new ArgumentNullException(nameof(response));
 
             if (response.Body.CanSeek)

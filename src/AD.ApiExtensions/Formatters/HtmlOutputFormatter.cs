@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -17,26 +15,17 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Net.Http.Headers;
 
 namespace AD.ApiExtensions.Formatters
 {
-    /// <inheritdoc />
+    /// <inheritdoc/>
     /// <summary>
     /// Writes an object in HTML format to the output stream.
     /// </summary>
     [PublicAPI]
-    public sealed class HtmlOutputFormatter<T> : IOutputFormatter
+    public class HtmlOutputFormatter<T> : OutputFormatter
     {
-        /// <summary>
-        /// The collection of supported media types.
-        /// </summary>
-        [NotNull]
-        public IList<MediaType> SupportedMediaTypes { get; } = new List<MediaType>
-        {
-            new MediaType("text/html"),
-            new MediaType("text/xhtml")
-        };
-
         /// <summary>
         /// The view path.
         /// </summary>
@@ -47,75 +36,96 @@ namespace AD.ApiExtensions.Formatters
         /// </summary>
         [NotNull] readonly Func<HttpContext, object, T> _modelFactory;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Constructs a new <see cref="HtmlOutputFormatter{T}"/>.
+        /// </summary>
+        /// <param name="view">The view path.</param>
+        /// <param name="modelFactory">The delegate returning a model.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="view"/></exception>
+        /// <exception cref="ArgumentNullException"><paramref name="modelFactory"/></exception>
         public HtmlOutputFormatter([NotNull] [PathReference] string view, [NotNull] Func<HttpContext, object, T> modelFactory)
         {
-            if (view is null)
+            if (view == null)
                 throw new ArgumentNullException(nameof(view));
 
-            if (modelFactory is null)
+            if (modelFactory == null)
                 throw new ArgumentNullException(nameof(modelFactory));
 
             _view = view;
             _modelFactory = modelFactory;
         }
 
-        /// <inheritdoc />
-        public bool CanWriteResult([NotNull] OutputFormatterCanWriteContext context)
+        /// <summary>
+        /// Add a content type to the collection of supported media types.
+        /// </summary>
+        /// <param name="contentType">The content type to register.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="contentType"/></exception>
+        public void Add([NotNull] string contentType)
         {
-            if (context is null)
-                throw new ArgumentNullException(nameof(context));
+            if (contentType is null)
+                throw new ArgumentNullException(nameof(contentType));
 
-            return SupportedMediaTypes.Contains(new MediaType(context.ContentType));
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse(contentType));
         }
 
         /// <inheritdoc />
-        public async Task WriteAsync([NotNull] OutputFormatterWriteContext context)
+        public override void WriteResponseHeaders([NotNull] OutputFormatterWriteContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
+
+            HttpResponse response = context.HttpContext.Response;
+            response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+        }
+
+        /// <inheritdoc />
+        [NotNull]
+        public override async Task WriteResponseBodyAsync([NotNull] OutputFormatterWriteContext context)
+        {
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
+
+            HttpContext httpContext = context.HttpContext;
 
             ActionContext actionContext =
                 new ActionContext(
-                    context.HttpContext,
-                    context.HttpContext.GetRouteData(),
+                    httpContext,
+                    httpContext.GetRouteData(),
                     new ActionDescriptor());
 
-            IRazorViewEngine razorViewEngine = context.HttpContext.RequestServices.GetService<IRazorViewEngine>();
-            ITempDataProvider tempDataProvider = context.HttpContext.RequestServices.GetService<ITempDataProvider>();
+            IServiceProvider services = httpContext.RequestServices;
 
-            ViewEngineResult viewEngineResult = razorViewEngine.FindView(actionContext, _view, false);
+            ViewEngineResult viewEngineResult =
+                services.GetRequiredService<IRazorViewEngine>()
+                        .FindView(actionContext, _view, false);
 
             if (!viewEngineResult.Success)
-            {
                 throw new FileNotFoundException(_view);
-            }
+
+            IView view = viewEngineResult.View;
 
             ViewDataDictionary viewDataDictionary =
                 new ViewDataDictionary<T>(new EmptyModelMetadataProvider(), new ModelStateDictionary())
                 {
-                    Model = _modelFactory(context.HttpContext, context.Object)
+                    Model = _modelFactory(httpContext, context.Object)
                 };
 
             TempDataDictionary tempDataDictionary =
-                new TempDataDictionary(context.HttpContext, tempDataProvider);
+                new TempDataDictionary(httpContext, services.GetRequiredService<ITempDataProvider>());
 
             using (StringWriter writer = new StringWriter())
             {
                 ViewContext viewContext =
                     new ViewContext(
                         actionContext,
-                        viewEngineResult.View,
+                        view,
                         viewDataDictionary,
                         tempDataDictionary,
                         writer,
                         new HtmlHelperOptions());
 
-                await viewEngineResult.View.RenderAsync(viewContext);
-
-                context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.OK;
-                await context.HttpContext.Response.WriteAsync(writer.ToString());
+                await view.RenderAsync(viewContext);
+                await httpContext.Response.WriteAsync(writer.ToString(), Encoding.UTF8, httpContext.RequestAborted);
             }
         }
     }

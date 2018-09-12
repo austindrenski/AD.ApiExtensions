@@ -29,7 +29,7 @@ namespace AD.ApiExtensions.Attributes
         /// </param>
         public PatternValidationAttribute([NotNull] [RegexPattern] string pattern, RegexOptions options = RegexOptions.Compiled | RegexOptions.IgnoreCase)
         {
-            if (pattern is null)
+            if (pattern == null)
             {
                 throw new ArgumentNullException(nameof(pattern));
             }
@@ -40,12 +40,12 @@ namespace AD.ApiExtensions.Attributes
         /// <inheritdoc />
         protected override ValidationResult IsValid([NotNull] object value, [NotNull] ValidationContext context)
         {
-            if (value is null)
+            if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }

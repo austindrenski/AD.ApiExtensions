@@ -44,7 +44,7 @@ namespace AD.ApiExtensions.Mvc
         /// <inheritdoc />
         public void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
         {
-            if (contentTypes is null)
+            if (contentTypes == null)
             {
                 throw new ArgumentNullException(nameof(contentTypes));
             }
@@ -53,12 +53,12 @@ namespace AD.ApiExtensions.Mvc
         /// <inheritdoc />
         public async Task OnActionExecutionAsync([NotNull] ActionExecutingContext context, [NotNull] ActionExecutionDelegate next)
         {
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (next is null)
+            if (next == null)
             {
                 throw new ArgumentNullException(nameof(next));
             }

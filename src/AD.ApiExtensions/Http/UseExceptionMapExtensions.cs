@@ -30,7 +30,7 @@ namespace AD.ApiExtensions.Http
         [NotNull]
         public static IApplicationBuilder UseExceptionMap<TException>([NotNull] this IApplicationBuilder builder, int httpStatusCode) where TException : Exception
         {
-            if (builder is null)
+            if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }

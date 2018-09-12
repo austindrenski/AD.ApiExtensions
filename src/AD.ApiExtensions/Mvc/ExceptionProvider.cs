@@ -49,7 +49,7 @@ namespace AD.ApiExtensions.Mvc
         /// </param>
         public ExceptionProvider([NotNull] string httpMethod, int httpStatusCode, int providerOrder, int filterOrder)
         {
-            if (httpMethod is null)
+            if (httpMethod == null)
             {
                 throw new ArgumentNullException(nameof(httpMethod));
             }
@@ -63,7 +63,7 @@ namespace AD.ApiExtensions.Mvc
         /// <inheritdoc />
         public void OnProvidersExecuting([NotNull] ApiDescriptionProviderContext context)
         {
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
@@ -75,7 +75,7 @@ namespace AD.ApiExtensions.Mvc
         /// </remarks>
         public void OnProvidersExecuted([NotNull] ApiDescriptionProviderContext context)
         {
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }

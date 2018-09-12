@@ -26,7 +26,7 @@ namespace AD.ApiExtensions.Mvc
         [NotNull]
         public static MvcOptions AddModelValidationFilter([NotNull] this MvcOptions options, bool objectResult = true)
         {
-            if (options is null)
+            if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }

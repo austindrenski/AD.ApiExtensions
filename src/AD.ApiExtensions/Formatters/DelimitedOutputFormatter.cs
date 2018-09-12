@@ -8,75 +8,63 @@ using System.Xml.Linq;
 using AD.IO;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 
 namespace AD.ApiExtensions.Formatters
 {
-    /// <inheritdoc cref="IOutputFormatter"/>
-    /// <inheritdoc cref="IApiResponseTypeMetadataProvider"/>
+    /// <inheritdoc/>
     /// <summary>
     /// Writes an object in delimited format to the output stream.
     /// </summary>
     [PublicAPI]
-    public class DelimitedOutputFormatter : IOutputFormatter, IApiResponseTypeMetadataProvider
+    public class DelimitedOutputFormatter : OutputFormatter
     {
         /// <summary>
-        /// The collection of supported media types.
+        /// The mapping of content types to delimiters.
         /// </summary>
-        [NotNull]
-        public IList<(MediaType MediaType, char Delimiter)> SupportedMediaTypes { get; } = new List<(MediaType, char)>
-        {
-            (new MediaType("text/csv"), ','),
-            (new MediaType("text/psv"), '|'),
-            (new MediaType("text/tab-separated-values"), '\t')
-        };
+        [NotNull] readonly Dictionary<StringSegment, char> _delimiters = new Dictionary<StringSegment, char>();
 
-        /// <inheritdoc />
-        [Pure]
-        [NotNull]
-        public IReadOnlyList<string> GetSupportedContentTypes([CanBeNull] string contentType, [CanBeNull] Type objectType)
+        /// <summary>
+        /// Add a content type and delimiter to the collection of supported media types.
+        /// </summary>
+        /// <param name="contentType">The content type to register.</param>
+        /// <param name="delimiter">The delimiter to register.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="contentType"/></exception>
+        public void Add([NotNull] string contentType, char delimiter)
         {
-            MediaType mediaType = contentType != null ? new MediaType(contentType) : default;
+            if (contentType is null)
+                throw new ArgumentNullException(nameof(contentType));
 
-            return
-                SupportedMediaTypes.Where(x => CanWriteResult(x.MediaType, mediaType))
-                                   .Select(x => $"{x.MediaType.Type}/{x.MediaType.SubType}")
-                                   .ToArray();
+            SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse(contentType));
+            _delimiters[contentType] = delimiter;
         }
 
         /// <inheritdoc />
-        [Pure]
-        public bool CanWriteResult([NotNull] OutputFormatterCanWriteContext context)
+        public override void WriteResponseHeaders([NotNull] OutputFormatterWriteContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
-            MediaType mediaType = new MediaType(context.ContentType);
-
-            return SupportedMediaTypes.Any(x => CanWriteResult(x.MediaType, mediaType));
+            HttpResponse response = context.HttpContext.Response;
+            response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
+            response.Headers.Add("header", "present");
+            response.Headers.Add("charset", Encoding.UTF8.WebName);
         }
 
         /// <inheritdoc />
-        public async Task WriteAsync([NotNull] OutputFormatterWriteContext context)
+        [NotNull]
+        public override async Task WriteResponseBodyAsync([NotNull] OutputFormatterWriteContext context)
         {
-            if (context is null)
+            if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
-            string text = GetDelimited(context.Object, GetDelimiter(context.ContentType));
+            HttpContext httpContext = context.HttpContext;
+            HttpResponse response = httpContext.Response;
 
-            context.HttpContext.Response.ContentType = MediaType.ReplaceEncoding(context.ContentType, Encoding.UTF8);
-            context.HttpContext.Response.Headers.Add("header", "present");
-            context.HttpContext.Response.Headers.Add("charset", Encoding.UTF8.WebName);
-            await context.HttpContext.Response.WriteAsync(text, Encoding.UTF8, context.HttpContext.RequestAborted);
-        }
-
-        [Pure]
-        char GetDelimiter(in StringSegment contentType)
-        {
-            MediaType mediaType = new MediaType(contentType);
-            return SupportedMediaTypes.First(x => x.MediaType.IsSubsetOf(mediaType) || mediaType.IsSubsetOf(x.MediaType)).Delimiter;
+            string text = GetDelimited(context.Object, _delimiters[context.ContentType]);
+            await response.WriteAsync(text, Encoding.UTF8, httpContext.RequestAborted);
         }
 
         /// <summary>
@@ -109,17 +97,5 @@ namespace AD.ApiExtensions.Formatters
                     return new object[] { value }.ToDelimited(true, delimiter);
             }
         }
-
-        /// <summary>
-        /// Determines whether this <see cref="IOutputFormatter" /> can produce the specified <paramref name="contentType"/>.
-        /// </summary>
-        /// <param name="supportedType">The content type that is supported.</param>
-        /// <param name="contentType">The content type to check.</param>
-        /// <returns>
-        /// True if the formatter can write the response; otherwise, false.
-        /// </returns>
-        [Pure]
-        static bool CanWriteResult(in MediaType supportedType, in MediaType contentType)
-            => supportedType.HasWildcard && contentType.IsSubsetOf(supportedType) || supportedType.IsSubsetOf(contentType);
     }
 }

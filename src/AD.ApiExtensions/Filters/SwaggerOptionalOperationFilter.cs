@@ -12,16 +12,16 @@ namespace AD.ApiExtensions.Filters
         /// <inheritdoc />
         public void Apply([NotNull] Operation operation, [NotNull] OperationFilterContext context)
         {
-            if (operation is null)
+            if (operation == null)
             {
                 throw new ArgumentNullException(nameof(operation));
             }
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (operation.Parameters is null)
+            if (operation.Parameters == null)
             {
                 return;
             }

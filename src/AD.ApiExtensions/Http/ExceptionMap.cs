@@ -34,7 +34,7 @@ namespace AD.ApiExtensions.Http
         /// <inheritdoc />
         public void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
         {
-            if (contentTypes is null)
+            if (contentTypes == null)
             {
                 throw new ArgumentNullException(nameof(contentTypes));
             }
@@ -44,12 +44,12 @@ namespace AD.ApiExtensions.Http
         [NotNull]
         public async Task InvokeAsync([NotNull] HttpContext context, [NotNull] RequestDelegate next)
         {
-            if (context is null)
+            if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (next is null)
+            if (next == null)
             {
                 throw new ArgumentNullException(nameof(next));
             }

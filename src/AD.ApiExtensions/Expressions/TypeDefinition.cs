@@ -38,7 +38,7 @@ namespace AD.ApiExtensions.Expressions
 
         internal TypeDefinition([NotNull] IEnumerable<(string Name, Type Type)> properties)
         {
-            if (properties is null)
+            if (properties == null)
             {
                 throw new ArgumentNullException(nameof(properties));
             }

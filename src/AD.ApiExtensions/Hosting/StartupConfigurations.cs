@@ -27,7 +27,7 @@ namespace AD.ApiExtensions.Hosting
         [NotNull]
         public static IWebHostBuilder UseStartup<T>([NotNull] this IWebHostBuilder builder, [NotNull] string[] args) where T : class, IStartup
         {
-            if (builder is null)
+            if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
 
             IConfiguration configuration =

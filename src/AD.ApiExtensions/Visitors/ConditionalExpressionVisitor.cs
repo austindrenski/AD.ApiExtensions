@@ -18,7 +18,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitBinary(BinaryExpression node)
         {
-            if (node is null)
+            if (node == null)
                 throw new ArgumentNullException(nameof(node));
 
             if (!(Visit(node.Left) is Expression left))
@@ -196,7 +196,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -328,7 +328,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitConditional(ConditionalExpression node)
         {
-            if (node is null)
+            if (node == null)
                 throw new ArgumentNullException(nameof(node));
 
             if (!(Visit(node.Test) is Expression test))
@@ -357,7 +357,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitMember(MemberExpression node)
         {
-            if (node is null)
+            if (node == null)
                 throw new ArgumentNullException(nameof(node));
 
             switch (node.Member)
@@ -380,7 +380,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitUnary(UnaryExpression node)
         {
-            if (node is null)
+            if (node == null)
                 throw new ArgumentNullException(nameof(node));
 
             if (!(Visit(node.Operand) is Expression operand))
@@ -496,7 +496,7 @@ namespace AD.ApiExtensions.Visitors
         [NotNull]
         static ConstantExpression CompileToBool([NotNull] Expression expression)
         {
-            if (expression is null)
+            if (expression == null)
                 throw new ArgumentNullException(nameof(expression));
 
             return Expression.Constant(Expression.Lambda<Func<bool>>(expression).Compile()(), typeof(bool));

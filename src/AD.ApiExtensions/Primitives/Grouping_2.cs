@@ -75,7 +75,7 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// True if the group is empty; otherwise false.
         /// </summary>
-        public bool IsEmpty => _values is null || _values.Length is 0;
+        public bool IsEmpty => _values == null || _values.Length is 0;
 
         /// <summary>
         /// True if the key contains a special signature indicating a group of individuals; otherwise false.
@@ -109,7 +109,7 @@ namespace AD.ApiExtensions.Primitives
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (values is null)
+            if (values == null)
             {
                 throw new ArgumentNullException(nameof(values));
             }
@@ -135,7 +135,7 @@ namespace AD.ApiExtensions.Primitives
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (values is null)
+            if (values == null)
             {
                 throw new ArgumentNullException(nameof(values));
             }
@@ -153,7 +153,7 @@ namespace AD.ApiExtensions.Primitives
         /// <exception cref="T:System.ArgumentNullException" />
         public Grouping([NotNull] IGrouping<TKey, TValue> grouping)
         {
-            if (grouping is null)
+            if (grouping == null)
             {
                 throw new ArgumentNullException(nameof(grouping));
             }
@@ -174,7 +174,7 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public static Grouping<string, TValue> CreateIndividuals([NotNull] IEnumerable<TValue> items)
         {
-            if (items is null)
+            if (items == null)
             {
                 throw new ArgumentNullException(nameof(items));
             }
@@ -225,7 +225,7 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public static Grouping<string, string> Parse([NotNull] string input)
         {
-            if (input is null)
+            if (input == null)
             {
                 throw new ArgumentNullException(nameof(input));
             }
@@ -261,7 +261,7 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public static (bool Success, Grouping<string, string> Result) TryParse([NotNull] string value)
         {
-            if (value is null)
+            if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
             }
@@ -296,7 +296,7 @@ namespace AD.ApiExtensions.Primitives
 
                 int hash = 397 * Key.GetHashCode();
 
-                if (_values is null)
+                if (_values == null)
                 {
                     return hash;
                 }
@@ -314,7 +314,7 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         public bool Equals(Grouping<TKey, TValue> other)
         {
-            if (_values is null && other._values is null)
+            if (_values == null && other._values == null)
             {
                 return true;
             }
@@ -448,7 +448,7 @@ namespace AD.ApiExtensions.Primitives
         [Pure]
         IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
         {
-            if (_values is null)
+            if (_values == null)
             {
                 yield break;
             }

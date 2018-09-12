@@ -57,7 +57,7 @@ namespace AD.ApiExtensions.Expressions
         [Pure]
         public bool ContainsKey([NotNull] Type type)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -79,7 +79,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public MethodInfo GetMethodInfoOrInput([NotNull] MethodInfo methodInfo)
         {
-            if (methodInfo is null)
+            if (methodInfo == null)
             {
                 throw new ArgumentNullException(nameof(methodInfo));
             }
@@ -108,7 +108,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public Expression GetParameterOrInput([NotNull] Expression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -130,7 +130,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public Type GetTypeOrInput([NotNull] Type type)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -160,17 +160,17 @@ namespace AD.ApiExtensions.Expressions
             [NotNull] Expression expression,
             [NotNull] IDictionary<string, MemberInfo> unavailable)
         {
-            if (memberInfo is null)
+            if (memberInfo == null)
             {
                 throw new ArgumentNullException(nameof(memberInfo));
             }
 
-            if (expression is null)
+            if (expression == null)
             {
                 throw new ArgumentNullException(nameof(expression));
             }
 
-            if (unavailable is null)
+            if (unavailable == null)
             {
                 throw new ArgumentNullException(nameof(unavailable));
             }
@@ -202,7 +202,7 @@ namespace AD.ApiExtensions.Expressions
         /// <exception cref="ArgumentNullException" />
         private bool IsUpdatedMemberName([NotNull] string name)
         {
-            if (name is null)
+            if (name == null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
@@ -226,12 +226,12 @@ namespace AD.ApiExtensions.Expressions
         /// <exception cref="ArgumentNullException" />
         public void Register([NotNull] Type type, [NotNull] Type result)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (result is null)
+            if (result == null)
             {
                 throw new ArgumentNullException(nameof(result));
             }
@@ -289,7 +289,7 @@ namespace AD.ApiExtensions.Expressions
             Pure]
         public bool TryGetParameter([NotNull] Type type, [CanBeNull] out ParameterExpression result)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
@@ -311,7 +311,7 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         private Type RecurseType([NotNull] Type type)
         {
-            if (type is null)
+            if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }

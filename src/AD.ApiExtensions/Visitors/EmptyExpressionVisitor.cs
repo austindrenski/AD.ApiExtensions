@@ -36,7 +36,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -59,7 +59,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitMember(MemberExpression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -95,7 +95,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -122,7 +122,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitNew(NewExpression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -173,7 +173,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -185,7 +185,7 @@ namespace AD.ApiExtensions.Visitors
         [Pure]
         protected override Expression VisitUnary(UnaryExpression node)
         {
-            if (node is null)
+            if (node == null)
             {
                 throw new ArgumentNullException(nameof(node));
             }
@@ -199,7 +199,7 @@ namespace AD.ApiExtensions.Visitors
                 operand = Visit(unary.Operand);
             }
 
-            if (operand is null)
+            if (operand == null)
             {
                 throw new ArgumentNullException(nameof(operand));
             }

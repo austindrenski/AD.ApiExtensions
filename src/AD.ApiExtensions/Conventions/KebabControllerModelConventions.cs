@@ -33,10 +33,10 @@ namespace AD.ApiExtensions.Conventions
         /// <exception cref="ArgumentNullException" />
         public KebabControllerModelConvention([NotNull] string home = "Home", [NotNull] string index = "Index")
         {
-            if (home is null)
+            if (home == null)
                 throw new ArgumentNullException(nameof(home));
 
-            if (index is null)
+            if (index == null)
                 throw new ArgumentNullException(nameof(index));
 
             _home = home;
@@ -46,12 +46,12 @@ namespace AD.ApiExtensions.Conventions
         /// <inheritdoc />
         public void Apply([NotNull] ControllerModel controller)
         {
-            if (controller is null)
+            if (controller == null)
                 throw new ArgumentNullException(nameof(controller));
 
             foreach (SelectorModel selector in controller.Selectors)
             {
-                if (selector.AttributeRouteModel is null)
+                if (selector.AttributeRouteModel == null)
                     selector.AttributeRouteModel = new AttributeRouteModel();
 
                 if (selector.AttributeRouteModel.Template != null)
@@ -67,7 +67,7 @@ namespace AD.ApiExtensions.Conventions
             {
                 foreach (SelectorModel selector in action.Selectors)
                 {
-                    if (selector.AttributeRouteModel is null)
+                    if (selector.AttributeRouteModel == null)
                         selector.AttributeRouteModel = new AttributeRouteModel();
 
                     if (selector.AttributeRouteModel.Template != null)

@@ -40,7 +40,7 @@ namespace AD.ApiExtensions.Attributes
         /// <exception cref="ArgumentNullException"><paramref name="name"/></exception>
         public RequiredRangeAttribute([NotNull] string name, int from, int to)
         {
-            if (name is null)
+            if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
             _name = name;

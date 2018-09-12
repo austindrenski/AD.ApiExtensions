@@ -60,11 +60,11 @@ namespace AD.ApiExtensions.Expressions
         [ItemNotNull]
         public static IOrderedQueryable<T> SortBy<T>([NotNull] [ItemNotNull] this IQueryable<T> source, [NotNull] [ItemCanBeNull] IEnumerable<string> keys)
         {
-            if (source is null)
+            if (source == null)
             {
                 throw new ArgumentNullException(nameof(source));
             }
-            if (keys is null)
+            if (keys == null)
             {
                 throw new ArgumentNullException(nameof(keys));
             }
@@ -128,7 +128,7 @@ namespace AD.ApiExtensions.Expressions
                       .GetProperties()
                       .SingleOrDefault(x => x.Name.Equals(keyName, StringComparison.OrdinalIgnoreCase));
 
-            if (propertyInfo is null)
+            if (propertyInfo == null)
             {
                 return source as IOrderedQueryable<T> ?? source.OrderBy(x => x);
             }
