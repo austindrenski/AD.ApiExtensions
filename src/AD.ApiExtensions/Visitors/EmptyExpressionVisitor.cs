@@ -18,28 +18,19 @@ namespace AD.ApiExtensions.Visitors
         /// <summary>
         /// Caches anonymous types that were encountered and modified.
         /// </summary>
-        [NotNull] private readonly TypeCache _cache;
+        [NotNull] private readonly TypeCache _cache = new TypeCache();
 
         /// <summary>
         /// Caches members that were encountered and removed.
         /// </summary>
-        [NotNull] private readonly IDictionary<string, MemberInfo> _removedMembers;
-
-        /// <inheritdoc />
-        public EmptyExpressionVisitor()
-        {
-            _cache = new TypeCache();
-            _removedMembers = new Dictionary<string, MemberInfo>();
-        }
+        [NotNull] private readonly IDictionary<string, MemberInfo> _removedMembers = new Dictionary<string, MemberInfo>();
 
         /// <inheritdoc />
         [Pure]
         protected override Expression VisitLambda<T>(Expression<T> node)
         {
             if (node == null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             ParameterExpression[] parameterExpression =
                 node.Parameters
@@ -48,9 +39,7 @@ namespace AD.ApiExtensions.Visitors
                     .ToArray();
 
             if (!(Visit(node.Body) is Expression body))
-            {
                 throw new ArgumentNullException(nameof(body));
-            }
 
             return Expression.Lambda(body, parameterExpression);
         }
@@ -60,9 +49,7 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitMember(MemberExpression node)
         {
             if (node == null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             // TODO: take another look at this.
             if (node.Expression is MemberExpression innerMemberExpression)
@@ -71,7 +58,7 @@ namespace AD.ApiExtensions.Visitors
                     throw new ArgumentNullException(nameof(type));
 
                 return
-                    _cache.TryGetParameter(type, out ParameterExpression test) && test != null
+                    _cache.TryGetParameter(type, out ParameterExpression test)
                         ? Expression.PropertyOrField(
                             Expression.PropertyOrField(test, innerMemberExpression.Member.Name),
                             node.Member.Name)
@@ -80,12 +67,10 @@ namespace AD.ApiExtensions.Visitors
             else
             {
                 if (!(node.Member.DeclaringType is Type type))
-                {
                     throw new ArgumentNullException(nameof(type));
-                }
 
                 return
-                    _cache.TryGetParameter(type, out ParameterExpression test) && test != null
+                    _cache.TryGetParameter(type, out ParameterExpression test)
                         ? Expression.PropertyOrField(test, node.Member.Name)
                         : base.VisitMember(node);
             }
@@ -96,77 +81,62 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
             if (node == null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             Expression instance = Visit(node.Object);
 
             Expression[] arguments =
                 node.Arguments
                     .Select(Visit)
-                    .Select(
-                         x =>
-                         {
-                             _cache.Register(x.Type, x.Type);
-                             return _cache.GetParameterOrInput(x);
-                         })
+                    .Select(_cache.GetOrAddParameter)
                     .ToArray();
 
-            MethodInfo method = _cache.GetMethodInfoOrInput(node.Method);
+            MethodInfo method = _cache.GetOrUpdate(node.Method);
 
             return Expression.Call(instance, method, arguments);
         }
 
         /// <inheritdoc />
         [Pure]
-        protected override Expression VisitNew(NewExpression node)
+        protected override Expression VisitNew(NewExpression e)
         {
-            if (node == null)
-            {
-                throw new ArgumentNullException(nameof(node));
-            }
+            if (e == null)
+                throw new ArgumentNullException(nameof(e));
 
-            if (node.Arguments.Count is 0)
-            {
-                return node;
-            }
+            if (e.Arguments.Count == 0)
+                return e;
 
             (MemberInfo Member, Expression Argument)[] assignments =
-                node.Arguments
-                    .Zip(node.Members, (a, m) => (Member: m, Argument: a))
-                    .Where(x => !_cache.IsLogicallyDefault(x.Member, x.Argument, _removedMembers))
-                    .Select(x => (x.Member, Visit(x.Argument)))
-                    .ToArray();
+                e.Arguments
+                 .Zip(e.Members, (a, m) => (Member: m, Argument: a))
+                 .Where(x => !_cache.IsLogicallyDefault(x.Member, x.Argument, _removedMembers))
+                 .Select(x => (x.Member, Visit(x.Argument)))
+                 .ToArray();
 
-            if (assignments.Length == node.Arguments.Count)
+            if (assignments.Length == e.Arguments.Count)
             {
-                if (!assignments.Any(x => x.Member.DeclaringType is Type type && _cache.ContainsKey(type)))
+                if (!assignments.Any(x => _cache.ContainsKey(x.Member.DeclaringType)))
                 {
-                    if (assignments.Zip(node.Arguments, (x, y) => x.Argument == y).All(x => x))
-                    {
-                        return node.Update(assignments.Select(x => x.Argument));
-                    }
+                    if (assignments.Zip(e.Arguments, (x, y) => x.Argument == y).All(x => x))
+                        return e.Update(assignments.Select(x => x.Argument));
                 }
             }
 
             // TODO: This is the current "unavailable" methodology. Fix this later.
-            IEnumerable<string> toAdd = node.Members.Select(x => x.Name).Except(assignments.Select(x => x.Member.Name)).Except(_removedMembers.Values.Select(x => x.Name));
+            IEnumerable<string> toAdd = e.Members.Select(x => x.Name).Except(assignments.Select(x => x.Member.Name)).Except(_removedMembers.Values.Select(x => x.Name));
             foreach (string removed in toAdd)
             {
-                _removedMembers.Add(removed, node.Members.Single(x => x.Name == removed));
+                _removedMembers.Add(removed, e.Members.Single(x => x.Name == removed));
             }
 
-            Type next =
-                assignments.Select(x => (x.Member.Name, x.Argument.Type))
-                           .CreateNew();
+            Type next = TypeDefinition.GetOrAdd(assignments);
 
-            _cache.Register(node.Type, next);
+            _cache.Register(e.Type, next);
 
             return
                 Expression.MemberInit(
                     Expression.New(next.GetEmptyConstructor()),
-                    assignments.Select(x => Expression.Bind(next.GetPropertyInfo(x.Member), x.Argument)));
+                    assignments.Select(x => Expression.Bind(next.GetRuntimeProperty(x.Member.Name), x.Argument)));
         }
 
         /// <inheritdoc />
@@ -174,11 +144,9 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitParameter(ParameterExpression node)
         {
             if (node == null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
-            return _cache.TryGetParameter(node.Type, out ParameterExpression result) && result != null ? result : base.VisitParameter(node);
+            return _cache.TryGetParameter(node.Type, out ParameterExpression result) ? result : base.VisitParameter(node);
         }
 
         /// <inheritdoc />
@@ -186,23 +154,17 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitUnary(UnaryExpression node)
         {
             if (node == null)
-            {
                 throw new ArgumentNullException(nameof(node));
-            }
 
             Expression operand = Visit(node.Operand);
 
             // TODO: Is this universal? Recursive?
             // Lifting results that are double quoted.
             if (node is UnaryExpression unary && unary.NodeType is ExpressionType.Quote)
-            {
                 operand = Visit(unary.Operand);
-            }
 
             if (operand == null)
-            {
                 throw new ArgumentNullException(nameof(operand));
-            }
 
             return Expression.MakeUnary(node.NodeType, operand, node.Type, node.Method);
         }

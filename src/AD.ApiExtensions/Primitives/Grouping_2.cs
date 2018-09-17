@@ -27,37 +27,39 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// The regular expression string to match strings in the form: NAME(MEMBER,MEMBER,MEMBER).
         /// </summary>
-        [NotNull] private const string NameMembersRegexString = "(?<Key>[A-z0-9_]+)\\((?<Members>[A-z0-9,]*)\\)";
+        [NotNull] const string NameMembersRegexString = "(?<Key>[A-z0-9_]+)\\((?<Members>[A-z0-9,]*)\\)";
 
         /// <summary>
         /// The regular expression string to match strings in the form: MEMBER-MEMBER-MEMBER.
         /// </summary>
-        [NotNull] private const string MembersRegexString = "(?<Member>[A-z0-9]+)";
+        [NotNull] const string MembersRegexString = "(?<Member>[A-z0-9]+)";
 
         /// <summary>
         /// The name of the individuals group.
         /// </summary>
-        [NotNull] private const string IndividualsGroupName = "<>__individuals";
+        [NotNull] const string IndividualsGroupName = "<>__individuals";
 
         /// <summary>
         /// The regex applied to match the name and members of a group.
         /// </summary>
-        [NotNull] private static readonly Regex OuterRegex;
+        [NotNull] static readonly Regex OuterRegex =
+            new Regex(NameMembersRegexString, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// The regex applied to match the members of group.
         /// </summary>
-        [NotNull] private static readonly Regex InnerRegex;
+        [NotNull] static readonly Regex InnerRegex =
+            new Regex(MembersRegexString, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// The default zero-length values array.
         /// </summary>
-        [NotNull] private static readonly TValue[] DefaultValuesArray;
+        [NotNull] static readonly TValue[] DefaultValuesArray = new TValue[0];
 
         /// <summary>
         /// The values array or null.
         /// </summary>
-        [CanBeNull] private readonly TValue[] _values;
+        [CanBeNull] readonly TValue[] _values;
 
         /// <inheritdoc />
         public TKey Key { get; }
@@ -83,16 +85,6 @@ namespace AD.ApiExtensions.Primitives
         public bool IsIndividuals => IsIndividualsGroup(Key);
 
         /// <summary>
-        /// Initializes static resources.
-        /// </summary>
-        static Grouping()
-        {
-            DefaultValuesArray = new TValue[0];
-            OuterRegex = new Regex(NameMembersRegexString, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
-            InnerRegex = new Regex(MembersRegexString, RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
-        }
-
-        /// <summary>
         /// Constructs a <see cref="T:ApiLibrary.Grouping{TKey, TValue}" /> from a key and a value array.
         /// </summary>
         /// <param name="key">
@@ -101,18 +93,15 @@ namespace AD.ApiExtensions.Primitives
         /// <param name="values">
         /// The grouping values.
         /// </param>
-        /// <exception cref="T:System.ArgumentNullException" />
+        /// <exception cref="ArgumentNullException"><paramref name="key"/></exception>
+        /// <exception cref="ArgumentNullException"><paramref name="values"/></exception>
         public Grouping([NotNull] TKey key, [NotNull] IEnumerable<TValue> values)
         {
             if (key == null)
-            {
                 throw new ArgumentNullException(nameof(key));
-            }
 
             if (values == null)
-            {
                 throw new ArgumentNullException(nameof(values));
-            }
 
             Key = key;
             _values = values.ToArray();
@@ -127,18 +116,15 @@ namespace AD.ApiExtensions.Primitives
         /// <param name="values">
         /// The grouping values.
         /// </param>
-        /// <exception cref="T:System.ArgumentNullException" />
+        /// <exception cref="ArgumentNullException"><paramref name="key"/></exception>
+        /// <exception cref="ArgumentNullException"><paramref name="values"/></exception>
         public Grouping([NotNull] TKey key, [NotNull] params TValue[] values)
         {
             if (key == null)
-            {
                 throw new ArgumentNullException(nameof(key));
-            }
 
             if (values == null)
-            {
                 throw new ArgumentNullException(nameof(values));
-            }
 
             Key = key;
             _values = values.ToArray();
@@ -150,13 +136,11 @@ namespace AD.ApiExtensions.Primitives
         /// <param name="grouping">
         /// The grouping to store.
         /// </param>
-        /// <exception cref="T:System.ArgumentNullException" />
+        /// <exception cref="ArgumentNullException"><paramref name="grouping"/></exception>
         public Grouping([NotNull] IGrouping<TKey, TValue> grouping)
         {
             if (grouping == null)
-            {
                 throw new ArgumentNullException(nameof(grouping));
-            }
 
             Key = grouping.Key;
             _values = grouping.ToArray();
@@ -171,13 +155,12 @@ namespace AD.ApiExtensions.Primitives
         /// <returns>
         /// A <see cref="Grouping{TKey, TValue}"/> whose key is set to a special string indicating that the group is a collection of individuals.
         /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="items"/></exception>
         [Pure]
         public static Grouping<string, TValue> CreateIndividuals([NotNull] IEnumerable<TValue> items)
         {
             if (items == null)
-            {
                 throw new ArgumentNullException(nameof(items));
-            }
 
             return new Grouping<string, TValue>(IndividualsGroupName, items);
         }
@@ -186,10 +169,7 @@ namespace AD.ApiExtensions.Primitives
         /// Returns true if the key contains a special signature; otherwise false.
         /// </summary>
         [Pure]
-        public static bool IsIndividualsGroup([CanBeNull] TKey key)
-        {
-            return IndividualsGroupName.Equals(key);
-        }
+        public static bool IsIndividualsGroup([CanBeNull] TKey key) => IndividualsGroupName.Equals(key);
 
         /// <summary>
         /// Returns the values as an array.
@@ -199,17 +179,11 @@ namespace AD.ApiExtensions.Primitives
         /// </returns>
         [Pure]
         [NotNull]
-        public TValue[] ToArray()
-        {
-            return _values?.ToArray() ?? DefaultValuesArray;
-        }
+        public TValue[] ToArray() => _values?.ToArray() ?? DefaultValuesArray;
 
         /// <inheritdoc />
         [Pure]
-        public override string ToString()
-        {
-            return $"{Key}({string.Join(",", _values ?? DefaultValuesArray)})";
-        }
+        public override string ToString() => $"{Key}({string.Join(",", _values ?? DefaultValuesArray)})";
 
         /// <summary>
         /// Parses a grouping from the string.
@@ -220,20 +194,15 @@ namespace AD.ApiExtensions.Primitives
         /// <returns>
         /// A <see cref="T:ApiLibrary.Grouping{TKey, TValue}" /> containing the features.
         /// </returns>
-        /// <exception cref="T:System.ArgumentNullException" />
-        /// <exception cref="T:System.ArgumentException" />
+        /// <exception cref="ArgumentNullException"><paramref name="input"/></exception>
         [Pure]
         public static Grouping<string, string> Parse([NotNull] string input)
         {
             if (input == null)
-            {
                 throw new ArgumentNullException(nameof(input));
-            }
 
             if (!OuterRegex.IsMatch(input))
-            {
                 return new Grouping<string, string>(input, input);
-            }
 
             Match parse = OuterRegex.Match(input);
 
@@ -256,20 +225,15 @@ namespace AD.ApiExtensions.Primitives
         /// <returns>
         /// True if the value was able to be parsed; otherwise false.
         /// </returns>
-        /// <exception cref="T:System.ArgumentNullException" />
-        /// <exception cref="T:System.ArgumentException" />
+        /// <exception cref="ArgumentNullException"><paramref name="value"/></exception>
         [Pure]
         public static (bool Success, Grouping<string, string> Result) TryParse([NotNull] string value)
         {
             if (value == null)
-            {
                 throw new ArgumentNullException(nameof(value));
-            }
 
             if (!OuterRegex.IsMatch(value))
-            {
                 return (false, default);
-            }
 
             Match parse = OuterRegex.Match(value);
 
@@ -290,16 +254,12 @@ namespace AD.ApiExtensions.Primitives
             unchecked
             {
                 if (Key == null)
-                {
                     return 0;
-                }
 
                 int hash = 397 * Key.GetHashCode();
 
                 if (_values == null)
-                {
                     return hash;
-                }
 
                 for (int i = 0; i < _values.Length; i++)
                 {
@@ -313,145 +273,88 @@ namespace AD.ApiExtensions.Primitives
         /// <inheritdoc />
         [Pure]
         public bool Equals(Grouping<TKey, TValue> other)
-        {
-            if (_values == null && other._values == null)
-            {
-                return true;
-            }
-
-            return Key.Equals(other.Key) && this.SequenceEqual(other);
-        }
+            => _values == null && other._values == null || Key.Equals(other.Key) && this.SequenceEqual(other);
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(IGrouping<TKey, TValue> other)
-        {
-            return other != null && Key.Equals(other.Key) && this.SequenceEqual(other);
-        }
+        public bool Equals(IGrouping<TKey, TValue> other) => other != null && Key.Equals(other.Key) && this.SequenceEqual(other);
 
         /// <inheritdoc />
         [Pure]
-        public override bool Equals(object obj)
-        {
-            return obj is Grouping<TKey, TValue> values && Equals(values);
-        }
+        public override bool Equals(object obj) => obj is Grouping<TKey, TValue> values && Equals(values);
 
         /// <summary>
         /// Compares two values.
         /// </summary>
-        /// <param name="left">
-        /// The left value to compare.
-        /// </param>
-        /// <param name="right">
-        /// The right value to compare.
-        /// </param>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
         /// <returns>
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator ==(Grouping<TKey, TValue> left, Grouping<TKey, TValue> right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Grouping<TKey, TValue> left, Grouping<TKey, TValue> right) => left.Equals(right);
 
         /// <summary>
         /// Compares two values.
         /// </summary>
-        /// <param name="left">
-        /// The left value to compare.
-        /// </param>
-        /// <param name="right">
-        /// The right value to compare.
-        /// </param>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
         /// <returns>
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator !=(Grouping<TKey, TValue> left, Grouping<TKey, TValue> right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(Grouping<TKey, TValue> left, Grouping<TKey, TValue> right) => !left.Equals(right);
 
         /// <summary>
         /// Compares two values.
         /// </summary>
-        /// <param name="left">
-        /// The left value to compare.
-        /// </param>
-        /// <param name="right">
-        /// The right value to compare.
-        /// </param>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
         /// <returns>
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator ==(Grouping<TKey, TValue> left, [CanBeNull] IGrouping<TKey, TValue> right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Grouping<TKey, TValue> left, [CanBeNull] IGrouping<TKey, TValue> right) => left.Equals(right);
 
         /// <summary>
         /// Compares two values.
         /// </summary>
-        /// <param name="left">
-        /// The left value to compare.
-        /// </param>
-        /// <param name="right">
-        /// The right value to compare.
-        /// </param>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
         /// <returns>
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator !=(Grouping<TKey, TValue> left, [CanBeNull] IGrouping<TKey, TValue> right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(Grouping<TKey, TValue> left, [CanBeNull] IGrouping<TKey, TValue> right) => !left.Equals(right);
 
         /// <summary>
         /// Compares two values.
         /// </summary>
-        /// <param name="left">
-        /// The left value to compare.
-        /// </param>
-        /// <param name="right">
-        /// The right value to compare.
-        /// </param>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
         /// <returns>
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator ==([CanBeNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right)
-        {
-            return right.Equals(left);
-        }
+        public static bool operator ==([CanBeNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right) => right.Equals(left);
 
         /// <summary>
         /// Compares two values.
         /// </summary>
-        /// <param name="left">
-        /// The left value to compare.
-        /// </param>
-        /// <param name="right">
-        /// The right value to compare.
-        /// </param>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
         /// <returns>
         /// True if equal; otherwise false.
         /// </returns>
         [Pure]
-        public static bool operator !=([CanBeNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right)
-        {
-            return !right.Equals(left);
-        }
+        public static bool operator !=([CanBeNull] IGrouping<TKey, TValue> left, Grouping<TKey, TValue> right) => !right.Equals(left);
 
         /// <inheritdoc />
         [Pure]
         IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
         {
             if (_values == null)
-            {
                 yield break;
-            }
 
             for (int i = 0; i < _values.Length; i++)
             {
@@ -461,9 +364,6 @@ namespace AD.ApiExtensions.Primitives
 
         /// <inheritdoc />
         [Pure]
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable<TValue>) this).GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<TValue>) this).GetEnumerator();
     }
 }

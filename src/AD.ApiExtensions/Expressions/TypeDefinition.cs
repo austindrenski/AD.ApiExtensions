@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -9,97 +11,248 @@ using JetBrains.Annotations;
 namespace AD.ApiExtensions.Expressions
 {
     /// <summary>
-    /// Private structure to construct a new type.
+    /// Defines a new anonymous type.
     /// </summary>
-    readonly struct TypeDefinition
+    [PublicAPI]
+    public readonly struct TypeDefinition : IEquatable<TypeDefinition>
     {
-        [NotNull] private const string AnonymousAssemblyName = "AD.ApiExtensions.Anonymous";
+        [NotNull] const string AnonymousAssemblyName = "AD.ApiExtensions.AnonymousTypes";
 
-        [NotNull] private const TypeAttributes AnonymousTypeAttributes = TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.SequentialLayout | TypeAttributes.Serializable;
+        [NotNull] static readonly ModuleBuilder ModuleBuilder =
+            AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(AnonymousAssemblyName), AssemblyBuilderAccess.Run)
+                           .DefineDynamicModule(AnonymousAssemblyName);
 
-        [NotNull] private static readonly ModuleBuilder ModuleBuilder;
+        /// <summary>
+        /// The previously defined types.
+        /// </summary>
+        [NotNull] static readonly ConcurrentDictionary<int, Type> Types = new ConcurrentDictionary<int, Type>();
 
-        [NotNull] private static readonly ConstructorInfo BaseConstructorInfo;
+        /// <summary>
+        /// Tracks the number of type definitions created.
+        /// </summary>
+        static long _typeCount;
 
-        [NotNull] private readonly TypeBuilder _typeBuilder;
+        /// <summary>
+        /// The type defined by the <see cref="TypeDefinition"/>.
+        /// </summary>
+        [NotNull] readonly TypeInfo _type;
 
-        private static long _typeCounter;
-
-        static TypeDefinition()
+        /// <summary>
+        /// Constructs a new <see cref="TypeDefinition"/> instance.
+        /// </summary>
+        /// <param name="properties">The name-type pairs to construct instance properties.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="properties"/></exception>
+        TypeDefinition([NotNull] (string Name, Type Type)[] properties)
         {
-            ModuleBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(AnonymousAssemblyName), AssemblyBuilderAccess.Run).DefineDynamicModule(AnonymousAssemblyName);
-            BaseConstructorInfo = typeof(object).GetEmptyConstructor();
+            TypeBuilder typeBuilder =
+                ModuleBuilder.DefineType(
+                    $"f__Anonymous__{Interlocked.Increment(ref _typeCount)}",
+                    TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.SequentialLayout | TypeAttributes.Serializable,
+                    typeof(ValueType));
+
+            DefineConstructor(typeBuilder, properties);
+
+            _type = typeBuilder.CreateTypeInfo();
         }
 
-        internal TypeDefinition([NotNull] IEnumerable<PropertyInfo> properties)
-            : this(properties.Select(x => (x.Name, x.PropertyType)))
-        {
-        }
-
-        internal TypeDefinition([NotNull] IEnumerable<(string Name, Type Type)> properties)
+        /// <summary>
+        /// Creates a new anonymous type similar to CLR-generated anonymous types.
+        /// </summary>
+        /// <param name="properties">The property information to include in the new type.</param>
+        /// <returns>
+        /// A new type that behaves like a CLR-generated anonymous type.
+        /// </returns>
+        /// <remarks>
+        /// The type is named with the pattern: f__Anonymous__{int}.
+        /// Unlike CLR-generated anonymous types, the created type is serializable.
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="properties"/></exception>
+        [NotNull]
+        public static Type GetOrAdd([NotNull] IEnumerable<(MemberInfo Member, Expression Expression)> properties)
         {
             if (properties == null)
-            {
                 throw new ArgumentNullException(nameof(properties));
-            }
 
-            long next = Interlocked.Increment(ref _typeCounter);
-
-            _typeBuilder = ModuleBuilder.DefineType($"f__Anonymous__{next}", AnonymousTypeAttributes, typeof(ValueType));
-            DefineConstructor();
-            DefineConstructorForConstructorInjection(properties);
+            return GetOrAdd(properties.Select(x => (x.Member.Name, x.Expression.Type)));
         }
 
         /// <summary>
-        /// Implicitly casts from <see cref="T:AD.ApiExtensions.Expressions.TypeDefinition"/> to <see cref="T:System.Reflection.TypeInfo"/>.
+        /// Creates a new anonymous type similar to CLR-generated anonymous types.
         /// </summary>
-        public static explicit operator TypeInfo(TypeDefinition typeDefinition)
+        /// <param name="properties">The property information to include in the new type.</param>
+        /// <returns>
+        /// A new type that behaves like a CLR-generated anonymous type.
+        /// </returns>
+        /// <remarks>
+        /// The type is named with the pattern: f__Anonymous__{int}.
+        /// Unlike CLR-generated anonymous types, the created type is serializable.
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="properties"/></exception>
+        [NotNull]
+        public static Type GetOrAdd([NotNull] IEnumerable<(string Name, Type Type)> properties)
         {
-            return typeDefinition._typeBuilder.CreateTypeInfo();
-        }
+            if (properties == null)
+                throw new ArgumentNullException(nameof(properties));
 
-        /// <summary>
-        /// Defines a default parameterless constructor.
-        /// </summary>
-        private void DefineConstructor()
-        {
-            _typeBuilder.DefineDefaultConstructor(MethodAttributes.Public);
-        }
-
-        /// <summary>
-        /// Defines a constructor that assigns values to the specified members during construction.
-        /// </summary>
-        /// <param name="properties">An array of <see cref="PropertyInfo"/> describing the properties to be injected during construction.</param>
-        private void DefineConstructorForConstructorInjection([NotNull] IEnumerable<(string Name, Type Type)> properties)
-        {
             (string Name, Type Type)[] propertyInfo = properties as (string Name, Type Type)[] ?? properties.ToArray();
-            MemberDefinition[] memberDefinitions = new MemberDefinition[propertyInfo.Length];
-            Type[] memberTypes = new Type[propertyInfo.Length];
 
-            for (int i = 0; i < memberDefinitions.Length; i++)
+            int hashCode = propertyInfo.Aggregate(397, (current, next) => unchecked(current ^ (397 * next.GetHashCode())));
+
+            return Types.GetOrAdd(hashCode, _ => new TypeDefinition(propertyInfo));
+        }
+
+        /// <summary>
+        /// Casts the <see cref="TypeDefinition"/> to its internal <see cref="TypeInfo"/>.
+        /// </summary>
+        /// <param name="definition">The <see cref="TypeDefinition"/> to cast.</param>
+        /// <returns>
+        /// The internal <see cref="TypeInfo"/> of the <see cref="TypeDefinition"/>.
+        /// </returns>
+        [Pure]
+        [NotNull]
+        public static implicit operator TypeInfo(TypeDefinition definition) => definition._type;
+
+        /// <inheritdoc />
+        public override int GetHashCode() => _type.GetHashCode();
+
+        /// <inheritdoc />
+        public bool Equals(TypeDefinition other) => _type == other._type;
+
+        /// <inheritdoc />
+        public override bool Equals(object obj) => obj is TypeDefinition type && Equals(type);
+
+        /// <summary>
+        /// Compares two values.
+        /// </summary>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
+        /// <returns>
+        /// True if equal; otherwise false.
+        /// </returns>
+        [Pure]
+        public static bool operator ==(TypeDefinition left, TypeDefinition right) => left.Equals(right);
+
+        /// <summary>
+        /// Compares two values.
+        /// </summary>
+        /// <param name="left">The left value to compare.</param>
+        /// <param name="right">The right value to compare.</param>
+        /// <returns>
+        /// True if equal; otherwise false.
+        /// </returns>
+        [Pure]
+        public static bool operator !=(TypeDefinition left, TypeDefinition right) => !left.Equals(right);
+
+        /// <summary>
+        /// Defines a default constructor and an overloaded constructor that assigns the specified members.
+        /// </summary>
+        /// <param name="builder">The <see cref="TypeBuilder"/> to mutate.</param>
+        /// <param name="properties">The properties to be injected during construction.</param>
+        static void DefineConstructor([NotNull] TypeBuilder builder, [NotNull] (string Name, Type Type)[] properties)
+        {
+            FieldInfo[] fields = new FieldInfo[properties.Length];
+            Type[] fieldTypes = new Type[properties.Length];
+
+            for (int i = 0; i < fields.Length; i++)
             {
-                memberDefinitions[i] = new MemberDefinition(propertyInfo[i], _typeBuilder);
-                memberTypes[i] = (Type) memberDefinitions[i];
+                fields[i] = new MemberDefinition(properties[i].Name, properties[i].Type, builder);
+                fieldTypes[i] = fields[i].FieldType;
             }
 
-            ILGenerator constructorIl =
-                _typeBuilder.DefineConstructor(
-                                MethodAttributes.PrivateScope,
-                                CallingConventions.Standard,
-                                memberTypes)
-                            .GetILGenerator();
+            ILGenerator ctorIl =
+                builder.DefineConstructor(MethodAttributes.PrivateScope, CallingConventions.Standard, fieldTypes)
+                       .GetILGenerator();
 
-            constructorIl.Emit(OpCodes.Ldarg_0);
-            constructorIl.Emit(OpCodes.Call, BaseConstructorInfo);
+            ctorIl.Emit(OpCodes.Ldarg_0);
+            ctorIl.Emit(OpCodes.Call, builder.DefineDefaultConstructor(MethodAttributes.Public));
 
-            for (int i = 0; i < memberDefinitions.Length; i++)
+            for (int i = 0; i < fields.Length; i++)
             {
-                constructorIl.Emit(OpCodes.Ldarg_0);
-                constructorIl.Emit(OpCodes.Ldarg, i + 1);
-                constructorIl.Emit(OpCodes.Stfld, (FieldBuilder) memberDefinitions[i]);
+                ctorIl.Emit(OpCodes.Ldarg_0);
+                ctorIl.Emit(OpCodes.Ldarg, i + 1);
+                ctorIl.Emit(OpCodes.Stfld, fields[i]);
             }
 
-            constructorIl.Emit(OpCodes.Ret);
+            ctorIl.Emit(OpCodes.Ret);
+        }
+
+        /// <summary>
+        /// Private structure to define a public property and a backing field.
+        /// </summary>
+        private readonly struct MemberDefinition
+        {
+            /// <summary>
+            /// Defines the method attributes needed to generate CLR compliant getter and setters in IL code.
+            /// </summary>
+            [NotNull] const MethodAttributes GetSetAttributes = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+
+            /// <summary>
+            /// The backing field for the public property.
+            /// </summary>
+            [NotNull] readonly FieldInfo _fieldInfo;
+
+            /// <summary>
+            /// Constructs an instance of the <see cref="MemberDefinition"/> struct.
+            /// </summary>
+            /// <param name="propertyName">The name of the property.</param>
+            /// <param name="propertyType">The type of the property.</param>
+            /// <param name="typeBuilder">The type builder to mutate.</param>
+            internal MemberDefinition([NotNull] string propertyName, [NotNull] Type propertyType, [NotNull] TypeBuilder typeBuilder)
+            {
+                _fieldInfo = typeBuilder.DefineField($"_{propertyName}", propertyType, FieldAttributes.Private);
+                PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(propertyName, PropertyAttributes.None, _fieldInfo.FieldType, Type.EmptyTypes);
+
+                DefineGetter(typeBuilder, propertyBuilder, _fieldInfo);
+                DefineSetter(typeBuilder, propertyBuilder, _fieldInfo);
+            }
+
+            /// <summary>
+            /// Casts the <see cref="MemberDefinition"/> to its internal <see cref="FieldInfo"/>.
+            /// </summary>
+            /// <param name="definition">The <see cref="MemberDefinition"/> to cast.</param>
+            /// <returns>
+            /// The internal <see cref="FieldInfo"/> of the <see cref="MemberDefinition"/>.
+            /// </returns>
+            [Pure]
+            [NotNull]
+            public static implicit operator FieldInfo(MemberDefinition definition) => definition._fieldInfo;
+
+            /// <summary>
+            /// Defines the method body the GetMethod of this member definition.
+            /// </summary>
+            static void DefineGetter(
+                [NotNull] TypeBuilder builder,
+                [NotNull] PropertyBuilder propertyBuilder,
+                [NotNull] FieldInfo field)
+            {
+                MethodBuilder get = builder.DefineMethod($"get{field.Name}", GetSetAttributes, field.FieldType, Type.EmptyTypes);
+                ILGenerator methodIl = get.GetILGenerator();
+
+                methodIl.Emit(OpCodes.Ldarg_0);
+                methodIl.Emit(OpCodes.Ldfld, field);
+                methodIl.Emit(OpCodes.Ret);
+
+                propertyBuilder.SetGetMethod(get);
+            }
+
+            /// <summary>
+            /// Defines the method body the SetMethod of this member definition.
+            /// </summary>
+            static void DefineSetter(
+                [NotNull] TypeBuilder builder,
+                [NotNull] PropertyBuilder propertyBuilder,
+                [NotNull] FieldInfo field)
+            {
+                MethodBuilder set = builder.DefineMethod($"set{field.Name}", GetSetAttributes, null, new Type[] { field.FieldType });
+                ILGenerator methodIl = set.GetILGenerator();
+
+                methodIl.Emit(OpCodes.Ldarg_0);
+                methodIl.Emit(OpCodes.Ldarg_1);
+                methodIl.Emit(OpCodes.Stfld, field);
+                methodIl.Emit(OpCodes.Ret);
+
+                propertyBuilder.SetSetMethod(set);
+            }
         }
     }
 }
