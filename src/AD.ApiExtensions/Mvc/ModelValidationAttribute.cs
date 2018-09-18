@@ -21,7 +21,7 @@ namespace AD.ApiExtensions.Mvc
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class ModelValidationAttribute : Attribute, IAsyncActionFilter, IApiResponseMetadataProvider
     {
-        private readonly bool _objectResult;
+        readonly bool _objectResult;
 
         /// <inheritdoc />
         public Type Type { get; } = typeof(Dictionary<string, string[]>);
@@ -33,35 +33,24 @@ namespace AD.ApiExtensions.Mvc
         /// <summary>
         /// Constructs a <see cref="ModelValidationAttribute"/>.
         /// </summary>
-        /// <param name="objectResult">
-        /// True to return a <see cref="BadRequestObjectResult"/>; otherwise false to return a <see cref="BadRequestResult"/>.
-        /// </param>
-        public ModelValidationAttribute(bool objectResult = true)
-        {
-            _objectResult = objectResult;
-        }
+        /// <param name="objectResult">True to return a <see cref="BadRequestObjectResult"/>; otherwise false to return a <see cref="BadRequestResult"/>.</param>
+        public ModelValidationAttribute(bool objectResult = true) => _objectResult = objectResult;
 
         /// <inheritdoc />
         public void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
         {
             if (contentTypes == null)
-            {
                 throw new ArgumentNullException(nameof(contentTypes));
-            }
         }
 
         /// <inheritdoc />
         public async Task OnActionExecutionAsync([NotNull] ActionExecutingContext context, [NotNull] ActionExecutionDelegate next)
         {
             if (context == null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (next == null)
-            {
                 throw new ArgumentNullException(nameof(next));
-            }
 
             if (context.ModelState.IsValid)
             {

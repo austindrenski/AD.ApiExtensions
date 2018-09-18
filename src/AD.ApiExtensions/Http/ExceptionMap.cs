@@ -15,7 +15,8 @@ namespace AD.ApiExtensions.Http
     public class ExceptionMap<TException> : IMiddleware, IApiResponseMetadataProvider where TException : Exception
     {
         /// <inheritdoc />
-        public Type Type { get; } = typeof(void);
+        [NotNull]
+        public Type Type => typeof(void);
 
         /// <inheritdoc />
         public int StatusCode { get; }
@@ -23,21 +24,14 @@ namespace AD.ApiExtensions.Http
         /// <summary>
         /// Constructs a <see cref="ExceptionMap{TException}"/> with the specified order value.
         /// </summary>
-        /// <param name="httpStatusCode">
-        /// The HTTP status code.
-        /// </param>
-        public ExceptionMap(int httpStatusCode)
-        {
-            StatusCode = httpStatusCode;
-        }
+        /// <param name="httpStatusCode">The HTTP status code.</param>
+        public ExceptionMap(int httpStatusCode) => StatusCode = httpStatusCode;
 
         /// <inheritdoc />
         public void SetContentTypes([NotNull] MediaTypeCollection contentTypes)
         {
             if (contentTypes == null)
-            {
                 throw new ArgumentNullException(nameof(contentTypes));
-            }
         }
 
         /// <inheritdoc />
@@ -45,14 +39,10 @@ namespace AD.ApiExtensions.Http
         public async Task InvokeAsync([NotNull] HttpContext context, [NotNull] RequestDelegate next)
         {
             if (context == null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (next == null)
-            {
                 throw new ArgumentNullException(nameof(next));
-            }
 
             try
             {
@@ -61,9 +51,7 @@ namespace AD.ApiExtensions.Http
             catch (TException)
             {
                 if (context.Response.HasStarted)
-                {
                     throw;
-                }
 
                 context.Response.StatusCode = StatusCode;
             }

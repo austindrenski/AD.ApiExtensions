@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace AD.ApiExtensions.Expressions
+namespace AD.ApiExtensions.Types
 {
     /// <summary>
     /// Provides extensions to access type information.

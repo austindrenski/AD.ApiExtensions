@@ -17,44 +17,31 @@ namespace AD.ApiExtensions.Http
         /// <summary>
         /// True if HTTP HEAD responses should transmit content headers.
         /// </summary>
-        private readonly bool _sendContentHeaders;
+        readonly bool _sendContentHeaders;
 
         /// <summary>
         /// Constructs a <see cref="HeadMethod"/>.
         /// </summary>
-        /// <param name="sendContentHeaders">
-        /// True if HTTP HEAD responses should transmit content headers.
-        /// </param>
-        public HeadMethod(bool sendContentHeaders = true)
-        {
-            _sendContentHeaders = sendContentHeaders;
-        }
+        /// <param name="sendContentHeaders">True if HTTP HEAD responses should transmit content headers.</param>
+        public HeadMethod(bool sendContentHeaders = true) => _sendContentHeaders = sendContentHeaders;
 
         /// <inheritdoc />
         [NotNull]
         public async Task InvokeAsync([NotNull] HttpContext context, [NotNull] RequestDelegate next)
         {
             if (context == null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             if (next == null)
-            {
                 throw new ArgumentNullException(nameof(next));
-            }
 
             if (HttpMethods.IsHead(context.Request.Method))
-            {
                 context.Response.Body = _sendContentHeaders ? new ObservableNullStream() : Stream.Null;
-            }
 
             await next(context);
 
             if (HttpMethods.IsHead(context.Request.Method))
-            {
                 context.Response.ContentLength = _sendContentHeaders ? context.Response.Body.Length : default;
-            }
         }
     }
 }

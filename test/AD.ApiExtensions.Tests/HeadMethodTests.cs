@@ -8,7 +8,7 @@ using Xunit;
 
 namespace AD.ApiExtensions.Tests
 {
-    [PublicAPI]
+    [UsedImplicitly]
     public class HeadMethodTests
     {
         [Theory]
@@ -36,7 +36,7 @@ namespace AD.ApiExtensions.Tests
         [Theory]
         [InlineData("")]
         [InlineData("Success")]
-        public async Task DontSendResponseBody(string value)
+        public async Task DoNotSendResponseBody(string value)
         {
             HttpContext context = GetHttpContext(HttpMethods.Head);
 
@@ -57,7 +57,7 @@ namespace AD.ApiExtensions.Tests
 
         [Pure]
         [NotNull]
-        public static HttpContext GetHttpContext(string httpMethod, [NotNull] params (string Header, string Value)[] headers)
+        static HttpContext GetHttpContext(string httpMethod, [NotNull] params (string Header, string Value)[] headers)
         {
             DefaultHttpContext context = new DefaultHttpContext();
 

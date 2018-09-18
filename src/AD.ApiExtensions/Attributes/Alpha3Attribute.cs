@@ -25,8 +25,7 @@ namespace AD.ApiExtensions.Attributes
         /// <summary>
         /// Validates that a property contains three alphabetic characters.
         /// </summary>
-        public Alpha3Attribute(bool strict = true) : base(strict ? StrictRegexPattern : RelaxedRegexPattern)
-        {
-        }
+        public Alpha3Attribute(bool strict = true)
+            : base(strict ? StrictRegexPattern : RelaxedRegexPattern) {}
     }
 }

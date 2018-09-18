@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace AD.ApiExtensions.Expressions
+namespace AD.ApiExtensions.Types
 {
     /// <summary>
     /// Represents a cache of types and updates.
@@ -46,15 +46,10 @@ namespace AD.ApiExtensions.Expressions
         [NotNull]
         public Type GetOrUpdate([NotNull] Type type)
         {
-            if (type is null)
+            if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            return _types.TryGetValue(RecurseType(type), out Type result) ? result : type;
-
-            Type RecurseType(Type t)
-                => t.IsConstructedGenericType
-                       ? GetOrUpdate(t.GetGenericTypeDefinition().MakeGenericType(t.GenericTypeArguments.Select(RecurseType).ToArray()))
-                       : t;
+            return _types.TryGetValue(type, out Type result) ? result : type;
         }
 
         /// <summary>
@@ -149,7 +144,7 @@ namespace AD.ApiExtensions.Expressions
             if (_types.ContainsKey(type))
                 return;
 
-            Type updatedType = GetOrUpdate(result);
+            Type updatedType = RecurseType(result);
 
             if (!_parameters.TryGetValue(updatedType, out ParameterExpression parameter))
                 parameter = Expression.Parameter(updatedType, $"param_{updatedType.Name}");
@@ -198,6 +193,29 @@ namespace AD.ApiExtensions.Expressions
                          .SelectMany(x => x.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                          .Select(y => y.Name)
                          .Contains(name);
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns>
+        ///
+        /// </returns>
+        [Pure]
+        [NotNull]
+        Type RecurseType([NotNull] Type type)
+        {
+            if (!type.IsConstructedGenericType)
+                return type;
+
+            return
+                GetOrUpdate(
+                    type.GetGenericTypeDefinition()
+                        .MakeGenericType(
+                             type.GenericTypeArguments
+                                 .Select(RecurseType)
+                                 .ToArray()));
         }
 
         /// <summary>

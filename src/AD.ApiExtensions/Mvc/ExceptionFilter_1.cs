@@ -35,12 +35,8 @@ namespace AD.ApiExtensions.Mvc
         /// <summary>
         /// Constructs a <see cref="ExceptionFilter{TException}"/> with the specified HTTP status code.
         /// </summary>
-        /// <param name="httpStatusCode">
-        /// The HTTP status code of the result.
-        /// </param>
-        /// <param name="order">
-        /// The value determining the execution order of the filter.
-        /// </param>
+        /// <param name="httpStatusCode">The HTTP status code of the result.</param>
+        /// <param name="order">The value determining the execution order of the filter.</param>
         public ExceptionFilter(int httpStatusCode, int order)
         {
             StatusCode = httpStatusCode;
@@ -61,7 +57,7 @@ namespace AD.ApiExtensions.Mvc
             if (context == null)
                 throw new ArgumentNullException(nameof(context));
 
-            if (!(context.Exception is TException))
+            if (context.Exception.GetType() != typeof(TException))
                 return;
 
             context.ExceptionHandled = true;
@@ -73,7 +69,6 @@ namespace AD.ApiExtensions.Mvc
         public virtual Task OnExceptionAsync([NotNull] ExceptionContext context)
         {
             if (context == null)
-
                 throw new ArgumentNullException(nameof(context));
 
             OnException(context);
@@ -84,5 +79,8 @@ namespace AD.ApiExtensions.Mvc
         /// <inheritdoc />
         [Pure]
         public bool Equals(ApiResponseType other) => other != null && Type == other.Type && StatusCode == other.StatusCode;
+
+        /// <inheritdoc />
+        public override string ToString() => $"{StatusCode} => {typeof(TException).FullName}";
     }
 }

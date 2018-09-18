@@ -5,19 +5,16 @@ using Xunit;
 
 namespace AD.ApiExtensions.Tests
 {
-    [PublicAPI]
-    public static class PatternValidationAttributeTests
+    [UsedImplicitly]
+    public class PatternValidationAttributeTests
     {
         [PublicAPI]
-        private class Example
+        class Example
         {
             [PatternValidation("^[A-z]{3}$")]
             public string Name { get; set; }
 
-            public void Validate()
-            {
-                Validator.ValidateObject(this, new ValidationContext(this), true);
-            }
+            public void Validate() => Validator.ValidateObject(this, new ValidationContext(this), true);
         }
 
         [Theory]

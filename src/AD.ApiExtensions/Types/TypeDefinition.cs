@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 using System.Threading;
 using JetBrains.Annotations;
 
-namespace AD.ApiExtensions.Expressions
+namespace AD.ApiExtensions.Types
 {
     /// <summary>
     /// Defines a new anonymous type.

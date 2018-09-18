@@ -28,45 +28,27 @@ namespace AD.ApiExtensions.Mvc
         public int Order { get; }
 
         /// <summary>
-        /// The HTTP status code produced by this provider.
-        /// </summary>
-        public int StatusCode { get; }
-
-        /// <summary>
         /// Constructs an <see cref="ExceptionProvider{TException}"/>.
         /// </summary>
-        /// <param name="httpMethod">
-        /// The HTTP method to support.
-        /// </param>
-        /// <param name="httpStatusCode">
-        /// The HTTP status code for the <see cref="ExceptionFilter{TException}"/>.
-        /// </param>
-        /// <param name="providerOrder">
-        /// The value that determines provider execution order.
-        /// </param>
-        /// <param name="filterOrder">
-        /// The value that determines filter execution order.
-        /// </param>
+        /// <param name="httpMethod">The HTTP method to support.</param>
+        /// <param name="httpStatusCode">The HTTP status code for the <see cref="ExceptionFilter{TException}"/>.</param>
+        /// <param name="providerOrder">The value that determines provider execution order.</param>
+        /// <param name="filterOrder">The value that determines filter execution order.</param>
         public ExceptionProvider([NotNull] string httpMethod, int httpStatusCode, int providerOrder, int filterOrder)
         {
             if (httpMethod == null)
-            {
                 throw new ArgumentNullException(nameof(httpMethod));
-            }
 
             HttpMethod = httpMethod;
-            StatusCode = httpStatusCode;
             Order = providerOrder;
-            ExceptionFilter = new ExceptionFilter<TException>(StatusCode, filterOrder);
+            ExceptionFilter = new ExceptionFilter<TException>(httpStatusCode, filterOrder);
         }
 
         /// <inheritdoc />
         public void OnProvidersExecuting([NotNull] ApiDescriptionProviderContext context)
         {
             if (context == null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
         }
 
         /// <inheritdoc />
@@ -76,16 +58,12 @@ namespace AD.ApiExtensions.Mvc
         public void OnProvidersExecuted([NotNull] ApiDescriptionProviderContext context)
         {
             if (context == null)
-            {
                 throw new ArgumentNullException(nameof(context));
-            }
 
             foreach (ApiDescription description in context.Results)
             {
                 if (description.HttpMethod == HttpMethod)
-                {
                     continue;
-                }
 
                 ApiResponseType[] removals =
                     description.SupportedResponseTypes
@@ -98,5 +76,8 @@ namespace AD.ApiExtensions.Mvc
                 }
             }
         }
+
+        /// <inheritdoc />
+        public override string ToString() => $"{HttpMethod} => {ExceptionFilter.StatusCode} => {typeof(TException).FullName}";
     }
 }

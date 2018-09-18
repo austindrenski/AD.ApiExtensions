@@ -11,7 +11,7 @@ using Xunit;
 
 namespace AD.ApiExtensions.Tests
 {
-    [PublicAPI]
+    [UsedImplicitly]
     public class DelimitedOutputFormatterTests
     {
         [Theory]

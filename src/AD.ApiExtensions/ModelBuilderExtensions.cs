@@ -7,11 +7,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace AD.ApiExtensions
 {
     /// <summary>
-    /// Provides extension methods to apply snake case conventions.
+    /// Provides extension to configure <see cref="ModelBuilder"/> and <see cref="IMutableAnnotatable"/>.
     /// </summary>
     [PublicAPI]
-    public static class UseSnakeCaseExtensions
+    public static class ModelBuilderExtensions
     {
+        #region SnakeCase
+
         /// <summary>
         /// Applies snake case conventions to relational annotations for
         /// table names, columns, keys, foreign keys, and indexes.
@@ -100,5 +102,7 @@ namespace AD.ApiExtensions
                 return m;
             }
         }
+
+        #endregion
     }
 }

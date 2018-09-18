@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using AD.ApiExtensions.Expressions;
+using AD.ApiExtensions.Types;
 using JetBrains.Annotations;
 
 namespace AD.ApiExtensions.Visitors

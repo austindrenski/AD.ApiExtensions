@@ -5,11 +5,11 @@ using Xunit;
 
 namespace AD.ApiExtensions.Tests
 {
-    [PublicAPI]
+    [UsedImplicitly]
     public class ConditionalExpressionVisitorTests
     {
         [Fact]
-        public static void Test0()
+        public void Test0()
         {
             Expression expression = Expression.Not(Expression.Constant(true));
 

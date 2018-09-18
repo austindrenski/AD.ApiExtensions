@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace AD.ApiExtensions.Expressions
+namespace AD.ApiExtensions.Types
 {
     /// <summary>
     /// Extenion methods to sort an <see cref="IQueryable{T}"/> by property name.

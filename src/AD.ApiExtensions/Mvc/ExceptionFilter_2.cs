@@ -1,7 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace AD.ApiExtensions.Mvc
 {
@@ -14,8 +13,6 @@ namespace AD.ApiExtensions.Mvc
         where TException : Exception
         where TResult : StatusCodeResult, new()
     {
-        static readonly TResult Result = new TResult();
-
         /// <inheritdoc />
         [NotNull]
         public override Type Type => typeof(TResult);
@@ -27,25 +24,6 @@ namespace AD.ApiExtensions.Mvc
         /// <param name="order">
         /// The order value for determining the order of execution of filters.
         /// </param>
-        public ExceptionFilter(int order) : base(Result.StatusCode, order)
-        {
-        }
-
-        /// <inheritdoc />
-        public override void OnException(ExceptionContext context)
-        {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
-            if (!(context.Exception is TException))
-            {
-                return;
-            }
-
-            context.ExceptionHandled = true;
-            context.Result = new TResult();
-        }
+        public ExceptionFilter(int order) : base(new TResult().StatusCode, order) {}
     }
 }
