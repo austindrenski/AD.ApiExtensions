@@ -1,6 +1,5 @@
 using System.Linq;
-using System.Linq.Expressions;
-using AD.ApiExtensions.Types;
+using AD.ApiExtensions.Visitors;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -12,23 +11,16 @@ namespace AD.ApiExtensions.Tests
         [Fact]
         public void GroupByUpdated()
         {
-            var cache = new TypeCache();
             var values = new[] { new { A = "a", B = "b", C = "c" } };
 
-            var type = values.First().GetType();
-            var updatedType = TypeDefinition.GetOrAdd(new[] { ("A", typeof(string)), ("B", typeof(string)) });
-            cache.Register(type, updatedType);
+            var group =
+                values.AsQueryable()
+                      .Select(x => new { x.A, x.B, D = 1 })
+                      .GroupBy(x => new { x.A, x.B })
+                      .Select(x => new { x.Key.A, x.Key.B, D = x.Sum(y => y.D) })
+                      .Enlist<ProjectionEliminationExpressionVisitor>();
 
-            var group = values.AsQueryable().GroupBy(x => x);
-            var method = (MethodCallExpression) group.Expression;
-            var updatedMethod = cache.GetOrUpdate(method.Method);
-            var updatedArguments = method.Arguments.Select(cache.GetOrAddParameter).ToArray();
-
-            var call = Expression.Call(updatedMethod, updatedArguments);
-
-            var result = group.Provider.Execute(call);
-
-            Assert.Equal(updatedType, result.GetType());
+            var _ = group.Cast<object>().ToArray();
         }
     }
 }

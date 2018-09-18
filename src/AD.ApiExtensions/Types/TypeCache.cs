@@ -16,12 +16,7 @@ namespace AD.ApiExtensions.Types
         /// <summary>
         /// Caches anonymous types that were encountered and updated.
         /// </summary>
-        [NotNull] readonly Dictionary<Type, Type> _types = new Dictionary<Type, Type>();
-
-        /// <summary>
-        /// Caches anonymous types that were encountered and modified.
-        /// </summary>
-        [NotNull] readonly Dictionary<Type, ParameterExpression> _parameters = new Dictionary<Type, ParameterExpression>();
+        [NotNull] readonly Dictionary<Type, ParameterExpression> _types = new Dictionary<Type, ParameterExpression>();
 
         /// <summary>
         /// Determines whether the <see cref="T:System.Collections.Generic.Dictionary`2"></see> contains the specified key.
@@ -49,7 +44,16 @@ namespace AD.ApiExtensions.Types
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            return _types.TryGetValue(type, out Type result) ? result : type;
+            var updated =
+                type.IsGenericType
+                    ? type.GetGenericTypeDefinition()
+                          .MakeGenericType(
+                               type.GenericTypeArguments
+                                   .Select(GetOrUpdate)
+                                   .ToArray())
+                    : type;
+
+            return _types.TryGetValue(updated, out ParameterExpression mapped) ? mapped.Type : type;
         }
 
         /// <summary>
@@ -67,14 +71,15 @@ namespace AD.ApiExtensions.Types
             if (method == null)
                 throw new ArgumentNullException(nameof(method));
 
+            if (!method.IsGenericMethod)
+                return method;
+
             return
-                method.IsGenericMethod
-                    ? method.GetGenericMethodDefinition()
-                            .MakeGenericMethod(
-                                 method.GetGenericArguments()
-                                       .Select(GetOrUpdate)
-                                       .ToArray())
-                    : method;
+                method.GetGenericMethodDefinition()
+                      .MakeGenericMethod(
+                           method.GetGenericArguments()
+                                 .Select(GetOrUpdate)
+                                 .ToArray());
         }
 
         /// <summary>
@@ -99,9 +104,14 @@ namespace AD.ApiExtensions.Types
             if (TryGetParameter(expression.Type, out ParameterExpression parameter))
                 return parameter;
 
-            Register(expression.Type, expression.Type);
+            Type type = GetOrUpdate(expression.Type);
 
-            return _parameters.TryGetValue(expression.Type, out parameter) ? parameter : expression;
+            if (TryGetParameter(type, out parameter))
+                return parameter;
+
+            Register(expression.Type, type);
+
+            return _types.TryGetValue(expression.Type, out parameter) ? parameter : expression;
         }
 
         /// <summary>Gets the value associated with the specified key.</summary>
@@ -112,19 +122,17 @@ namespace AD.ApiExtensions.Types
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/></exception>
         [Pure]
-        [ContractAnnotation("type:null => false, result:null")]
-        public bool TryGetParameter([NotNull] Type type, [NotNull] out ParameterExpression result)
+        [ContractAnnotation("type:null => false, result:null; => result:notnull")]
+        public bool TryGetParameter([CanBeNull] Type type, out ParameterExpression result)
         {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type));
+            result = null;
 
-            return _parameters.TryGetValue(type, out result);
+            return type != null && _types.TryGetValue(type, out result);
         }
 
         /// <summary>
         /// Updates the initial type and adds it to the type and parameter cache, provided
-        /// that the initial type is a constructed generic type and that the type does not
-        /// already exist in the cache.
+        /// that the initial type does not already exist in the cache.
         /// </summary>
         /// <param name="type">The initial type.</param>
         /// <param name="result">The result type.</param>
@@ -138,19 +146,16 @@ namespace AD.ApiExtensions.Types
             if (result == null)
                 throw new ArgumentNullException(nameof(result));
 
-            if (!type.IsConstructedGenericType)
-                return;
-
             if (_types.ContainsKey(type))
                 return;
 
-            Type updatedType = RecurseType(result);
+            if (_types.ContainsKey(GetOrUpdate(type)))
+                return;
 
-            if (!_parameters.TryGetValue(updatedType, out ParameterExpression parameter))
-                parameter = Expression.Parameter(updatedType, $"param_{updatedType.Name}");
+            ParameterExpression parameter =
+                Expression.Parameter(result, $"param_{result.Name}");
 
-            _types.Add(type, parameter.Type);
-            _parameters.Add(type, parameter);
+            _types.Add(type, parameter);
         }
 
         /// <summary>
@@ -189,33 +194,10 @@ namespace AD.ApiExtensions.Types
             return unavailable.TryGetValue(memberInfo.Name, out MemberInfo m) && m.GetType() == memberInfo.GetType();
 
             bool IsUpdatedMemberName(string name)
-                => _types.Select(x => x.Value)
+                => _types.Select(x => x.Value.Type)
                          .SelectMany(x => x.GetProperties(BindingFlags.Instance | BindingFlags.Public))
                          .Select(y => y.Name)
                          .Contains(name);
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns>
-        ///
-        /// </returns>
-        [Pure]
-        [NotNull]
-        Type RecurseType([NotNull] Type type)
-        {
-            if (!type.IsConstructedGenericType)
-                return type;
-
-            return
-                GetOrUpdate(
-                    type.GetGenericTypeDefinition()
-                        .MakeGenericType(
-                             type.GenericTypeArguments
-                                 .Select(RecurseType)
-                                 .ToArray()));
         }
 
         /// <summary>
