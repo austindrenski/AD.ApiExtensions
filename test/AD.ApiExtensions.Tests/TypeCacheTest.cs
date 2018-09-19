@@ -51,7 +51,7 @@ namespace AD.ApiExtensions.Tests
                 values.AsQueryable()
                       .Select(x => new { x.A, x.B, D = 0 })
                       .GroupBy(x => new { x.A, x.B })
-                      .SelectMany(x => x.AsQueryable())
+                      .SelectMany(x => x)
                       .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = group.Cast<object>().ToArray();

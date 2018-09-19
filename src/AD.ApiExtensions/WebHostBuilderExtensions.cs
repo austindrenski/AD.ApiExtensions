@@ -14,7 +14,8 @@ namespace AD.ApiExtensions
     public static class WebHostBuilderExtensions
     {
         /// <summary>
-        /// Builds an <see cref="IConfiguration"/> and adds <typeparamref name="T"/> as an <see cref="IStartup"/> to the <see cref="IWebHostBuilder"/>.
+        /// Builds an <see cref="IConfiguration"/> and adds <typeparamref name="T"/> as an
+        /// <see cref="IStartup"/> to the <see cref="IWebHostBuilder"/>.
         /// </summary>
         /// <param name="builder">The builder to modify.</param>
         /// <param name="args">Command line arguments to add to the <see cref="IConfiguration"/>.</param>
@@ -25,7 +26,8 @@ namespace AD.ApiExtensions
         /// <exception cref="ArgumentNullException"><paramref name="builder"/></exception>
         [Pure]
         [NotNull]
-        public static IWebHostBuilder UseStartup<T>([NotNull] this IWebHostBuilder builder, [NotNull] string[] args) where T : class, IStartup, new()
+        public static IWebHostBuilder UseStartup<T>([NotNull] this IWebHostBuilder builder, [NotNull] string[] args)
+            where T : class, IStartup
         {
             if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
