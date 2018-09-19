@@ -13,7 +13,7 @@ namespace AD.ApiExtensions.Visitors
     /// Represents an expression visitor which reduces empty statements dependant upon constant values.
     /// </summary>
     [PublicAPI]
-    public sealed class ProjectionEliminationExpressionVisitor : ExpressionVisitor
+    public sealed class ProjectionEliminatingExpressionVisitor : ExpressionVisitor
     {
         /// <summary>
         /// Caches anonymous types that were encountered and modified.
@@ -28,9 +28,25 @@ namespace AD.ApiExtensions.Visitors
         /// <inheritdoc />
         [Pure]
         protected override Expression VisitLambda<T>(Expression<T> e)
-            => Visit(e.Body) is Expression body
-                   ? Expression.Lambda(body, e.Parameters.Select(Visit).Cast<ParameterExpression>())
-                   : base.VisitLambda(e);
+        {
+            Expression body = Visit(e.Body);
+
+            ParameterExpression[] parameters = e.Parameters.ToArray();
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (!_knownTypes.TryGetParameter(parameters[i].Type, out ParameterExpression result))
+                    continue;
+
+                ParameterReplacingExpressionVisitor visitor =
+                    new ParameterReplacingExpressionVisitor(parameters[i], result);
+
+                body = visitor.Visit(body);
+                parameters[i] = result;
+            }
+
+            return body != null ? Expression.Lambda(body, parameters) : base.VisitLambda(e);
+        }
 
         /// <inheritdoc />
         [Pure]
@@ -55,17 +71,31 @@ namespace AD.ApiExtensions.Visitors
         protected override Expression VisitMethodCall(MethodCallExpression e)
         {
             // N.B. materialization order matters.
-            Expression instance =
-                Visit(e.Object);
-
-            Expression[] arguments =
-                e.Arguments
-                 .Select(Visit)
-                 .Select(_knownTypes.GetOrAddParameter)
-                 .ToArray();
+            Expression instance = Visit(e.Object);
+            Expression[] arguments = e.Arguments.Select(Visit).ToArray();
 
             MethodInfo method =
-                _knownTypes.GetOrUpdate(e.Method);
+                e.Method.IsGenericMethod
+                    ? e.Method
+                       .GetGenericMethodDefinition()
+                       .MakeGenericMethod(e.Method.GetGenericArguments().Select(_knownTypes.GetOrUpdate).ToArray())
+                    : e.Method;
+
+            // TODO: need to allow flexibility between interfaces
+            ParameterInfo[] paramInfo = method.GetParameters();
+
+            for (int i = 0; i < paramInfo.Length; i++)
+            {
+                if (paramInfo[i].ParameterType.IsAssignableFrom(arguments[i].Type))
+                    continue;
+
+                arguments[i] = Expression.Convert(arguments[i], paramInfo[i].ParameterType);
+
+//                    Expression.MakeUnary(
+//                        arguments[i].Type.IsValueType ? ExpressionType.Convert : ExpressionType.TypeAs,
+//                        arguments[i],
+//                        paramInfo[i].ParameterType);
+            }
 
             return Expression.Call(instance, method, arguments);
         }
@@ -108,22 +138,25 @@ namespace AD.ApiExtensions.Visitors
 
             _knownTypes.Register(e.Type, next);
 
-            return
-                Expression.MemberInit(
-                    Expression.New(next.GetEmptyConstructor()),
-                    assignments.Select(x => Expression.Bind(next.GetRuntimeProperty(x.Member.Name), x.Argument)));
+            ConstructorInfo ctor =
+                next.GetConstructor(assignments.Select(x => ((PropertyInfo) x.Member).PropertyType).ToArray());
+
+            if (ctor == null)
+                throw new MissingMemberException($"Constructor not found for {next.FullName} with {assignments.Length} parameters.");
+
+            return Expression.New(ctor, assignments.Select(x => x.Argument));
         }
 
         /// <inheritdoc />
         [Pure]
         protected override Expression VisitParameter(ParameterExpression e)
-            => _knownTypes.GetOrAddParameter(e);
+            => _knownTypes.TryGetParameter(e.Type, out ParameterExpression p) ? p : base.VisitParameter(e);
 
         /// <inheritdoc />
         [Pure]
         protected override Expression VisitUnary(UnaryExpression e)
             => Visit(e.Operand) is Expression operand
-                   ? Expression.MakeUnary(e.NodeType, operand, e.Type, e.Method)
-                   : base.VisitUnary(e);
+                ? Expression.MakeUnary(e.NodeType, operand, e.Type, e.Method)
+                : base.VisitUnary(e);
     }
 }

@@ -44,74 +44,12 @@ namespace AD.ApiExtensions.Types
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            var updated =
-                type.IsGenericType
-                    ? type.GetGenericTypeDefinition()
-                          .MakeGenericType(
-                               type.GenericTypeArguments
-                                   .Select(GetOrUpdate)
-                                   .ToArray())
-                    : type;
+            if (_types.TryGetValue(type, out ParameterExpression mapped))
+                return mapped.Type;
 
-            return _types.TryGetValue(updated, out ParameterExpression mapped) ? mapped.Type : type;
-        }
+            return type.IsGenericType && _types.TryGetValue(Recurse(type), out mapped) ? mapped.Type : type;
 
-        /// <summary>
-        /// Returns an updated method or the initial method if no update is required.
-        /// </summary>
-        /// <param name="method">The method to update.</param>
-        /// <returns>
-        /// An updated method or the initial method if no update is required.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="method"/></exception>
-        [Pure]
-        [NotNull]
-        public MethodInfo GetOrUpdate([NotNull] MethodInfo method)
-        {
-            if (method == null)
-                throw new ArgumentNullException(nameof(method));
-
-            if (!method.IsGenericMethod)
-                return method;
-
-            return
-                method.GetGenericMethodDefinition()
-                      .MakeGenericMethod(
-                           method.GetGenericArguments()
-                                 .Select(GetOrUpdate)
-                                 .ToArray());
-        }
-
-        /// <summary>
-        /// Returns an updated <see cref="ParameterExpression"/> or the initial expression if no update
-        /// is required, or if the initial expression is not a <see cref="ParameterExpression"/>.
-        /// </summary>
-        /// <param name="expression">The expression to update.</param>
-        /// <returns>
-        /// An updated <see cref="ParameterExpression"/> or the initial expression if no update is required.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="expression"/></exception>
-        [Pure]
-        [NotNull]
-        public Expression GetOrAddParameter([NotNull] Expression expression)
-        {
-            if (expression == null)
-                throw new ArgumentNullException(nameof(expression));
-
-            if (expression.NodeType != ExpressionType.Parameter)
-                return expression;
-
-            if (TryGetParameter(expression.Type, out ParameterExpression parameter))
-                return parameter;
-
-            Type type = GetOrUpdate(expression.Type);
-
-            if (TryGetParameter(type, out parameter))
-                return parameter;
-
-            Register(expression.Type, type);
-
-            return _types.TryGetValue(expression.Type, out parameter) ? parameter : expression;
+            Type Recurse(Type t) => t.GetGenericTypeDefinition().MakeGenericType(t.GenericTypeArguments.Select(GetOrUpdate).ToArray());
         }
 
         /// <summary>Gets the value associated with the specified key.</summary>
@@ -146,16 +84,10 @@ namespace AD.ApiExtensions.Types
             if (result == null)
                 throw new ArgumentNullException(nameof(result));
 
-            if (_types.ContainsKey(type))
+            if (_types.ContainsKey(type) || _types.ContainsKey(GetOrUpdate(type)))
                 return;
 
-            if (_types.ContainsKey(GetOrUpdate(type)))
-                return;
-
-            ParameterExpression parameter =
-                Expression.Parameter(result, $"param_{result.Name}");
-
-            _types.Add(type, parameter);
+            _types.Add(type, Expression.Parameter(result, result.Name));
         }
 
         /// <summary>

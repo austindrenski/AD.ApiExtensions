@@ -16,6 +16,17 @@ namespace AD.ApiExtensions.Types
     [PublicAPI]
     public readonly struct TypeDefinition : IEquatable<TypeDefinition>
     {
+        /// <summary>
+        /// The standard <see cref="MethodAttributes"/> used to define a constructor.
+        /// </summary>
+        const MethodAttributes ConstructorAttributes =
+            MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
+
+        /// <summary>
+        /// The standard <see cref="CallingConventions"/> used to define a constructor.
+        /// </summary>
+        const CallingConventions ConstructorConventions = CallingConventions.Standard | CallingConventions.HasThis;
+
         [NotNull] const string AnonymousAssemblyName = "AD.ApiExtensions.AnonymousTypes";
 
         [NotNull] static readonly ModuleBuilder ModuleBuilder =
@@ -46,7 +57,7 @@ namespace AD.ApiExtensions.Types
         {
             TypeBuilder typeBuilder =
                 ModuleBuilder.DefineType(
-                    $"f__Anonymous__{Interlocked.Increment(ref _typeCount)}",
+                    $"@__anonymous_{properties.Length}_{Interlocked.Increment(ref _typeCount)}",
                     TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.SequentialLayout | TypeAttributes.Serializable,
                     typeof(ValueType));
 
@@ -160,11 +171,11 @@ namespace AD.ApiExtensions.Types
             }
 
             ILGenerator ctorIl =
-                builder.DefineConstructor(MethodAttributes.PrivateScope, CallingConventions.Standard, fieldTypes)
+                builder.DefineConstructor(ConstructorAttributes, ConstructorConventions, fieldTypes)
                        .GetILGenerator();
 
             ctorIl.Emit(OpCodes.Ldarg_0);
-            ctorIl.Emit(OpCodes.Call, builder.DefineDefaultConstructor(MethodAttributes.Public));
+            ctorIl.Emit(OpCodes.Call, builder.DefineDefaultConstructor(ConstructorAttributes));
 
             for (int i = 0; i < fields.Length; i++)
             {
@@ -184,7 +195,7 @@ namespace AD.ApiExtensions.Types
             /// <summary>
             /// Defines the method attributes needed to generate CLR compliant getter and setters in IL code.
             /// </summary>
-            [NotNull] const MethodAttributes GetSetAttributes = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
+            const MethodAttributes GetSetAttributes = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
 
             /// <summary>
             /// The backing field for the public property.

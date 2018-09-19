@@ -11,13 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BB915292-2
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AD.ApiExtensions.Tests", "test\AD.ApiExtensions.Tests\AD.ApiExtensions.Tests.csproj", "{F36E5CD9-947B-4424-A6A4-E95A2C58C152}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sln", "sln", "{F5F42DE1-4456-409D-8CE7-5BA28586E146}"
-ProjectSection(SolutionItems) = preProject
-	.gitignore = .gitignore
-	LICENSE = LICENSE
-	.appveyor.yml = .appveyor.yml
-EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
