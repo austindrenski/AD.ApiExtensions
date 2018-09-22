@@ -44,10 +44,15 @@ namespace AD.ApiExtensions.Types
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            if (_types.TryGetValue(type, out ParameterExpression mapped))
-                return mapped.Type;
+            if (_types.TryGetValue(type, out ParameterExpression parameterExpression))
+                return parameterExpression.Type;
 
-            return type.IsGenericType && _types.TryGetValue(Recurse(type), out mapped) ? mapped.Type : type;
+            if (!type.IsGenericType)
+                return type;
+
+            Type recurse = Recurse(type);
+
+            return _types.TryGetValue(recurse, out parameterExpression) ? parameterExpression.Type : recurse;
 
             Type Recurse(Type t) => t.GetGenericTypeDefinition().MakeGenericType(t.GenericTypeArguments.Select(GetOrUpdate).ToArray());
         }
@@ -61,7 +66,7 @@ namespace AD.ApiExtensions.Types
         /// <exception cref="ArgumentNullException"><paramref name="type"/></exception>
         [Pure]
         [ContractAnnotation("type:null => false, result:null; => result:notnull")]
-        public bool TryGetParameter([CanBeNull] Type type, out ParameterExpression result)
+        public bool TryGetValue([CanBeNull] Type type, out ParameterExpression result)
         {
             result = null;
 
@@ -70,13 +75,19 @@ namespace AD.ApiExtensions.Types
 
         /// <summary>
         /// Updates the initial type and adds it to the type and parameter cache, provided
-        /// that the initial type does not already exist in the cache.
+        /// that the initial type does not already exist in the cache. If the type already
+        /// exists in the cache and <paramref name="update"/> is true, then the parameter
+        /// is replaced, provided the existing parameter and the replacement type differ.
         /// </summary>
         /// <param name="type">The initial type.</param>
         /// <param name="result">The result type.</param>
+        /// <param name="update">True if existing keys should be updated; otherwise, false.</param>
+        /// <returns>
+        /// True if any type was registered or updated; otherwise, false.
+        /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/></exception>
         /// <exception cref="ArgumentNullException"><paramref name="result"/></exception>
-        public void Register([NotNull] Type type, [NotNull] Type result)
+        public bool Register([NotNull] Type type, [NotNull] Type result, bool update = false)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -84,10 +95,28 @@ namespace AD.ApiExtensions.Types
             if (result == null)
                 throw new ArgumentNullException(nameof(result));
 
-            if (_types.ContainsKey(type) || _types.ContainsKey(GetOrUpdate(type)))
-                return;
+            // The key already exists.
+            if (_types.ContainsKey(type))
+            {
+                if (update && type != result)
+                    _types[type] = Expression.Parameter(result, result.Name);
 
+                return update;
+            }
+
+            // The key already exists for an updated type.
+            if (GetOrUpdate(type) is Type t && _types.ContainsKey(t))
+            {
+                if (update && t != result)
+                    _types[t] = Expression.Parameter(result, result.Name);
+
+                return update;
+            }
+
+            // The key does not yet exist..
             _types.Add(type, Expression.Parameter(result, result.Name));
+
+            return true;
         }
 
         /// <summary>

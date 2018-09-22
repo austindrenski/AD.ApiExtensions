@@ -9,7 +9,7 @@ using Xunit;
 namespace AD.ApiExtensions.Tests
 {
     [UsedImplicitly]
-    public class HeadMethodTests
+    public class HeadMethodTest
     {
         [Theory]
         [InlineData("")]

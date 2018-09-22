@@ -1,12 +1,12 @@
 ﻿using System.Linq.Expressions;
-using AD.ApiExtensions.Visitors;
+using AD.ApiExtensions.Expressions;
 using JetBrains.Annotations;
 using Xunit;
 
 namespace AD.ApiExtensions.Tests
 {
     [UsedImplicitly]
-    public class ConditionalExpressionVisitorTests
+    public class ConditionalExpressionVisitorTest
     {
         [Fact]
         public void Test0()

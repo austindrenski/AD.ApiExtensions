@@ -12,7 +12,7 @@ using Xunit;
 namespace AD.ApiExtensions.Tests
 {
     [UsedImplicitly]
-    public class DelimitedOutputFormatterTests
+    public class DelimitedOutputFormatterTest
     {
         [Theory]
         [InlineData("text/csv", ',')]

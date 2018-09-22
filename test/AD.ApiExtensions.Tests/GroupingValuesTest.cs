@@ -6,7 +6,7 @@ using Xunit;
 namespace AD.ApiExtensions.Tests
 {
     [UsedImplicitly]
-    public class GroupingValuesTests
+    public class GroupingValuesTest
     {
         [Theory]
         [InlineData("a,b,c,d,e,f,g", 1)]

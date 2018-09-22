@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace AD.ApiExtensions.Visitors
+namespace AD.ApiExtensions.Expressions
 {
     /// <inheritdoc />
     /// <summary>
@@ -14,6 +14,11 @@ namespace AD.ApiExtensions.Visitors
     [PublicAPI]
     public sealed class ConditionalExpressionVisitor : ExpressionVisitor
     {
+        /// <inheritdoc />
+        [Pure]
+        [ContractAnnotation("e:notnull => notnull; e:null => null")]
+        public override Expression Visit(Expression e) => base.Visit(e);
+
         /// <inheritdoc />
         [Pure]
         protected override Expression VisitBinary(BinaryExpression node)
