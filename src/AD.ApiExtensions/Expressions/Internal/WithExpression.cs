@@ -30,18 +30,6 @@ namespace AD.ApiExtensions.Expressions.Internal
         [NotNull] static readonly ConcurrentDictionary<Type, MethodInfo> SelectorCache =
             new ConcurrentDictionary<Type, MethodInfo>();
 
-        /// <summary>
-        /// The cache of properties.
-        /// </summary>
-        [NotNull] static readonly ConcurrentDictionary<Type, IReadOnlyList<PropertyInfo>> PropertyCache =
-            new ConcurrentDictionary<Type, IReadOnlyList<PropertyInfo>>();
-
-        /// <summary>
-        /// The cache of constructors.
-        /// </summary>
-        [NotNull] static readonly ConcurrentDictionary<Type, NewExpression> ConstructorCache =
-            new ConcurrentDictionary<Type, NewExpression>();
-
         #endregion
 
         /// <inheritdoc />
@@ -121,17 +109,12 @@ namespace AD.ApiExtensions.Expressions.Internal
             Expression rebind = new ParameterRebindingExpressionVisitor(parameter).Visit(Value.Body);
 
             IReadOnlyList<PropertyInfo> properties =
-                PropertyCache.GetOrAdd(
-                    parameter.Type,
-                    t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly));
+                parameter.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
-            IReadOnlyList<MemberExpression> expressions =
+            (MemberInfo Member, Expression Expression)[] expressions =
                 properties.Select(x => Property(parameter, x))
+                          .Select(x => (x.Member, Expression: x.Member == Member.Member ? rebind : x))
                           .ToArray();
-
-            IEnumerable<MemberAssignment> members =
-                expressions.Select(x => Bind(x.Member, x))
-                           .Select(x => x.Member == Member.Member ? x.Update(rebind) : x);
 
             Type[] types =
                 properties.Select(x => x.PropertyType)
@@ -139,8 +122,8 @@ namespace AD.ApiExtensions.Expressions.Internal
 
             Expression body =
                 parameter.Type.GetConstructor(types) is ConstructorInfo m
-                    ? ConstructorCache.GetOrAdd(parameter.Type, t => New(m, expressions))
-                    : (Expression) MemberInit(ConstructorCache.GetOrAdd(parameter.Type, New), members);
+                    ? New(m, expressions.Select(x => x.Expression), expressions.Select(x => x.Member))
+                    : (Expression) MemberInit(New(parameter.Type), expressions.Select(x => Bind(x.Member, x.Expression)));
 
             MethodInfo selector =
                 SelectorCache.GetOrAdd(parameter.Type, t => SelectMethodInfo.MakeGenericMethod(t, body.Type));

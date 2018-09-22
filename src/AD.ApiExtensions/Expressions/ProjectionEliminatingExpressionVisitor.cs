@@ -35,7 +35,10 @@ namespace AD.ApiExtensions.Expressions
             Expression body = Visit(e.Body);
 
             ParameterExpression[] parameters =
-                e.Parameters.Select(Visit).Cast<ParameterExpression>().ToArray();
+                e.Parameters
+                 .Select(Visit)
+                 .Cast<ParameterExpression>()
+                 .ToArray();
 
             for (int i = 0; i < parameters.Length; i++)
             {
@@ -45,7 +48,29 @@ namespace AD.ApiExtensions.Expressions
                 body = visitor.Visit(body);
             }
 
-            return Expression.Lambda(body, parameters);
+            // TODO: make this less brittle.
+            Type[] typeArgs = new Type[parameters.Length + 1];
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                typeArgs[i] = parameters[i].Type;
+            }
+
+            typeArgs[parameters.Length] = body.Type;
+
+            Type delegateType = Expression.GetDelegateType(typeArgs);
+
+            // TODO: needs fixed for the general case.
+            if (body.Type.IsGenericType &&
+                body.Type.GetGenericTypeDefinition() != delegateType.GetGenericTypeDefinition())
+            {
+                // TODO: obviously too brittle.
+                body = Expression.TypeAs(body, body.Type.GetInterfaces()[0]);
+                typeArgs[parameters.Length] = body.Type;
+                delegateType = Expression.GetDelegateType(typeArgs);
+            }
+
+            return Expression.Lambda(delegateType, body, parameters);
         }
 
         /// <inheritdoc />
@@ -74,17 +99,16 @@ namespace AD.ApiExtensions.Expressions
                 e.Bindings
                  .Where(x => x.Member.DeclaringType != null)
                  .Where(x => _knownTypes.GetOrUpdate(x.Member.DeclaringType).GetRuntimeProperties().Any(y => y.Name == x.Member.Name))
-                 .Select(VisitMemberBinding)
                  .ToArray();
 
             // TODO: handle MemberBindingType.ListBinding and MemberBindingType.MemberBinding.
             if (bindings.Any(x => x.BindingType != MemberBindingType.Assignment))
-                return e.Update(newExpression, bindings);
+                return e.Update(newExpression, bindings.Select(VisitMemberBinding));
 
             (string Name, Expression Expression)[] assignments =
                 bindings.Cast<MemberAssignment>()
                         .Where(x => !_knownTypes.IsLogicallyDefault(x.Member, x.Expression, _eliminatedMembers))
-                        .Select(x => (x.Member.Name, x.Expression))
+                        .Select(x => (x.Member.Name, Visit(x.Expression)))
                         .ToArray();
 
             return ConstructNewTypeAndExpression(e.Type, assignments);
@@ -102,10 +126,51 @@ namespace AD.ApiExtensions.Expressions
             MethodInfo generic =
                 e.Method.GetGenericMethodDefinition();
 
-            MethodInfo method =
-                generic.MakeGenericMethod(e.Method.GetGenericArguments().Select(_knownTypes.GetOrUpdate).ToArray());
+            Type[] genericArguments = generic.GetGenericArguments();
+            ParameterInfo[] genericParameters = generic.GetParameters();
+
+            Type[] types = new Type[genericArguments.Length];
+            for (int i = 0; i < genericArguments.Length; i++)
+            {
+                Type genericType = genericArguments[i];
+                for (int j = 0; j < genericParameters.Length; j++)
+                {
+                    Type parameterType = genericParameters[j].ParameterType;
+                    Type realArgType = arguments[j].Type;
+
+                    if (TryInfer(genericType, parameterType, realArgType, out Type result))
+                        types[i] = result;
+                }
+            }
+
+            MethodInfo method = generic.MakeGenericMethod(types);
 
             return Expression.Call(instance, method, arguments);
+        }
+
+        bool TryInfer(Type genericType, Type parameterType, Type realArgType, out Type result)
+        {
+            if (parameterType.IsGenericType)
+            {
+                Type[] parameterTypeGenerics = parameterType.GetGenericArguments();
+                for (int i = 0; i < parameterTypeGenerics.Length; i++)
+                {
+                    Type innerParameterTypeGeneric = parameterTypeGenerics[i];
+                    Type innerRealArgType = realArgType.GetGenericArguments()[i];
+
+                    if (genericType.IsAssignableFrom(innerParameterTypeGeneric))
+                    {
+                        result = _knownTypes.GetOrUpdate(innerRealArgType);
+                        return true;
+                    }
+
+                    if (TryInfer(genericType, innerParameterTypeGeneric, innerRealArgType, out result))
+                        return true;
+                }
+            }
+
+            result = null;
+            return false;
         }
 
         /// <inheritdoc />
@@ -114,7 +179,7 @@ namespace AD.ApiExtensions.Expressions
             if (e.Arguments.Count == 0 || e.Members == null)
                 return base.VisitNew(e);
 
-            (string Name, Expression Expression)[] assignments =
+            (string Name, Expression)[] assignments =
                 e.Arguments
                  .Zip(e.Members, (a, m) => (Member: m, Expression: a))
                  .Where(x => !_knownTypes.IsLogicallyDefault(x.Member, x.Expression, _eliminatedMembers))
@@ -157,13 +222,16 @@ namespace AD.ApiExtensions.Expressions
 
             _knownTypes.Register(type, next);
 
-            ConstructorInfo ctor =
-                next.GetConstructor(assignments.Select(x => x.Expression.Type).ToArray());
+            ConstructorInfo ctor = next.GetConstructor(assignments.Select(x => x.Expression.Type).ToArray());
 
             if (ctor == null)
                 throw new MissingMemberException($"Constructor not found for {next.FullName} with {assignments.Length} parameters.");
 
-            return Expression.New(ctor, assignments.Select(x => x.Expression));
+            return Expression.New(
+                ctor,
+                assignments.Select(x => x.Expression),
+                next.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                    .Where(x => assignments.Any(y => y.Name == x.Name)));
         }
     }
 }

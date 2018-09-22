@@ -113,7 +113,7 @@ namespace AD.ApiExtensions.Types
                 return update;
             }
 
-            // The key does not yet exist..
+            // The key does not yet exist.
             _types.Add(type, Expression.Parameter(result, result.Name));
 
             return true;
