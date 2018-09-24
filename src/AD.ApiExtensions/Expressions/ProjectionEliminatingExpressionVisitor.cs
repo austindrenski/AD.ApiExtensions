@@ -113,7 +113,7 @@ namespace AD.ApiExtensions.Expressions
                 for (int j = 0; j < parameters.Length; j++)
                 {
                     // N.B. Continue the loop in case a later parameter is a better fit.
-                    if (TryInfer(typeParameter, parameters[j].ParameterType, arguments[j].Type, out Type result))
+                    if (TryInferGenericArgument(typeParameter, parameters[j].ParameterType, arguments[j].Type, out Type result))
                         typeParameters[i] = _knownTypes.GetOrUpdate(result);
                 }
             }
@@ -124,15 +124,18 @@ namespace AD.ApiExtensions.Expressions
         }
 
         /// <summary>
-        ///
+        /// Attempts to infer the concrete type used in place of a specific type parameter,
+        /// such as the concrete type of `TKey` in <see cref="IGrouping{TKey,TValue}"/>.
         /// </summary>
-        /// <param name="typeParameter"></param>
-        /// <param name="parameter"></param>
-        /// <param name="argument"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
+        /// <param name="typeParameter">The type parameter being inferred.</param>
+        /// <param name="parameter">The parameter of the generic method.</param>
+        /// <param name="argument">The argument to the current method.</param>
+        /// <param name="result">The inferred result.</param>
+        /// <returns>
+        /// True if a type was inferred; otherwise false.
+        /// </returns>
         [ContractAnnotation("=> false, result:null; => true, result:notnull")]
-        static bool TryInfer([NotNull] Type typeParameter, [NotNull] Type parameter, [NotNull] Type argument, out Type result)
+        static bool TryInferGenericArgument([NotNull] Type typeParameter, [NotNull] Type parameter, [NotNull] Type argument, out Type result)
         {
             if (parameter.IsGenericType && argument.IsGenericType)
             {
@@ -141,13 +144,16 @@ namespace AD.ApiExtensions.Expressions
 
                 for (int i = 0; i < parameterTypeArguments.Length; i++)
                 {
+                    if (argumentTypeArguments.Length <= i)
+                        break;
+
                     if (typeParameter.IsAssignableFrom(parameterTypeArguments[i]))
                     {
                         result = argumentTypeArguments[i];
                         return true;
                     }
 
-                    if (TryInfer(typeParameter, parameterTypeArguments[i], argumentTypeArguments[i], out result))
+                    if (TryInferGenericArgument(typeParameter, parameterTypeArguments[i], argumentTypeArguments[i], out result))
                         return true;
                 }
             }
