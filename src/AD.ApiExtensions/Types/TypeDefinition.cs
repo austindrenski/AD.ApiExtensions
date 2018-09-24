@@ -17,18 +17,13 @@ namespace AD.ApiExtensions.Types
     public readonly struct TypeDefinition : IEquatable<TypeDefinition>
     {
         /// <summary>
-        /// The standard <see cref="MethodAttributes"/> used to define a constructor.
+        /// The name of the dynamic assembly and dynamic module.
         /// </summary>
-        const MethodAttributes ConstructorAttributes =
-            MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
-
-        /// <summary>
-        /// The standard <see cref="CallingConventions"/> used to define a constructor.
-        /// </summary>
-        const CallingConventions ConstructorConventions = CallingConventions.Standard | CallingConventions.HasThis;
-
         [NotNull] const string AnonymousAssemblyName = "AD.ApiExtensions.AnonymousTypes";
 
+        /// <summary>
+        /// The dynamic module builder used to define new types.
+        /// </summary>
         [NotNull] static readonly ModuleBuilder ModuleBuilder =
             AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(AnonymousAssemblyName), AssemblyBuilderAccess.Run)
                            .DefineDynamicModule(AnonymousAssemblyName);
@@ -162,29 +157,35 @@ namespace AD.ApiExtensions.Types
         static void DefineConstructor([NotNull] TypeBuilder builder, [NotNull] (string Name, Type Type)[] properties)
         {
             FieldInfo[] fields = new FieldInfo[properties.Length];
-            Type[] fieldTypes = new Type[properties.Length];
+            Type[] fieldTypes = new Type[fields.Length];
 
             for (int i = 0; i < fields.Length; i++)
             {
-                fields[i] = new MemberDefinition(properties[i].Name, properties[i].Type, builder);
+                fields[i] = new MemberDefinition(builder, properties[i].Name, properties[i].Type);
                 fieldTypes[i] = fields[i].FieldType;
             }
 
-            ILGenerator ctorIl =
-                builder.DefineConstructor(ConstructorAttributes, ConstructorConventions, fieldTypes)
-                       .GetILGenerator();
+            const CallingConventions ctorConventions =
+                CallingConventions.Standard | CallingConventions.HasThis;
 
-            ctorIl.Emit(OpCodes.Ldarg_0);
-            ctorIl.Emit(OpCodes.Call, builder.DefineDefaultConstructor(ConstructorAttributes));
+            const MethodAttributes ctorAttributes =
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
+
+            ConstructorBuilder ctor =
+                builder.DefineConstructor(ctorAttributes, ctorConventions, fieldTypes);
+
+            ILGenerator il = ctor.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Call, builder.DefineDefaultConstructor(ctorAttributes));
 
             for (int i = 0; i < fields.Length; i++)
             {
-                ctorIl.Emit(OpCodes.Ldarg_0);
-                ctorIl.Emit(OpCodes.Ldarg, i + 1);
-                ctorIl.Emit(OpCodes.Stfld, fields[i]);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg, i + 1);
+                il.Emit(OpCodes.Stfld, fields[i]);
             }
 
-            ctorIl.Emit(OpCodes.Ret);
+            il.Emit(OpCodes.Ret);
         }
 
         /// <summary>
@@ -193,11 +194,6 @@ namespace AD.ApiExtensions.Types
         private readonly struct MemberDefinition
         {
             /// <summary>
-            /// Defines the method attributes needed to generate CLR compliant getter and setters in IL code.
-            /// </summary>
-            const MethodAttributes GetSetAttributes = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
-
-            /// <summary>
             /// The backing field for the public property.
             /// </summary>
             [NotNull] readonly FieldInfo _fieldInfo;
@@ -205,16 +201,19 @@ namespace AD.ApiExtensions.Types
             /// <summary>
             /// Constructs an instance of the <see cref="MemberDefinition"/> struct.
             /// </summary>
+            /// <param name="typeBuilder">The type builder to mutate.</param>
             /// <param name="propertyName">The name of the property.</param>
             /// <param name="propertyType">The type of the property.</param>
-            /// <param name="typeBuilder">The type builder to mutate.</param>
-            internal MemberDefinition([NotNull] string propertyName, [NotNull] Type propertyType, [NotNull] TypeBuilder typeBuilder)
+            internal MemberDefinition([NotNull] TypeBuilder typeBuilder, [NotNull] string propertyName, [NotNull] Type propertyType)
             {
-                _fieldInfo = typeBuilder.DefineField($"_{propertyName}", propertyType, FieldAttributes.Private);
-                PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(propertyName, PropertyAttributes.None, _fieldInfo.FieldType, Type.EmptyTypes);
+                _fieldInfo =
+                    typeBuilder.DefineField($"_{propertyName}", propertyType, FieldAttributes.Private);
 
-                DefineGetter(typeBuilder, propertyBuilder, _fieldInfo);
-                DefineSetter(typeBuilder, propertyBuilder, _fieldInfo);
+                PropertyBuilder propertyBuilder =
+                    typeBuilder.DefineProperty(propertyName, PropertyAttributes.None, _fieldInfo.FieldType, Type.EmptyTypes);
+
+                propertyBuilder.SetGetMethod(DefineGetter(typeBuilder, _fieldInfo));
+                propertyBuilder.SetSetMethod(DefineSetter(typeBuilder, _fieldInfo));
             }
 
             /// <summary>
@@ -231,38 +230,42 @@ namespace AD.ApiExtensions.Types
             /// <summary>
             /// Defines the method body the GetMethod of this member definition.
             /// </summary>
-            static void DefineGetter(
-                [NotNull] TypeBuilder builder,
-                [NotNull] PropertyBuilder propertyBuilder,
-                [NotNull] FieldInfo field)
+            [NotNull]
+            static MethodBuilder DefineGetter([NotNull] TypeBuilder builder, [NotNull] FieldInfo field)
             {
-                MethodBuilder get = builder.DefineMethod($"get{field.Name}", GetSetAttributes, field.FieldType, Type.EmptyTypes);
-                ILGenerator methodIl = get.GetILGenerator();
+                const MethodAttributes propertyAttributes =
+                    MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
 
-                methodIl.Emit(OpCodes.Ldarg_0);
-                methodIl.Emit(OpCodes.Ldfld, field);
-                methodIl.Emit(OpCodes.Ret);
+                MethodBuilder getter =
+                    builder.DefineMethod($"get{field.Name}", propertyAttributes, field.FieldType, Type.EmptyTypes);
 
-                propertyBuilder.SetGetMethod(get);
+                ILGenerator il = getter.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldfld, field);
+                il.Emit(OpCodes.Ret);
+
+                return getter;
             }
 
             /// <summary>
             /// Defines the method body the SetMethod of this member definition.
             /// </summary>
-            static void DefineSetter(
-                [NotNull] TypeBuilder builder,
-                [NotNull] PropertyBuilder propertyBuilder,
-                [NotNull] FieldInfo field)
+            [NotNull]
+            static MethodBuilder DefineSetter([NotNull] TypeBuilder builder, [NotNull] FieldInfo field)
             {
-                MethodBuilder set = builder.DefineMethod($"set{field.Name}", GetSetAttributes, null, new Type[] { field.FieldType });
-                ILGenerator methodIl = set.GetILGenerator();
+                const MethodAttributes propertyAttributes =
+                    MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName;
 
-                methodIl.Emit(OpCodes.Ldarg_0);
-                methodIl.Emit(OpCodes.Ldarg_1);
-                methodIl.Emit(OpCodes.Stfld, field);
-                methodIl.Emit(OpCodes.Ret);
+                MethodBuilder setter =
+                    builder.DefineMethod($"set{field.Name}", propertyAttributes, typeof(void), new Type[] { field.FieldType });
 
-                propertyBuilder.SetSetMethod(set);
+                ILGenerator il = setter.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Stfld, field);
+                il.Emit(OpCodes.Ret);
+
+                return setter;
             }
         }
     }
