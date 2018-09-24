@@ -23,7 +23,7 @@ namespace AD.ApiExtensions.Expressions
         /// <summary>
         /// Caches members that were encountered and removed.
         /// </summary>
-        [NotNull] readonly IDictionary<string, MemberInfo> _eliminatedMembers = new Dictionary<string, MemberInfo>();
+        [NotNull] readonly Dictionary<string, MemberInfo> _eliminatedMembers = new Dictionary<string, MemberInfo>();
 
         /// <inheritdoc />
         [ContractAnnotation("e:notnull => notnull; e:null => null")]
@@ -48,29 +48,7 @@ namespace AD.ApiExtensions.Expressions
                 body = visitor.Visit(body);
             }
 
-            // TODO: make this less brittle.
-            Type[] typeArgs = new Type[parameters.Length + 1];
-
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                typeArgs[i] = parameters[i].Type;
-            }
-
-            typeArgs[parameters.Length] = body.Type;
-
-            Type delegateType = Expression.GetDelegateType(typeArgs);
-
-            // TODO: needs fixed for the general case.
-            if (body.Type.IsGenericType &&
-                body.Type.GetGenericTypeDefinition() != delegateType.GetGenericTypeDefinition())
-            {
-                // TODO: obviously too brittle.
-                body = Expression.TypeAs(body, body.Type.GetInterfaces()[0]);
-                typeArgs[parameters.Length] = body.Type;
-                delegateType = Expression.GetDelegateType(typeArgs);
-            }
-
-            return Expression.Lambda(delegateType, body, parameters);
+            return Expression.Lambda(body, parameters);
         }
 
         /// <inheritdoc />
@@ -123,48 +101,53 @@ namespace AD.ApiExtensions.Expressions
             if (!e.Method.IsGenericMethod)
                 return e.Update(instance, arguments);
 
-            MethodInfo generic =
+            MethodInfo genericMethod =
                 e.Method.GetGenericMethodDefinition();
 
-            Type[] genericArguments = generic.GetGenericArguments();
-            ParameterInfo[] genericParameters = generic.GetParameters();
+            Type[] typeParameters = genericMethod.GetGenericArguments();
+            ParameterInfo[] parameters = genericMethod.GetParameters();
 
-            Type[] types = new Type[genericArguments.Length];
-            for (int i = 0; i < genericArguments.Length; i++)
+            for (int i = 0; i < typeParameters.Length; i++)
             {
-                Type genericType = genericArguments[i];
-                for (int j = 0; j < genericParameters.Length; j++)
+                Type typeParameter = typeParameters[i];
+                for (int j = 0; j < parameters.Length; j++)
                 {
-                    Type parameterType = genericParameters[j].ParameterType;
-                    Type realArgType = arguments[j].Type;
-
-                    if (TryInfer(genericType, parameterType, realArgType, out Type result))
-                        types[i] = result;
+                    // N.B. Continue the loop in case a later parameter is a better fit.
+                    if (TryInfer(typeParameter, parameters[j].ParameterType, arguments[j].Type, out Type result))
+                        typeParameters[i] = _knownTypes.GetOrUpdate(result);
                 }
             }
 
-            MethodInfo method = generic.MakeGenericMethod(types);
+            MethodInfo method = genericMethod.MakeGenericMethod(typeParameters);
 
             return Expression.Call(instance, method, arguments);
         }
 
-        bool TryInfer(Type genericType, Type parameterType, Type realArgType, out Type result)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="typeParameter"></param>
+        /// <param name="parameter"></param>
+        /// <param name="argument"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        [ContractAnnotation("=> false, result:null; => true, result:notnull")]
+        static bool TryInfer([NotNull] Type typeParameter, [NotNull] Type parameter, [NotNull] Type argument, out Type result)
         {
-            if (parameterType.IsGenericType)
+            if (parameter.IsGenericType && argument.IsGenericType)
             {
-                Type[] parameterTypeGenerics = parameterType.GetGenericArguments();
-                for (int i = 0; i < parameterTypeGenerics.Length; i++)
-                {
-                    Type innerParameterTypeGeneric = parameterTypeGenerics[i];
-                    Type innerRealArgType = realArgType.GetGenericArguments()[i];
+                Type[] parameterTypeArguments = parameter.GetGenericArguments();
+                Type[] argumentTypeArguments = argument.GetGenericArguments();
 
-                    if (genericType.IsAssignableFrom(innerParameterTypeGeneric))
+                for (int i = 0; i < parameterTypeArguments.Length; i++)
+                {
+                    if (typeParameter.IsAssignableFrom(parameterTypeArguments[i]))
                     {
-                        result = _knownTypes.GetOrUpdate(innerRealArgType);
+                        result = argumentTypeArguments[i];
                         return true;
                     }
 
-                    if (TryInfer(genericType, innerParameterTypeGeneric, innerRealArgType, out result))
+                    if (TryInfer(typeParameter, parameterTypeArguments[i], argumentTypeArguments[i], out result))
                         return true;
                 }
             }
