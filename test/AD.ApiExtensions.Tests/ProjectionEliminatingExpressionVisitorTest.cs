@@ -8,6 +8,78 @@ namespace AD.ApiExtensions.Tests
     [UsedImplicitly]
     public class ProjectionEliminatingExpressionVisitorTest
     {
+        #region Contains
+
+        [Fact]
+        public void Contains_anonymous()
+        {
+            var strings = new[] { "a", "b", "c" };
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new { x.A, x.B, D = 1 })
+                     .Where(x => strings.Contains(x.A))
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void Contains_anonymous_with_elimination()
+        {
+            var strings = new[] { "a", "b", "c" };
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new { x.A, x.B, D = 0 })
+                     .Where(x => strings.Contains(x.A))
+                     .Select(x => new { x.A, x.B, x.D })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(2, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void Contains_concrete()
+        {
+            var strings = new[] { "a", "b", "c" };
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
+                     .Where(x => strings.Contains(x.A))
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void Contains_concrete_with_elimination()
+        {
+            var strings = new[] { "a", "b", "c" };
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 0 })
+                     .Where(x => strings.Contains(x.A))
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(2, result.First().GetType().GetProperties().Length);
+        }
+
+        #endregion
+
         #region GroupBy
 
         [Fact]

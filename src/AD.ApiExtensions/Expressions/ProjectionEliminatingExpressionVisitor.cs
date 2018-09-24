@@ -137,10 +137,18 @@ namespace AD.ApiExtensions.Expressions
         [ContractAnnotation("=> false, result:null; => true, result:notnull")]
         static bool TryInferGenericArgument([NotNull] Type typeParameter, [NotNull] Type parameter, [NotNull] Type argument, out Type result)
         {
-            if (parameter.IsGenericType && argument.IsGenericType)
+            // N.B. consider T[] == IEnumerable<T>
+            if (parameter.IsGenericType && argument.IsGenericType || argument.IsArray)
             {
-                Type[] parameterTypeArguments = parameter.GetGenericArguments();
-                Type[] argumentTypeArguments = argument.GetGenericArguments();
+                Type[] parameterTypeArguments =
+                    parameter.GetGenericArguments();
+
+                Type[] argumentTypeArguments =
+                    argument.IsGenericType
+                        ? argument.GetGenericArguments()
+                        : argument.IsArray
+                            ? new[] { argument.GetElementType() }
+                            : new Type[0];
 
                 for (int i = 0; i < parameterTypeArguments.Length; i++)
                 {
