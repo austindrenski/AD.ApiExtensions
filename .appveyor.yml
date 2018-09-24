@@ -17,11 +17,14 @@ dotnet_csproj:
   assembly_version: '{version}'
 
 build_script:
-- pwsh: dotnet build -c Release
-- pwsh: dotnet pack -c Release
+- pwsh: |
+    $ErrorActionPreference = "Stop";
+    dotnet pack -c Release
 
 test_script:
-- pwsh: dotnet test test/AD.ApiExtensions.Tests -c Release
+- pwsh: |
+    $ErrorActionPreference = "Stop";
+    dotnet test test/AD.ApiExtensions.Tests -c Release
 
 artifacts:
 - path: 'src\**\*.nupkg'

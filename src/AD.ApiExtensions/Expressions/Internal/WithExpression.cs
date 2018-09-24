@@ -45,7 +45,7 @@ namespace AD.ApiExtensions.Expressions.Internal
         /// The element type of the source expression.
         /// </summary>
         [NotNull]
-        public virtual Type ElementType { get; }
+        public ParameterExpression Parameter { get; }
 
         /// <summary>
         /// The source expression.
@@ -63,7 +63,7 @@ namespace AD.ApiExtensions.Expressions.Internal
         /// The value to bind.
         /// </summary>
         [NotNull]
-        public LambdaExpression Value { get; }
+        public Expression Value { get; }
 
         /// <summary>
         /// Constructs a new instance of the <see cref="WithExpression"/> class.
@@ -94,26 +94,26 @@ namespace AD.ApiExtensions.Expressions.Internal
             if (value is null)
                 throw new ArgumentNullException(nameof(value));
 
-            ElementType = elementType;
-            Source = source;
-            Member = member;
-            Value = value;
+            Parameter = Parameter(elementType);
+
+            ParameterRebindingExpressionVisitor visitor =
+                new ParameterRebindingExpressionVisitor(Parameter);
+
+            Source = visitor.Visit(source);
+            Member = (MemberExpression) visitor.Visit(member);
+            Value = visitor.Visit(value.Body);
         }
 
         /// <inheritdoc />
         [Pure]
         public override Expression Reduce()
         {
-            ParameterExpression parameter = Parameter(ElementType);
-
-            Expression rebind = new ParameterRebindingExpressionVisitor(parameter).Visit(Value.Body);
-
             IReadOnlyList<PropertyInfo> properties =
-                parameter.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                Parameter.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
             (MemberInfo Member, Expression Expression)[] expressions =
-                properties.Select(x => Property(parameter, x))
-                          .Select(x => (x.Member, Expression: x.Member == Member.Member ? rebind : x))
+                properties.Select(x => Property(Parameter, x))
+                          .Select(x => (x.Member, Expression: x.Member == Member.Member ? Value : x))
                           .ToArray();
 
             Type[] types =
@@ -121,27 +121,25 @@ namespace AD.ApiExtensions.Expressions.Internal
                           .ToArray();
 
             Expression body =
-                parameter.Type.GetConstructor(types) is ConstructorInfo m
-                    ? New(m, expressions.Select(x => x.Expression), expressions.Select(x => x.Member))
-                    : (Expression) MemberInit(New(parameter.Type), expressions.Select(x => Bind(x.Member, x.Expression)));
+                Parameter.Type.GetConstructor(types) is ConstructorInfo m
+                    ? (Expression) New(m, expressions.Select(x => x.Expression), expressions.Select(x => x.Member))
+                    : MemberInit(New(Parameter.Type), expressions.Select(x => Bind(x.Member, x.Expression)));
 
             MethodInfo selector =
-                SelectorCache.GetOrAdd(parameter.Type, t => SelectMethodInfo.MakeGenericMethod(t, body.Type));
+                SelectorCache.GetOrAdd(Parameter.Type, t => SelectMethodInfo.MakeGenericMethod(t, body.Type));
 
-            MethodCallExpression call = Call(selector, Source, Lambda(body, parameter));
-
-            return call;
+            return Call(selector, Source, Lambda(body, Parameter));
         }
 
         /// <inheritdoc />
         [Pure]
-        public override string ToString() => $"{Type.Name} => {ElementType.Name}.{Member.Member.Name} = {Value.Body}";
+        public override string ToString() => $"{Source}.With({Member}, {Value})";
 
         /// <inheritdoc />
         [Pure]
         public bool Equals(WithExpression other)
             => other != null &&
-               Type == other.Type &&
+               Parameter.Equals(other.Parameter) &&
                Source.Equals(other.Source) &&
                Member.Equals(other.Member) &&
                Value.Equals(other.Value);
@@ -156,7 +154,7 @@ namespace AD.ApiExtensions.Expressions.Internal
         {
             unchecked
             {
-                int hashCode = ElementType.GetHashCode();
+                int hashCode = Parameter.GetHashCode();
                 hashCode = (397 * hashCode) ^ Source.GetHashCode();
                 hashCode = (397 * hashCode) ^ Member.GetHashCode();
                 hashCode = (397 * hashCode) ^ Value.GetHashCode();

@@ -114,7 +114,7 @@ namespace AD.ApiExtensions.Tests
             Assert.Equal(2, result.First().GetType().GetProperties().Length);
         }
 
-        [Fact]
+        [Fact(Skip = "WIP")]
         public void GroupBy_anonymous_with_elimination_and_implicit_cast()
         {
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
@@ -214,6 +214,22 @@ namespace AD.ApiExtensions.Tests
         }
 
         [Fact]
+        public void With_anonymous_twice()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new { x.A, x.B, D = 1 })
+                     .With(x => x.D, x => x.D)
+                     .With(x => x.A, x => x.A)
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
         public void With_anonymous_with_elimination()
         {
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
@@ -236,6 +252,22 @@ namespace AD.ApiExtensions.Tests
             var select =
                 query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
                      .With(x => x.D, x => x.D)
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void With_concrete_twice()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
+                     .With(x => x.D, x => x.D)
+                     .With(x => x.A, x => x.A)
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = select.Cast<object>().ToArray();

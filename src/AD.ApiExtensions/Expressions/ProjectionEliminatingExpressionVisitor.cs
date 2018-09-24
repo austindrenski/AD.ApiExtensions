@@ -153,7 +153,7 @@ namespace AD.ApiExtensions.Expressions
                 for (int i = 0; i < parameterTypeArguments.Length; i++)
                 {
                     if (argumentTypeArguments.Length <= i)
-                        break;
+                        throw new ArgumentOutOfRangeException("The argument has fewer type parameters than the method parameter.");
 
                     if (typeParameter.IsAssignableFrom(parameterTypeArguments[i]))
                     {
