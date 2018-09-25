@@ -114,7 +114,7 @@ namespace AD.ApiExtensions.Tests
             Assert.Equal(2, result.First().GetType().GetProperties().Length);
         }
 
-        [Fact(Skip = "WIP")]
+        [Fact]
         public void GroupBy_anonymous_with_elimination_and_implicit_cast()
         {
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();

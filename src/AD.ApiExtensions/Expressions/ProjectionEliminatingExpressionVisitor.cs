@@ -48,7 +48,14 @@ namespace AD.ApiExtensions.Expressions
                 body = visitor.Visit(body);
             }
 
-            return Expression.Lambda(body, parameters);
+            Type[] typeArguments =
+                parameters.Select(x => x.Type)
+                          .Append(NegotiateMutualInterface(e.ReturnType, body.Type))
+                          .ToArray();
+
+            Type funcType = Expression.GetFuncType(typeArguments);
+
+            return Expression.Lambda(funcType, body, parameters);
         }
 
         /// <inheritdoc />
@@ -123,6 +130,76 @@ namespace AD.ApiExtensions.Expressions
             return Expression.Call(instance, method, arguments);
         }
 
+        /// <inheritdoc />
+        protected override Expression VisitNew(NewExpression e)
+        {
+            if (e.Arguments.Count == 0 || e.Members == null)
+                return base.VisitNew(e);
+
+            (string Name, Expression)[] assignments =
+                e.Arguments
+                 .Zip(e.Members, (a, m) => (Member: m, Expression: a))
+                 .Where(x => !_knownTypes.IsLogicallyDefault(x.Member, x.Expression, _eliminatedMembers))
+                 .Select(x => (x.Member.Name, Visit(x.Expression)))
+                 .ToArray();
+
+            // TODO: This is the current "unavailable" methodology. Fix this later.
+            IEnumerable<string> toAdd =
+                e.Members
+                 .Select(x => x.Name)
+                 .Except(assignments.Select(x => x.Name))
+                 .Except(_eliminatedMembers.Values.Select(x => x.Name));
+
+            foreach (string removed in toAdd)
+            {
+                _eliminatedMembers.Add(removed, e.Members.Single(x => x.Name == removed));
+            }
+
+            return ConstructNewTypeAndExpression(e.Type, assignments);
+        }
+
+        /// <inheritdoc />
+        protected override Expression VisitParameter(ParameterExpression e)
+        {
+            if (_knownTypes.TryGetValue(e.Type, out ParameterExpression p))
+                return p;
+
+            Type type = _knownTypes.GetOrUpdate(e.Type);
+
+            if (e.Type != type)
+                _knownTypes.Register(e.Type, type);
+
+            return _knownTypes.TryGetValue(type, out p) ? p : base.VisitParameter(e);
+        }
+
+        /// <summary>
+        /// Defines a new type and constructs a <see cref="NewExpression"/> for it.
+        /// </summary>
+        /// <param name="type">The type that the new type replaces.</param>
+        /// <param name="assignments">The assignments representing the new type.</param>
+        /// <returns>
+        /// A <see cref="NewExpression"/> for the new type.
+        /// </returns>
+        /// <exception cref="MissingMemberException">Constructor not found for {next.FullName} with {assignments.Length} parameters.</exception>
+        [NotNull]
+        Expression ConstructNewTypeAndExpression([NotNull] Type type, [NotNull] (string Name, Expression Expression)[] assignments)
+        {
+            Type next = TypeDefinition.GetOrAdd(assignments.Select(x => (x.Name, x.Expression.Type)));
+
+            _knownTypes.Register(type, next);
+
+            ConstructorInfo ctor = next.GetConstructor(assignments.Select(x => x.Expression.Type).ToArray());
+
+            if (ctor == null)
+                throw new MissingMemberException($"Constructor not found for {next.FullName} with {assignments.Length} parameters.");
+
+            return Expression.New(
+                ctor,
+                assignments.Select(x => x.Expression),
+                next.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                    .Where(x => assignments.Any(y => y.Name == x.Name)));
+        }
+
         /// <summary>
         /// Attempts to infer the concrete type used in place of a specific type parameter,
         /// such as the concrete type of `TKey` in <see cref="IGrouping{TKey,TValue}"/>.
@@ -170,65 +247,54 @@ namespace AD.ApiExtensions.Expressions
             return false;
         }
 
-        /// <inheritdoc />
-        protected override Expression VisitNew(NewExpression e)
+        /// <summary>
+        /// Finds an interface such that the <paramref name="value"/> fits the shape of the <paramref name="target"/>.
+        /// </summary>
+        /// <param name="target">The shape of the type to target.</param>
+        /// <param name="value">The type from which to find a matching interface.</param>
+        /// <returns>
+        /// A constructed interface type for <paramref name="value"/> that fits the shape of the <paramref name="target"/>.
+        /// The <paramref name="value"/> is returned if no interface is found.
+        /// </returns>
+        [Pure]
+        [NotNull]
+        static Type NegotiateMutualInterface([NotNull] Type target, [NotNull] Type value)
         {
-            if (e.Arguments.Count == 0 || e.Members == null)
-                return base.VisitNew(e);
+            if (!target.IsInterface)
+                return value;
 
-            (string Name, Expression)[] assignments =
-                e.Arguments
-                 .Zip(e.Members, (a, m) => (Member: m, Expression: a))
-                 .Where(x => !_knownTypes.IsLogicallyDefault(x.Member, x.Expression, _eliminatedMembers))
-                 .Select(x => (x.Member.Name, Visit(x.Expression)))
-                 .ToArray();
+            Type targetGeneric =
+                target.IsConstructedGenericType
+                    ? target.GetGenericTypeDefinition()
+                    : target;
 
-            // TODO: This is the current "unavailable" methodology. Fix this later.
-            IEnumerable<string> toAdd =
-                e.Members
-                 .Select(x => x.Name)
-                 .Except(assignments.Select(x => x.Name))
-                 .Except(_eliminatedMembers.Values.Select(x => x.Name));
+            Type[] interfaces = value.GetInterfaces();
+            Type[] interfaceGenerics = new Type[interfaces.Length];
 
-            foreach (string removed in toAdd)
+            for (int i = 0; i < interfaces.Length; i++)
             {
-                _eliminatedMembers.Add(removed, e.Members.Single(x => x.Name == removed));
+                interfaceGenerics[i] =
+                    interfaces[i].IsGenericType
+                        ? interfaces[i].GetGenericTypeDefinition()
+                        : interfaces[i];
             }
 
-            return ConstructNewTypeAndExpression(e.Type, assignments);
-        }
+            // Look for an exact match.
+            for (int i = 0; i < interfaces.Length; i++)
+            {
+                if (targetGeneric == interfaceGenerics[i])
+                    return interfaces[i];
+            }
 
-        /// <inheritdoc />
-        protected override Expression VisitParameter(ParameterExpression e)
-        {
-            if (_knownTypes.TryGetValue(e.Type, out ParameterExpression p))
-                return p;
+            // Look for an acceptable match.
+            for (int i = 0; i < interfaces.Length; i++)
+            {
+                if (targetGeneric.IsAssignableFrom(interfaceGenerics[i]))
+                    return interfaces[i];
+            }
 
-            Type type = _knownTypes.GetOrUpdate(e.Type);
-
-            if (e.Type != type)
-                _knownTypes.Register(e.Type, type);
-
-            return _knownTypes.TryGetValue(type, out p) ? p : base.VisitParameter(e);
-        }
-
-        [NotNull]
-        Expression ConstructNewTypeAndExpression([NotNull] Type type, [NotNull] (string Name, Expression Expression)[] assignments)
-        {
-            Type next = TypeDefinition.GetOrAdd(assignments.Select(x => (x.Name, x.Expression.Type)));
-
-            _knownTypes.Register(type, next);
-
-            ConstructorInfo ctor = next.GetConstructor(assignments.Select(x => x.Expression.Type).ToArray());
-
-            if (ctor == null)
-                throw new MissingMemberException($"Constructor not found for {next.FullName} with {assignments.Length} parameters.");
-
-            return Expression.New(
-                ctor,
-                assignments.Select(x => x.Expression),
-                next.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                    .Where(x => assignments.Any(y => y.Name == x.Name)));
+            // No match, just return the value.
+            return value;
         }
     }
 }
