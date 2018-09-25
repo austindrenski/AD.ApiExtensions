@@ -170,28 +170,28 @@ namespace AD.ApiExtensions.Tests
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
 
             var select =
-                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
-                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D })
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1, Other = new SomeOtherClass { E = "e" } })
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D, Other = new SomeOtherClass { E = x.Other.E } })
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = select.Cast<object>().ToArray();
 
-            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+            Assert.Equal(4, result.First().GetType().GetProperties().Length);
         }
 
         [Fact]
         public void Select_concrete_with_elimination()
         {
-            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+            var query = new[] { new { A = "a", B = "b", C = "c", } }.AsQueryable();
 
             var select =
-                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 0 })
-                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D })
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 0, Other = new SomeOtherClass { E = "e" } })
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D, Other = new SomeOtherClass { E = x.Other.E } })
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = select.Cast<object>().ToArray();
 
-            Assert.Equal(2, result.First().GetType().GetProperties().Length);
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
         }
 
         #endregion
@@ -252,21 +252,6 @@ namespace AD.ApiExtensions.Tests
             var select =
                 query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
                      .With(x => x.D, x => x.D)
-                     .Enlist<ProjectionEliminatingExpressionVisitor>();
-
-            var result = select.Cast<object>().ToArray();
-
-            Assert.Equal(3, result.First().GetType().GetProperties().Length);
-        }
-
-        [Fact]
-        public void With_concrete_twice()
-        {
-            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
-
-            var select =
-                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
-                     .With(x => x.D, x => x.D)
                      .With(x => x.A, x => x.A)
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
@@ -281,13 +266,44 @@ namespace AD.ApiExtensions.Tests
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
 
             var select =
-                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1 })
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1, Other = new SomeOtherClass { E = "e" } })
                      .With(x => x.D, x => 0)
+                     .With(x => x.A, x => x.A)
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = select.Cast<object>().ToArray();
 
-            Assert.Equal(2, result.First().GetType().GetProperties().Length);
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void With_concrete_with_navigation()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1, Other = new SomeOtherClass { E = "e" } })
+                     .With(x => x.Other, x => new SomeOtherClass { E = x.Other.E })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(4, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void With_concrete_with_navigation_elimination()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1, Other = new SomeOtherClass { E = "e" } })
+                     .With(x => x.Other, x => null)
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
         }
 
         #endregion
@@ -299,6 +315,12 @@ namespace AD.ApiExtensions.Tests
             public string A { get; set; }
             public string B { get; set; }
             public int D { get; set; }
+            public SomeOtherClass Other { get; set; }
+        }
+
+        class SomeOtherClass
+        {
+            public string E { get; set; }
         }
 
         #endregion

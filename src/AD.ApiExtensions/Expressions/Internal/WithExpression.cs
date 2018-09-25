@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -108,7 +107,7 @@ namespace AD.ApiExtensions.Expressions.Internal
         [Pure]
         public override Expression Reduce()
         {
-            IReadOnlyList<PropertyInfo> properties =
+            PropertyInfo[] properties =
                 Parameter.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
             (MemberInfo Member, Expression Expression)[] expressions =
