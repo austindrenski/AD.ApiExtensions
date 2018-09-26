@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -19,11 +18,6 @@ namespace AD.ApiExtensions.Expressions
         /// Caches anonymous types that were encountered and modified.
         /// </summary>
         [NotNull] readonly TypeCache _knownTypes = new TypeCache();
-
-        /// <summary>
-        /// Caches members that were encountered and removed.
-        /// </summary>
-        [NotNull] readonly Dictionary<string, MemberInfo> _eliminatedMembers = new Dictionary<string, MemberInfo>();
 
         /// <inheritdoc />
         [ContractAnnotation("e:notnull => notnull; e:null => null")]
@@ -61,14 +55,17 @@ namespace AD.ApiExtensions.Expressions
         /// <inheritdoc />
         protected override Expression VisitMember(MemberExpression e)
         {
-            switch (Visit(e.Expression))
-            {
-                case Expression s:
-                    return Expression.PropertyOrField(s, e.Member.Name);
+            Expression member = Visit(e.Expression);
 
-                default:
-                    return base.VisitMember(e);
-            }
+            if (member == null || e.Member.MemberType != MemberTypes.Property)
+                return base.VisitMember(e);
+
+            Type updatedType = _knownTypes.GetOrUpdate(((PropertyInfo) e.Member).PropertyType);
+
+            if (member.Type.GetProperty(e.Member.Name, updatedType) is PropertyInfo p)
+                return Expression.Property(member, p);
+
+            return Expression.Default(updatedType);
         }
 
         /// <inheritdoc />
@@ -89,9 +86,9 @@ namespace AD.ApiExtensions.Expressions
 
             (string Name, Expression Expression)[] assignments =
                 bindings.Cast<MemberAssignment>()
+                        .Select(x => (x.Member.Name, Expression: Visit(x.Expression)))
                         .Where(x => !IsConstantDefaultValue(x.Expression))
-                        .Where(x => !_eliminatedMembers.ContainsKey(x.Member.Name))
-                        .Select(x => (x.Member.Name, Visit(x.Expression)))
+                        .Select(x => (x.Name, x.Expression))
                         .ToArray();
 
             return ConstructNewTypeAndExpression(e.Type, assignments);
@@ -144,24 +141,10 @@ namespace AD.ApiExtensions.Expressions
 
             (string Name, Expression Expression)[] assignments =
                 e.Arguments
-                 .Zip(e.Members, (a, m) => (Member: m, Expression: a))
+                 .Zip(e.Members, (a, m) => (Member: m, Expression: Visit(a)))
                  .Where(x => !IsConstantDefaultValue(x.Expression))
-                 .Where(x => !_eliminatedMembers.ContainsKey(x.Member.Name))
-                 .Select(x => (x.Member.Name, Visit(x.Expression)))
+                 .Select(x => (x.Member.Name, x.Expression))
                  .ToArray();
-
-            // TODO: This is the current "unavailable" methodology. Fix this later.
-            string[] toAdd =
-                e.Members
-                 .Select(x => x.Name)
-                 .Except(assignments.Select(x => x.Name))
-                 .Except(_eliminatedMembers.Values.Select(x => x.Name))
-                 .ToArray();
-
-            foreach (string removed in toAdd)
-            {
-                _eliminatedMembers.Add(removed, e.Members.Single(x => x.Name == removed));
-            }
 
             return ConstructNewTypeAndExpression(e.Type, assignments);
         }
@@ -310,25 +293,28 @@ namespace AD.ApiExtensions.Expressions
         [Pure]
         static bool IsConstantDefaultValue([NotNull] Expression expression)
         {
+            if (expression.NodeType == ExpressionType.Default)
+                return true;
+
             if (!(expression is ConstantExpression c))
                 return false;
 
             switch (c.Value)
             {
                 case null:      return true;
-                case char v:    return v == '\0';
-                case bool v:    return v == false;
-                case byte v:    return v == 0;
-                case sbyte v:   return v == 0;
-                case decimal v: return v == 0;
-                case double v:  return v == 0;
-                case float v:   return v == 0;
-                case int v:     return v == 0;
-                case uint v:    return v == 0;
-                case long v:    return v == 0;
-                case ulong v:   return v == 0;
-                case short v:   return v == 0;
-                case ushort v:  return v == 0;
+                case char v:    return v == default;
+                case bool v:    return v == default;
+                case byte v:    return v == default;
+                case sbyte v:   return v == default;
+                case decimal v: return v == default;
+                case double v:  return v == default;
+                case float v:   return v == default;
+                case int v:     return v == default;
+                case uint v:    return v == default;
+                case long v:    return v == default;
+                case ulong v:   return v == default;
+                case short v:   return v == default;
+                case ushort v:  return v == default;
                 default:        return false;
             }
         }
