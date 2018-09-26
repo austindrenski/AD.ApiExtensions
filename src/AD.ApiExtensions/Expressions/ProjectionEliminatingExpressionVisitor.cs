@@ -32,13 +32,13 @@ namespace AD.ApiExtensions.Expressions
         /// <inheritdoc />
         protected override Expression VisitLambda<T>(Expression<T> e)
         {
-            Expression body = Visit(e.Body);
-
             ParameterExpression[] parameters =
                 e.Parameters
                  .Select(Visit)
                  .Cast<ParameterExpression>()
                  .ToArray();
+
+            Expression body = Visit(e.Body);
 
             for (int i = 0; i < parameters.Length; i++)
             {
@@ -55,7 +55,7 @@ namespace AD.ApiExtensions.Expressions
 
             Type funcType = Expression.GetFuncType(typeArguments);
 
-            return Expression.Lambda(funcType, body, parameters);
+            return Expression.Lambda(funcType, body, e.Name, e.TailCall, parameters);
         }
 
         /// <inheritdoc />
@@ -63,9 +63,6 @@ namespace AD.ApiExtensions.Expressions
         {
             switch (Visit(e.Expression))
             {
-                case ParameterExpression p:
-                    return Expression.PropertyOrField(VisitParameter(p), e.Member.Name);
-
                 case Expression s:
                     return Expression.PropertyOrField(s, e.Member.Name);
 
@@ -92,7 +89,8 @@ namespace AD.ApiExtensions.Expressions
 
             (string Name, Expression Expression)[] assignments =
                 bindings.Cast<MemberAssignment>()
-                        .Where(x => !_knownTypes.IsLogicallyDefault(x.Member, x.Expression, _eliminatedMembers))
+                        .Where(x => !IsConstantDefaultValue(x.Expression))
+                        .Where(x => !_eliminatedMembers.ContainsKey(x.Member.Name))
                         .Select(x => (x.Member.Name, Visit(x.Expression)))
                         .ToArray();
 
@@ -119,9 +117,13 @@ namespace AD.ApiExtensions.Expressions
                 Type typeParameter = typeParameters[i];
                 for (int j = 0; j < parameters.Length; j++)
                 {
-                    // N.B. Continue the loop in case a later parameter is a better fit.
-                    if (TryInferGenericArgument(typeParameter, parameters[j].ParameterType, arguments[j].Type, out Type result))
-                        typeParameters[i] = _knownTypes.GetOrUpdate(result);
+                    Type t = InferGenericArgument(typeParameter, parameters[j].ParameterType, arguments[j].Type);
+
+                    if (t == null)
+                        continue;
+
+                    typeParameters[i] = _knownTypes.GetOrUpdate(t);
+                    break;
                 }
             }
 
@@ -136,19 +138,21 @@ namespace AD.ApiExtensions.Expressions
             if (e.Arguments.Count == 0 || e.Members == null)
                 return base.VisitNew(e);
 
-            (string Name, Expression)[] assignments =
+            (string Name, Expression Expression)[] assignments =
                 e.Arguments
                  .Zip(e.Members, (a, m) => (Member: m, Expression: a))
-                 .Where(x => !_knownTypes.IsLogicallyDefault(x.Member, x.Expression, _eliminatedMembers))
+                 .Where(x => !IsConstantDefaultValue(x.Expression))
+                 .Where(x => !_eliminatedMembers.ContainsKey(x.Member.Name))
                  .Select(x => (x.Member.Name, Visit(x.Expression)))
                  .ToArray();
 
             // TODO: This is the current "unavailable" methodology. Fix this later.
-            IEnumerable<string> toAdd =
+            string[] toAdd =
                 e.Members
                  .Select(x => x.Name)
                  .Except(assignments.Select(x => x.Name))
-                 .Except(_eliminatedMembers.Values.Select(x => x.Name));
+                 .Except(_eliminatedMembers.Values.Select(x => x.Name))
+                 .ToArray();
 
             foreach (string removed in toAdd)
             {
@@ -169,7 +173,7 @@ namespace AD.ApiExtensions.Expressions
             if (e.Type != type)
                 _knownTypes.Register(e.Type, type);
 
-            return _knownTypes.TryGetValue(type, out p) ? p : base.VisitParameter(e);
+            return _knownTypes.TryGetValue(e.Type, out p) ? p : base.VisitParameter(e);
         }
 
         /// <summary>
@@ -207,44 +211,39 @@ namespace AD.ApiExtensions.Expressions
         /// <param name="typeParameter">The type parameter being inferred.</param>
         /// <param name="parameter">The parameter of the generic method.</param>
         /// <param name="argument">The argument to the current method.</param>
-        /// <param name="result">The inferred result.</param>
         /// <returns>
-        /// True if a type was inferred; otherwise false.
+        /// The inferred type or null.
         /// </returns>
-        [ContractAnnotation("=> false, result:null; => true, result:notnull")]
-        static bool TryInferGenericArgument([NotNull] Type typeParameter, [NotNull] Type parameter, [NotNull] Type argument, out Type result)
+        [Pure]
+        [CanBeNull]
+        static Type InferGenericArgument([NotNull] Type typeParameter, [NotNull] Type parameter, [NotNull] Type argument)
         {
             // N.B. consider T[] == IEnumerable<T>
-            if (parameter.IsGenericType && argument.IsGenericType || argument.IsArray)
+            if ((!parameter.IsGenericType || !argument.IsGenericType) && !argument.IsArray)
+                return null;
+
+            Type[] parameterTypeArguments =
+                parameter.GetGenericArguments();
+
+            Type interfaceType = NegotiateMutualInterface(parameter, argument);
+
+            Type[] argumentTypeArguments =
+                interfaceType.IsGenericType
+                    ? interfaceType.GetGenericArguments()
+                    : interfaceType.IsArray
+                        ? new[] { interfaceType.GetElementType() }
+                        : new Type[0];
+
+            for (int i = 0; i < parameterTypeArguments.Length; i++)
             {
-                Type[] parameterTypeArguments =
-                    parameter.GetGenericArguments();
+                if (typeParameter.IsAssignableFrom(parameterTypeArguments[i]))
+                    return argumentTypeArguments[i];
 
-                Type[] argumentTypeArguments =
-                    argument.IsGenericType
-                        ? argument.GetGenericArguments()
-                        : argument.IsArray
-                            ? new[] { argument.GetElementType() }
-                            : new Type[0];
-
-                for (int i = 0; i < parameterTypeArguments.Length; i++)
-                {
-                    if (argumentTypeArguments.Length <= i)
-                        throw new ArgumentOutOfRangeException("The argument has fewer type parameters than the method parameter.");
-
-                    if (typeParameter.IsAssignableFrom(parameterTypeArguments[i]))
-                    {
-                        result = argumentTypeArguments[i];
-                        return true;
-                    }
-
-                    if (TryInferGenericArgument(typeParameter, parameterTypeArguments[i], argumentTypeArguments[i], out result))
-                        return true;
-                }
+                if (InferGenericArgument(typeParameter, parameterTypeArguments[i], argumentTypeArguments[i]) is Type result)
+                    return result;
             }
 
-            result = null;
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -295,6 +294,39 @@ namespace AD.ApiExtensions.Expressions
 
             // No match, just return the value.
             return value;
+        }
+
+        /// <summary>
+        /// Tests if the expression is a constant default value.
+        /// </summary>
+        /// <param name="expression">The expression to test.</param>
+        /// <returns>
+        /// True if the expression is a constant default value; otherwise, false.
+        /// </returns>
+        [Pure]
+        static bool IsConstantDefaultValue([NotNull] Expression expression)
+        {
+            if (!(expression is ConstantExpression c))
+                return false;
+
+            switch (c.Value)
+            {
+                case null:      return true;
+                case char v:    return v == '\0';
+                case bool v:    return v == false;
+                case byte v:    return v == 0;
+                case sbyte v:   return v == 0;
+                case decimal v: return v == 0;
+                case double v:  return v == 0;
+                case float v:   return v == 0;
+                case int v:     return v == 0;
+                case uint v:    return v == 0;
+                case long v:    return v == 0;
+                case ulong v:   return v == 0;
+                case short v:   return v == 0;
+                case ushort v:  return v == 0;
+                default:        return false;
+            }
         }
     }
 }

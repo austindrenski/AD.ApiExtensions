@@ -19,7 +19,7 @@ namespace AD.ApiExtensions.Tests
             var select =
                 query.Select(x => new { x.A, x.B, D = 1 })
                      .Where(x => strings.Contains(x.A))
-                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D })
+                     .Select(x => new { x.A, x.B, x.D })
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = select.Cast<object>().ToArray();

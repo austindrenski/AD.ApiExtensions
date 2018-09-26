@@ -11,7 +11,7 @@ namespace AD.ApiExtensions.Expressions.Internal
     /// Represents an expression that rebinds a specified property or field.
     /// </summary>
     [PublicAPI]
-    public class WithExpression : Expression, IEquatable<WithExpression>
+    public class WithExpression<TSource, TValue> : Expression, IEquatable<WithExpression<TSource, TValue>>
     {
         #region Resources
 
@@ -41,12 +41,6 @@ namespace AD.ApiExtensions.Expressions.Internal
         public override Type Type => Source.Type;
 
         /// <summary>
-        /// The element type of the source expression.
-        /// </summary>
-        [NotNull]
-        public ParameterExpression Parameter { get; }
-
-        /// <summary>
         /// The source expression.
         /// </summary>
         [NotNull]
@@ -56,51 +50,43 @@ namespace AD.ApiExtensions.Expressions.Internal
         /// The member to bind.
         /// </summary>
         [NotNull]
-        public MemberExpression Member { get; }
+        public MemberExpression Target { get; }
 
         /// <summary>
         /// The value to bind.
         /// </summary>
         [NotNull]
-        public Expression Value { get; }
+        public Expression<Func<TSource, TValue>> Value { get; }
 
         /// <summary>
-        /// Constructs a new instance of the <see cref="WithExpression"/> class.
+        /// Constructs a new instance of the <see cref="WithExpression{TSource,TValue}"/> class.
         /// </summary>
-        /// <param name="elementType">The element type of the source expression.</param>
         /// <param name="source">The source expression.</param>
-        /// <param name="member">The member to bind.</param>
+        /// <param name="target">The target to bind.</param>
         /// <param name="value">The value to bind.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="elementType"/></exception>
         /// <exception cref="ArgumentNullException"><paramref name="source"/></exception>
-        /// <exception cref="ArgumentNullException"><paramref name="member"/></exception>
+        /// <exception cref="ArgumentNullException"><paramref name="target"/></exception>
         /// <exception cref="ArgumentNullException"><paramref name="value"/></exception>
         public WithExpression(
-            [NotNull] Type elementType,
             [NotNull] Expression source,
-            [NotNull] MemberExpression member,
-            [NotNull] LambdaExpression value)
+            [NotNull] Expression<Func<TSource, TValue>> target,
+            [NotNull] Expression<Func<TSource, TValue>> value)
         {
-            if (elementType is null)
-                throw new ArgumentNullException(nameof(elementType));
-
             if (source is null)
                 throw new ArgumentNullException(nameof(source));
 
-            if (member is null)
-                throw new ArgumentNullException(nameof(member));
+            if (target is null)
+                throw new ArgumentNullException(nameof(target));
 
             if (value is null)
                 throw new ArgumentNullException(nameof(value));
 
-            Parameter = Parameter(elementType);
+            if (!(target.Body is MemberExpression member) || member.Member.MemberType != MemberTypes.Property)
+                throw new ArgumentException($"{nameof(target)} must be a {nameof(MemberExpression)} of {MemberTypes.Property}.");
 
-            ParameterRebindingExpressionVisitor visitor =
-                new ParameterRebindingExpressionVisitor(Parameter);
-
-            Source = visitor.Visit(source);
-            Member = (MemberExpression) visitor.Visit(member);
-            Value = visitor.Visit(value.Body);
+            Source = source;
+            Target = member;
+            Value = value;
         }
 
         /// <inheritdoc />
@@ -108,11 +94,11 @@ namespace AD.ApiExtensions.Expressions.Internal
         public override Expression Reduce()
         {
             PropertyInfo[] properties =
-                Parameter.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
             (MemberInfo Member, Expression Expression)[] expressions =
-                properties.Select(x => Property(Parameter, x))
-                          .Select(x => (x.Member, Expression: x.Member == Member.Member ? Value : x))
+                properties.Select(x => Property(Target.Expression, typeof(TSource), x.Name))
+                          .Select(x => (x.Member, Expression: x.Member == Target.Member ? Value.Body : x))
                           .ToArray();
 
             Type[] types =
@@ -120,32 +106,31 @@ namespace AD.ApiExtensions.Expressions.Internal
                           .ToArray();
 
             Expression body =
-                Parameter.Type.GetConstructor(types) is ConstructorInfo m
+                typeof(TSource).GetConstructor(types) is ConstructorInfo m
                     ? (Expression) New(m, expressions.Select(x => x.Expression), expressions.Select(x => x.Member))
-                    : MemberInit(New(Parameter.Type), expressions.Select(x => Bind(x.Member, x.Expression)));
+                    : MemberInit(New(typeof(TSource)), expressions.Select(x => Bind(x.Member, x.Expression)));
 
             MethodInfo selector =
-                SelectorCache.GetOrAdd(Parameter.Type, t => SelectMethodInfo.MakeGenericMethod(t, body.Type));
+                SelectorCache.GetOrAdd(typeof(TSource), t => SelectMethodInfo.MakeGenericMethod(t, body.Type));
 
-            return Call(selector, Source, Lambda(body, Parameter));
+            return Call(selector, Source, Lambda(body, Value.Parameters.Single()));
         }
 
         /// <inheritdoc />
         [Pure]
-        public override string ToString() => $"{Source}.With({Member}, {Value})";
+        public override string ToString() => $"{Source}.With({Target}, {Value})";
 
         /// <inheritdoc />
         [Pure]
-        public bool Equals(WithExpression other)
+        public bool Equals(WithExpression<TSource, TValue> other)
             => other != null &&
-               Parameter.Equals(other.Parameter) &&
                Source.Equals(other.Source) &&
-               Member.Equals(other.Member) &&
+               Target.Equals(other.Target) &&
                Value.Equals(other.Value);
 
         /// <inheritdoc />
         [Pure]
-        public override bool Equals(object obj) => obj is WithExpression w && Equals(w);
+        public override bool Equals(object obj) => obj is WithExpression<TSource, TValue> w && Equals(w);
 
         /// <inheritdoc />
         [Pure]
@@ -153,30 +138,29 @@ namespace AD.ApiExtensions.Expressions.Internal
         {
             unchecked
             {
-                int hashCode = Parameter.GetHashCode();
-                hashCode = (397 * hashCode) ^ Source.GetHashCode();
-                hashCode = (397 * hashCode) ^ Member.GetHashCode();
+                int hashCode = Source.GetHashCode();
+                hashCode = (397 * hashCode) ^ Target.GetHashCode();
                 hashCode = (397 * hashCode) ^ Value.GetHashCode();
                 return hashCode;
             }
         }
 
-        /// <summary>Returns a value that indicates whether the values of two <see cref="WithExpression"/> objects are equal.</summary>
+        /// <summary>Returns a value that indicates whether the values of two <see cref="WithExpression{TSource,TValue}"/> objects are equal.</summary>
         /// <param name="left">The first value to compare.</param>
         /// <param name="right">The second value to compare.</param>
         /// <returns>
         /// True if the <paramref name="left" /> and <paramref name="right" /> parameters have the same value; otherwise, false.
         /// </returns>
         [Pure]
-        public static bool operator ==(WithExpression left, WithExpression right) => Equals(left, right);
+        public static bool operator ==(WithExpression<TSource, TValue> left, WithExpression<TSource, TValue> right) => Equals(left, right);
 
-        /// <summary>Returns a value that indicates whether two <see cref="WithExpression" /> objects have different values.</summary>
+        /// <summary>Returns a value that indicates whether two <see cref="WithExpression{TSource,TValue}" /> objects have different values.</summary>
         /// <param name="left">The first value to compare.</param>
         /// <param name="right">The second value to compare.</param>
         /// <returns>
         /// True if <paramref name="left" /> and <paramref name="right" /> are not equal; otherwise, false.
         /// </returns>
         [Pure]
-        public static bool operator !=(WithExpression left, WithExpression right) => !Equals(left, right);
+        public static bool operator !=(WithExpression<TSource, TValue> left, WithExpression<TSource, TValue> right) => !Equals(left, right);
     }
 }

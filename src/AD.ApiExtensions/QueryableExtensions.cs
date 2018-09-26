@@ -87,7 +87,6 @@ namespace AD.ApiExtensions
         /// <exception cref="ArgumentNullException"><paramref name="source"/></exception>
         /// <exception cref="ArgumentNullException"><paramref name="target"/></exception>
         /// <exception cref="ArgumentNullException"><paramref name="value"/></exception>
-        /// <exception cref="ArgumentException">target must be a <see cref="MemberExpression"/> of <see cref="T:MemberTypes.Property"/>.</exception>
         [Pure]
         [NotNull]
         [LinqTunnel]
@@ -105,13 +104,10 @@ namespace AD.ApiExtensions
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
-            if (!(target.Body is MemberExpression member) || member.Member.MemberType != MemberTypes.Property)
-                throw new ArgumentException($"{nameof(target)} must be a {nameof(MemberExpression)} of {MemberTypes.Property}.");
-
             Expression expression =
-                new WithExpression(source.ElementType, source.Expression, member, value);
+                new WithExpression<TSource, TValue>(source.Expression, target, value);
 
-            return source.Provider.CreateQuery<TSource>(expression);
+            return source.Provider.CreateQuery<TSource>(expression.Reduce());
         }
 
         #endregion

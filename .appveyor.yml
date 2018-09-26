@@ -19,7 +19,7 @@ dotnet_csproj:
 build_script:
 - pwsh: |
     $ErrorActionPreference = "Stop";
-    dotnet pack -c Release
+    dotnet pack src/AD.ApiExtensions -c Release
 
 test_script:
 - pwsh: |
