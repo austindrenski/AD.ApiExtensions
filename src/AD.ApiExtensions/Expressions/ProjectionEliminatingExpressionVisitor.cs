@@ -109,6 +109,7 @@ namespace AD.ApiExtensions.Expressions
             MethodInfo genericMethod =
                 e.Method.GetGenericMethodDefinition();
 
+            Type[] sourceTypeParameters = e.Method.GetGenericArguments();
             Type[] typeParameters = genericMethod.GetGenericArguments();
             ParameterInfo[] parameters = genericMethod.GetParameters();
 
@@ -125,6 +126,9 @@ namespace AD.ApiExtensions.Expressions
                     typeParameters[i] = _knownTypes.GetOrUpdate(t);
                     break;
                 }
+
+                if (typeParameters[i].IsGenericParameter)
+                    typeParameters[i] = sourceTypeParameters[i];
             }
 
             MethodInfo method = genericMethod.MakeGenericMethod(typeParameters);

@@ -8,6 +8,73 @@ namespace AD.ApiExtensions.Tests
     [UsedImplicitly]
     public class ProjectionEliminatingExpressionVisitorTest
     {
+        #region Cast
+
+        [Fact]
+        public void Cast_anonymous()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new { x.A, x.B, D = 1 })
+                     .Cast<object>()
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void Cast_anonymous_with_elimination()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new { x.A, x.B, D = 1 })
+                     .Select(x => new { x.A, x.B, D = 0 })
+                     .Cast<object>()
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(2, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void Cast_concrete()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 1, Other = new SomeOtherClass { E = "e" } })
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D, Other = new SomeOtherClass { E = x.Other.E } })
+                     .Cast<object>()
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(4, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void Cast_concrete_with_elimination()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c", } }.AsQueryable();
+
+            var select =
+                query.Select(x => new SomeClass { A = x.A, B = x.B, D = 0, Other = new SomeOtherClass { E = "e" } })
+                     .Select(x => new SomeClass { A = x.A, B = x.B, D = x.D, Other = new SomeOtherClass { E = x.Other.E } })
+                     .Cast<object>()
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = select.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+        }
+
+        #endregion
+
         #region Contains
 
         [Fact]
