@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
@@ -69,42 +66,26 @@ namespace AD.ApiExtensions.Types
         /// A new type that behaves like a CLR-generated anonymous type.
         /// </returns>
         /// <remarks>
-        /// The type is named with the pattern: f__Anonymous__{int}.
-        /// Unlike CLR-generated anonymous types, the created type is serializable.
+        /// The type is named with the pattern: @__anonymous__{properties}_{id}.
         /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="properties"/></exception>
         [NotNull]
-        public static Type GetOrAdd([NotNull] IEnumerable<(MemberInfo Member, Expression Expression)> properties)
+        public static Type GetOrAdd([NotNull] (string Name, Type Type)[] properties)
         {
             if (properties == null)
                 throw new ArgumentNullException(nameof(properties));
 
-            return GetOrAdd(properties.Select(x => (x.Member.Name, x.Expression.Type)));
-        }
+            int hashCode = 397;
 
-        /// <summary>
-        /// Creates a new anonymous type similar to CLR-generated anonymous types.
-        /// </summary>
-        /// <param name="properties">The property information to include in the new type.</param>
-        /// <returns>
-        /// A new type that behaves like a CLR-generated anonymous type.
-        /// </returns>
-        /// <remarks>
-        /// The type is named with the pattern: f__Anonymous__{int}.
-        /// Unlike CLR-generated anonymous types, the created type is serializable.
-        /// </remarks>
-        /// <exception cref="ArgumentNullException"><paramref name="properties"/></exception>
-        [NotNull]
-        public static Type GetOrAdd([NotNull] IEnumerable<(string Name, Type Type)> properties)
-        {
-            if (properties == null)
-                throw new ArgumentNullException(nameof(properties));
+            for (int i = 0; i < properties.Length; i++)
+            {
+                unchecked
+                {
+                    hashCode ^= 397 * properties[i].GetHashCode();
+                }
+            }
 
-            (string Name, Type Type)[] propertyInfo = properties as (string Name, Type Type)[] ?? properties.ToArray();
-
-            int hashCode = propertyInfo.Aggregate(397, (current, next) => unchecked(current ^ (397 * next.GetHashCode())));
-
-            return Types.GetOrAdd(hashCode, _ => new TypeDefinition(propertyInfo));
+            return Types.GetOrAdd(hashCode, _ => new TypeDefinition(properties));
         }
 
         /// <summary>

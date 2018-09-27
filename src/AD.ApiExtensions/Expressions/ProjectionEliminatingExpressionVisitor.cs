@@ -71,27 +71,29 @@ namespace AD.ApiExtensions.Expressions
         /// <inheritdoc />
         protected override Expression VisitMemberInit(MemberInitExpression e)
         {
-            if (!(Visit(e.NewExpression) is NewExpression newExpression))
-                return base.VisitMemberInit(e);
-
             MemberBinding[] bindings =
                 e.Bindings
                  .Where(x => x.Member.DeclaringType != null)
-                 .Where(x => _knownTypes.GetOrUpdate(x.Member.DeclaringType).GetRuntimeProperties().Any(y => y.Name == x.Member.Name))
+                 .Where(x => _knownTypes.GetOrUpdate(x.Member.DeclaringType).GetRuntimeProperty(x.Member.Name) != null)
                  .ToArray();
 
             // TODO: handle MemberBindingType.ListBinding and MemberBindingType.MemberBinding.
             if (bindings.Any(x => x.BindingType != MemberBindingType.Assignment))
-                return e.Update(newExpression, bindings.Select(VisitMemberBinding));
+                return base.VisitMemberInit(e);
 
             (string Name, Expression Expression)[] assignments =
                 bindings.Cast<MemberAssignment>()
                         .Select(x => (x.Member.Name, Expression: Visit(x.Expression)))
-                        .Where(x => !IsConstantDefaultValue(x.Expression))
-                        .Select(x => (x.Name, x.Expression))
+                        .Where(x => !IsDefaultValue(x.Expression))
                         .ToArray();
 
-            return ConstructNewTypeAndExpression(e.Type, assignments);
+            Type newType = TypeDefinition.GetOrAdd(assignments.Select(x => (x.Name, x.Expression.Type)).ToArray());
+
+            _knownTypes.Register(e.Type, newType);
+
+            return Expression.MemberInit(
+                Expression.New(newType),
+                assignments.Select(x => Expression.Bind(newType.GetRuntimeProperty(x.Name), x.Expression)));
         }
 
         /// <inheritdoc />
@@ -130,6 +132,10 @@ namespace AD.ApiExtensions.Expressions
 
             MethodInfo method = genericMethod.MakeGenericMethod(typeParameters);
 
+            // TODO: find a better way to handle these cases.
+            if (method.Name == "Sum" && e.Arguments.Count == 2 && ((LambdaExpression) arguments[1]).Body is DefaultExpression d)
+                return d;
+
             return Expression.Call(instance, method, arguments);
         }
 
@@ -139,14 +145,27 @@ namespace AD.ApiExtensions.Expressions
             if (e.Arguments.Count == 0 || e.Members == null)
                 return base.VisitNew(e);
 
-            (string Name, Expression Expression)[] assignments =
+            (string Name, Expression Expression)[] arguments =
                 e.Arguments
-                 .Zip(e.Members, (a, m) => (Member: m, Expression: Visit(a)))
-                 .Where(x => !IsConstantDefaultValue(x.Expression))
-                 .Select(x => (x.Member.Name, x.Expression))
+                 .Zip(e.Members, (a, m) => (m.Name, Expression: Visit(a)))
+                 .Where(x => !IsDefaultValue(x.Expression))
                  .ToArray();
 
-            return ConstructNewTypeAndExpression(e.Type, assignments);
+            Type newType =
+                TypeDefinition.GetOrAdd(arguments.Select(x => (x.Name, x.Expression.Type)).ToArray());
+
+            _knownTypes.Register(e.Type, newType);
+
+            ConstructorInfo ctor =
+                newType.GetConstructor(arguments.Select(x => x.Expression.Type).ToArray());
+
+            if (ctor == null)
+                throw new MissingMemberException($"Constructor not found for {newType.FullName} with {arguments.Length} parameters.");
+
+            return Expression.New(
+                ctor,
+                arguments.Select(x => x.Expression),
+                newType.GetRuntimeProperties().Where(x => arguments.Any(y => y.Name == x.Name)));
         }
 
         /// <inheritdoc />
@@ -161,34 +180,6 @@ namespace AD.ApiExtensions.Expressions
                 _knownTypes.Register(e.Type, type);
 
             return _knownTypes.TryGetValue(e.Type, out p) ? p : base.VisitParameter(e);
-        }
-
-        /// <summary>
-        /// Defines a new type and constructs a <see cref="NewExpression"/> for it.
-        /// </summary>
-        /// <param name="type">The type that the new type replaces.</param>
-        /// <param name="assignments">The assignments representing the new type.</param>
-        /// <returns>
-        /// A <see cref="NewExpression"/> for the new type.
-        /// </returns>
-        /// <exception cref="MissingMemberException">Constructor not found for {next.FullName} with {assignments.Length} parameters.</exception>
-        [NotNull]
-        Expression ConstructNewTypeAndExpression([NotNull] Type type, [NotNull] (string Name, Expression Expression)[] assignments)
-        {
-            Type next = TypeDefinition.GetOrAdd(assignments.Select(x => (x.Name, x.Expression.Type)));
-
-            _knownTypes.Register(type, next);
-
-            ConstructorInfo ctor = next.GetConstructor(assignments.Select(x => x.Expression.Type).ToArray());
-
-            if (ctor == null)
-                throw new MissingMemberException($"Constructor not found for {next.FullName} with {assignments.Length} parameters.");
-
-            return Expression.New(
-                ctor,
-                assignments.Select(x => x.Expression),
-                next.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                    .Where(x => assignments.Any(y => y.Name == x.Name)));
         }
 
         /// <summary>
@@ -286,17 +277,17 @@ namespace AD.ApiExtensions.Expressions
         /// <summary>
         /// Tests if the expression is a constant default value.
         /// </summary>
-        /// <param name="expression">The expression to test.</param>
+        /// <param name="e">The expression to test.</param>
         /// <returns>
         /// True if the expression is a constant default value; otherwise, false.
         /// </returns>
         [Pure]
-        static bool IsConstantDefaultValue([NotNull] Expression expression)
+        static bool IsDefaultValue([NotNull] Expression e)
         {
-            if (expression.NodeType == ExpressionType.Default)
+            if (e.NodeType == ExpressionType.Default)
                 return true;
 
-            if (!(expression is ConstantExpression c))
+            if (!(e is ConstantExpression c))
                 return false;
 
             switch (c.Value)

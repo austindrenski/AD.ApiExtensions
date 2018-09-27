@@ -165,7 +165,7 @@ namespace AD.ApiExtensions.Tests
             Assert.Equal(3, result.First().GetType().GetProperties().Length);
         }
 
-        [Fact(Skip = "Special case required for aggregate projections over eliminated members.")]
+        [Fact]
         public void GroupBy_anonymous_with_elimination()
         {
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
