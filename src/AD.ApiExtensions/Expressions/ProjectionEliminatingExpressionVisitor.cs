@@ -133,8 +133,11 @@ namespace AD.ApiExtensions.Expressions
             MethodInfo method = genericMethod.MakeGenericMethod(typeParameters);
 
             // TODO: find a better way to handle these cases.
-            if (method.Name == "Sum" && e.Arguments.Count == 2 && ((LambdaExpression) arguments[1]).Body is DefaultExpression d)
-                return d;
+            if (method.Name == "Average" && e.Arguments.Count == 2 && ((LambdaExpression) arguments[1]).Body is DefaultExpression average)
+                return average;
+
+            if (method.Name == "Sum" && e.Arguments.Count == 2 && ((LambdaExpression) arguments[1]).Body is DefaultExpression sum)
+                return sum;
 
             return Expression.Call(instance, method, arguments);
         }

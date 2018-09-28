@@ -166,7 +166,23 @@ namespace AD.ApiExtensions.Tests
         }
 
         [Fact]
-        public void GroupBy_anonymous_with_elimination()
+        public void GroupBy_anonymous_with_elimination_average()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var group =
+                query.Select(x => new { x.A, x.B, D = 0.0 })
+                     .GroupBy(x => new { x.A, x.B })
+                     .Select(x => new { x.Key.A, x.Key.B, D = x.Average(y => y.D) })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = group.Cast<object>().ToArray();
+
+            Assert.Equal(2, result.First().GetType().GetProperties().Length);
+        }
+
+        [Fact]
+        public void GroupBy_anonymous_with_elimination_sum()
         {
             var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
 
