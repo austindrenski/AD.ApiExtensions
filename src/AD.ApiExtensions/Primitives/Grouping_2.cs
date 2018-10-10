@@ -27,7 +27,7 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// The regular expression string to match strings in the form: NAME(MEMBER,MEMBER,MEMBER).
         /// </summary>
-        [NotNull] const string NameMembersRegexString = "(?<Key>[A-z0-9_]+)\\((?<Members>[A-z0-9,]*)\\)";
+        [NotNull] const string NameMembersRegexString = "(?<Key>[A-z0-9_]*)\\((?<Members>[A-z0-9,]*)\\)";
 
         /// <summary>
         /// The regular expression string to match strings in the form: MEMBER-MEMBER-MEMBER.
@@ -37,7 +37,7 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// The name of the individuals group.
         /// </summary>
-        [NotNull] const string IndividualsGroupName = "<>__individuals";
+        [NotNull] const string IndividualsGroupName = "";
 
         /// <summary>
         /// The regex applied to match the name and members of a group.
