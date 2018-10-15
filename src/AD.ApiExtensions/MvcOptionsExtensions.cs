@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using AD.ApiExtensions.Formatters;
 using AD.ApiExtensions.Mvc;
 using JetBrains.Annotations;

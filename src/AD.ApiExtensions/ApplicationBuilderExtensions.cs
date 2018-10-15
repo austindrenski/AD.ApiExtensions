@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using AD.ApiExtensions.Http;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
