@@ -4,7 +4,7 @@ using Microsoft.Extensions.Primitives;
 namespace AD.ApiExtensions.Primitives
 {
     /// <summary>
-    ///
+    /// Provides extension methods for <see cref="StringSegment"/>.
     /// </summary>
     [PublicAPI]
     public static class StringSegmentExtensions
@@ -12,36 +12,22 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// Removes up to the specified count of the specified character from both the start and end of the segment.
         /// </summary>
-        /// <param name="segment">
-        /// The segment to trim.
-        /// </param>
-        /// <param name="c">
-        /// The character to remove.
-        /// </param>
-        /// <param name="count">
-        /// The maximum number of characters to remove.
-        /// </param>
+        /// <param name="segment">The segment to trim.</param>
+        /// <param name="c">The character to remove.</param>
+        /// <param name="count">The maximum number of characters to remove.</param>
         /// <returns>
         /// The trimmed <see cref="StringSegment" />.
         /// </returns>
         [Pure]
         public static StringSegment Trim(in this StringSegment segment, char c, int count = -1)
-        {
-            return segment.TrimStart(c, count).TrimEnd(c, count);
-        }
+            => segment.TrimStart(c, count).TrimEnd(c, count);
 
         /// <summary>
         /// Removes up to the specified count of the specified character from the start of the segment.
         /// </summary>
-        /// <param name="segment">
-        /// The segment to trim.
-        /// </param>
-        /// <param name="c">
-        /// The character to remove.
-        /// </param>
-        /// <param name="count">
-        /// The maximum number of characters to remove.
-        /// </param>
+        /// <param name="segment">The segment to trim.</param>
+        /// <param name="c">The character to remove.</param>
+        /// <param name="count">The maximum number of characters to remove.</param>
         /// <returns>
         /// The trimmed <see cref="StringSegment" />.
         /// </returns>
@@ -69,15 +55,9 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// Removes up to the specified count of the specified character from the end of the segment.
         /// </summary>
-        /// <param name="segment">
-        /// The segment to trim.
-        /// </param>
-        /// <param name="c">
-        /// The character to remove.
-        /// </param>
-        /// <param name="count">
-        /// The maximum number of characters to remove.
-        /// </param>
+        /// <param name="segment">The segment to trim.</param>
+        /// <param name="c">The character to remove.</param>
+        /// <param name="count">The maximum number of characters to remove.</param>
         /// <returns>
         /// The trimmed <see cref="StringSegment" />.
         /// </returns>
@@ -105,12 +85,8 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// Reduces multiples of the specified character to one.
         /// </summary>
-        /// <param name="segment">
-        /// The segment to fix.
-        /// </param>
-        /// <param name="c">
-        /// The character to normalize.
-        /// </param>
+        /// <param name="segment">The segment to fix.</param>
+        /// <param name="c">The character to normalize.</param>
         /// <returns>
         /// A <see cref="StringSegment"/> representing the corrected string.
         /// </returns>

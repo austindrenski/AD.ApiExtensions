@@ -4,39 +4,32 @@ using Microsoft.Extensions.Primitives;
 
 namespace AD.ApiExtensions.Primitives
 {
-    // TODO: document StringValuesExtensions
     /// <summary>
-    ///
+    /// Provides extension methods for <see cref="StringValues"/>.
     /// </summary>
     [PublicAPI]
     public static class StringValuesExtensions
     {
         /// <summary>
-        ///
+        /// Returns a copy of this <see cref="StringValues"/> converted to lowercase.
         /// </summary>
-        /// <param name="values">
-        ///
-        /// </param>
+        /// <param name="values">The source values.</param>
         /// <returns>
-        ///
+        /// The lowercase equivalent of the current <see cref="StringValues"/>.
         /// </returns>
-        public static StringValues ToLower(this StringValues values)
-        {
-            return values.Select(x => x.ToLower()).ToArray();
-        }
+        [Pure]
+        public static StringValues ToLower(in this StringValues values)
+            => values.Select(x => x.ToLower()).ToArray();
 
         /// <summary>
-        ///
+        /// Returns a copy of this <see cref="StringValues"/> converted to uppercase.
         /// </summary>
-        /// <param name="values">
-        ///
-        /// </param>
+        /// <param name="values">The source values.</param>
         /// <returns>
-        ///
+        /// The uppercase equivalent of the current <see cref="StringValues"/>.
         /// </returns>
-        public static StringValues ToUpper(this StringValues values)
-        {
-            return values.Select(x => x.ToUpper()).ToArray();
-        }
+        [Pure]
+        public static StringValues ToUpper(in this StringValues values)
+            => values.Select(x => x.ToUpper()).ToArray();
     }
 }

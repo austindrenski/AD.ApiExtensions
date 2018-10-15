@@ -20,8 +20,8 @@ namespace AD.ApiExtensions.Expressions.Internal
         /// </summary>
         [NotNull] static readonly MethodInfo SelectMethodInfo =
             new Func<IQueryable<object>, Expression<Func<object, object>>, IQueryable<object>>(Queryable.Select)
-                .GetMethodInfo()
-                .GetGenericMethodDefinition();
+               .GetMethodInfo()
+               .GetGenericMethodDefinition();
 
         /// <summary>
         /// The cache of non-generic select methods.
@@ -152,7 +152,7 @@ namespace AD.ApiExtensions.Expressions.Internal
         /// True if the <paramref name="left" /> and <paramref name="right" /> parameters have the same value; otherwise, false.
         /// </returns>
         [Pure]
-        public static bool operator ==(WithExpression<TSource, TValue> left, WithExpression<TSource, TValue> right) => Equals(left, right);
+        public static bool operator ==([CanBeNull] WithExpression<TSource, TValue> left, [CanBeNull] WithExpression<TSource, TValue> right) => Equals(left, right);
 
         /// <summary>Returns a value that indicates whether two <see cref="WithExpression{TSource,TValue}" /> objects have different values.</summary>
         /// <param name="left">The first value to compare.</param>
@@ -161,6 +161,6 @@ namespace AD.ApiExtensions.Expressions.Internal
         /// True if <paramref name="left" /> and <paramref name="right" /> are not equal; otherwise, false.
         /// </returns>
         [Pure]
-        public static bool operator !=(WithExpression<TSource, TValue> left, WithExpression<TSource, TValue> right) => !Equals(left, right);
+        public static bool operator !=([CanBeNull] WithExpression<TSource, TValue> left, [CanBeNull] WithExpression<TSource, TValue> right) => !Equals(left, right);
     }
 }

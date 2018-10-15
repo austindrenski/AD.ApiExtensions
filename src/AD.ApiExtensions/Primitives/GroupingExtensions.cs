@@ -13,23 +13,16 @@ namespace AD.ApiExtensions.Primitives
         /// <summary>
         /// Casts the elements of an <see cref="IEnumerable{T}"/> as <see cref="Grouping{TKey,TValue}"/>.
         /// </summary>
-        /// <param name="source">
-        /// The source collection.
-        /// </param>
-        /// <typeparam name="TKey">
-        /// The type of the keys.
-        /// </typeparam>
-        /// <typeparam name="TValue">
-        /// The type of the values.
-        /// </typeparam>
+        /// <param name="source">The source collection.</param>
+        /// <typeparam name="TKey">The type of the keys.</typeparam>
+        /// <typeparam name="TValue">The type of the values.</typeparam>
         /// <returns>
         /// The resulting enumerable collection.
         /// </returns>
         [Pure]
         [NotNull]
-        public static IEnumerable<Grouping<TKey, TValue>> AsGrouping<TKey, TValue>([NotNull] this IEnumerable<IGrouping<TKey, TValue>> source)
-        {
-            return source.Cast<Grouping<TKey, TValue>>();
-        }
+        public static IEnumerable<Grouping<TKey, TValue>> AsGrouping<TKey, TValue>(
+            [NotNull] this IEnumerable<IGrouping<TKey, TValue>> source)
+            => source.Cast<Grouping<TKey, TValue>>();
     }
 }
