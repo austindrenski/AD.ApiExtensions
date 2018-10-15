@@ -167,6 +167,59 @@ namespace AD.ApiExtensions.Types
             }
 
             il.Emit(OpCodes.Ret);
+
+            DefineEquality(builder, fields);
+            DefineInequality(builder, fields);
+        }
+
+        static void DefineEquality([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
+        {
+            const MethodAttributes methodAttributes =
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName;
+
+            MethodBuilder equality =
+                builder.DefineMethod("op_Equality", methodAttributes, typeof(bool), new Type[] { builder, builder });
+
+            ILGenerator il = equality.GetILGenerator();
+
+            il.Emit(OpCodes.Ldc_I4_1);
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldfld, fields[i]);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldfld, fields[i]);
+                il.Emit(OpCodes.Call, typeof(object).GetRuntimeMethod(nameof(object.Equals), new Type[] { typeof(object), typeof(object) }));
+                il.Emit(OpCodes.Ceq);
+            }
+
+            il.Emit(OpCodes.Ret);
+        }
+
+        static void DefineInequality([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
+        {
+            const MethodAttributes methodAttributes =
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName;
+
+            MethodBuilder inequality =
+                builder.DefineMethod("op_Inequality", methodAttributes, typeof(bool), new Type[] { builder, builder });
+
+            ILGenerator il = inequality.GetILGenerator();
+
+            il.Emit(OpCodes.Ldc_I4_0);
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldfld, fields[i]);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldfld, fields[i]);
+                il.Emit(OpCodes.Call, typeof(object).GetRuntimeMethod(nameof(object.Equals), new Type[] { typeof(object), typeof(object) }));
+                il.Emit(OpCodes.Ceq);
+            }
+
+            il.Emit(OpCodes.Ret);
         }
 
         /// <summary>

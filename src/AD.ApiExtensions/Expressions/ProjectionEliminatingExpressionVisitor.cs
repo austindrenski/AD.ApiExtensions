@@ -24,6 +24,10 @@ namespace AD.ApiExtensions.Expressions
         public override Expression Visit(Expression e) => base.Visit(e);
 
         /// <inheritdoc />
+        protected override Expression VisitBinary(BinaryExpression e)
+            => e.NodeType == ExpressionType.Equal ? Expression.Equal(Visit(e.Left), Visit(e.Right)) : base.VisitBinary(e);
+
+        /// <inheritdoc />
         protected override Expression VisitLambda<T>(Expression<T> e)
         {
             ParameterExpression[] parameters =

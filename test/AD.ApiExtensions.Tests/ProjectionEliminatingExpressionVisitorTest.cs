@@ -215,6 +215,48 @@ namespace AD.ApiExtensions.Tests
 
         #endregion
 
+        #region Join
+
+        [Fact]
+        public void Join_anonymous()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var group =
+                query.Select(x => new { x.A, x.B, D = 1 })
+                     .Join(query, x => x.A, x => x.A, (x, y) => new { x, y })
+                      // ReSharper disable once EqualExpressionComparison
+                     .Where(x => x.x == x.x)
+                     .Select(x => new { x.x.A, x.x.B, x.y.C, x.x.D })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = group.Cast<object>().ToArray();
+
+            Assert.Equal(4, result.First().GetType().GetProperties().Length);
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public void Join_anonymous_with_elimination()
+        {
+            var query = new[] { new { A = "a", B = "b", C = "c" } }.AsQueryable();
+
+            var group =
+                query.Select(x => new { x.A, x.B, D = 0.0 })
+                     .Join(query, x => x.A, x => x.A, (x, y) => new { x, y })
+                      // ReSharper disable once EqualExpressionComparison
+                     .Where(x => x.x == x.x)
+                     .Select(x => new { x.x.A, x.x.B, x.y.C, x.x.D })
+                     .Enlist<ProjectionEliminatingExpressionVisitor>();
+
+            var result = group.Cast<object>().ToArray();
+
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+            Assert.Single(result);
+        }
+
+        #endregion
+
         #region Select
 
         [Fact]
