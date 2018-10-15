@@ -227,13 +227,15 @@ namespace AD.ApiExtensions.Tests
                      .Join(query, x => x.A, x => x.A, (x, y) => new { x, y })
                       // ReSharper disable once EqualExpressionComparison
                      .Where(x => x.x == x.x)
+                      // ReSharper disable once EqualExpressionComparison
+                     .Where(x => x.x.Equals(x.x))
                      .Select(x => new { x.x.A, x.x.B, x.y.C, x.x.D })
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = group.Cast<object>().ToArray();
 
-            Assert.Equal(4, result.First().GetType().GetProperties().Length);
             Assert.Single(result);
+            Assert.Equal(4, result.First().GetType().GetProperties().Length);
         }
 
         [Fact]
@@ -245,14 +247,17 @@ namespace AD.ApiExtensions.Tests
                 query.Select(x => new { x.A, x.B, D = 0.0 })
                      .Join(query, x => x.A, x => x.A, (x, y) => new { x, y })
                       // ReSharper disable once EqualExpressionComparison
+                      // ReSharper disable once EqualExpressionComparison
                      .Where(x => x.x == x.x)
+                      // ReSharper disable once EqualExpressionComparison
+                     .Where(x => x.x.Equals(x.x))
                      .Select(x => new { x.x.A, x.x.B, x.y.C, x.x.D })
                      .Enlist<ProjectionEliminatingExpressionVisitor>();
 
             var result = group.Cast<object>().ToArray();
 
-            Assert.Equal(3, result.First().GetType().GetProperties().Length);
             Assert.Single(result);
+            Assert.Equal(3, result.First().GetType().GetProperties().Length);
         }
 
         #endregion

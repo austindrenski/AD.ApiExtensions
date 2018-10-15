@@ -26,6 +26,12 @@ namespace AD.ApiExtensions.Types
                            .DefineDynamicModule(AnonymousAssemblyName);
 
         /// <summary>
+        /// The static method info for <see cref="T:object.Equals(object,object)"/>.
+        /// </summary>
+        [NotNull] static readonly MethodInfo ObjectEquals =
+            typeof(object).GetRuntimeMethod(nameof(object.Equals), new Type[] { typeof(object), typeof(object) });
+
+        /// <summary>
         /// The previously defined types.
         /// </summary>
         [NotNull] static readonly ConcurrentDictionary<int, Type> Types = new ConcurrentDictionary<int, Type>();
@@ -156,6 +162,7 @@ namespace AD.ApiExtensions.Types
                 builder.DefineConstructor(ctorAttributes, ctorConventions, fieldTypes);
 
             ILGenerator il = ctor.GetILGenerator();
+
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, builder.DefineDefaultConstructor(ctorAttributes));
 
@@ -168,19 +175,18 @@ namespace AD.ApiExtensions.Types
 
             il.Emit(OpCodes.Ret);
 
-            DefineEquality(builder, fields);
-            DefineInequality(builder, fields);
+            DefineTypedEquals(builder, fields);
         }
 
-        static void DefineEquality([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
+        static void DefineTypedEquals([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
         {
             const MethodAttributes methodAttributes =
-                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName;
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
 
-            MethodBuilder equality =
-                builder.DefineMethod("op_Equality", methodAttributes, typeof(bool), new Type[] { builder, builder });
+            MethodBuilder typedEquals =
+                builder.DefineMethod("Equals", methodAttributes, typeof(bool), new Type[] { builder });
 
-            ILGenerator il = equality.GetILGenerator();
+            ILGenerator il = typedEquals.GetILGenerator();
 
             il.Emit(OpCodes.Ldc_I4_1);
 
@@ -190,35 +196,73 @@ namespace AD.ApiExtensions.Types
                 il.Emit(OpCodes.Ldfld, fields[i]);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldfld, fields[i]);
-                il.Emit(OpCodes.Call, typeof(object).GetRuntimeMethod(nameof(object.Equals), new Type[] { typeof(object), typeof(object) }));
+                il.Emit(OpCodes.Call, ObjectEquals);
                 il.Emit(OpCodes.Ceq);
             }
 
             il.Emit(OpCodes.Ret);
+
+            DefineObjectEquals(builder, typedEquals);
+            DefineOpEquality(builder, typedEquals);
+            DefineOpInequality(builder, typedEquals);
         }
 
-        static void DefineInequality([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
+        static void DefineObjectEquals([NotNull] TypeBuilder builder, [NotNull] MethodInfo typedEquals)
+        {
+            const MethodAttributes methodAttributes =
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
+
+            MethodBuilder objectEquals =
+                builder.DefineMethod("Equals", methodAttributes, typeof(bool), new Type[] { typeof(object) });
+
+            ILGenerator il = objectEquals.GetILGenerator();
+            Label isFalse = il.DefineLabel();
+
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Isinst, builder);
+            il.Emit(OpCodes.Brfalse_S, isFalse);
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Unbox_Any, builder);
+            il.Emit(OpCodes.Call, typedEquals);
+            il.Emit(OpCodes.Ret);
+
+            il.MarkLabel(isFalse);
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Ret);
+        }
+
+        static void DefineOpEquality([NotNull] TypeBuilder builder, [NotNull] MethodInfo typedEquals)
         {
             const MethodAttributes methodAttributes =
                 MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName;
 
-            MethodBuilder inequality =
+            MethodBuilder opEquality =
+                builder.DefineMethod("op_Equality", methodAttributes, typeof(bool), new Type[] { builder, builder });
+
+            ILGenerator il = opEquality.GetILGenerator();
+
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Call, typedEquals);
+            il.Emit(OpCodes.Ret);
+        }
+
+        static void DefineOpInequality([NotNull] TypeBuilder builder, [NotNull] MethodInfo typedEquals)
+        {
+            const MethodAttributes methodAttributes =
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Static | MethodAttributes.SpecialName;
+
+            MethodBuilder opInequality =
                 builder.DefineMethod("op_Inequality", methodAttributes, typeof(bool), new Type[] { builder, builder });
 
-            ILGenerator il = inequality.GetILGenerator();
+            ILGenerator il = opInequality.GetILGenerator();
 
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Call, typedEquals);
             il.Emit(OpCodes.Ldc_I4_0);
-
-            for (int i = 0; i < fields.Length; i++)
-            {
-                il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldfld, fields[i]);
-                il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Ldfld, fields[i]);
-                il.Emit(OpCodes.Call, typeof(object).GetRuntimeMethod(nameof(object.Equals), new Type[] { typeof(object), typeof(object) }));
-                il.Emit(OpCodes.Ceq);
-            }
-
+            il.Emit(OpCodes.Ceq);
             il.Emit(OpCodes.Ret);
         }
 

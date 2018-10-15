@@ -107,7 +107,17 @@ namespace AD.ApiExtensions.Expressions
             Expression[] arguments = e.Arguments.Select(Visit).ToArray();
 
             if (!e.Method.IsGenericMethod)
-                return e.Update(instance, arguments);
+            {
+                ParameterInfo[] p = e.Method.GetParameters();
+
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    if (arguments[i].Type.IsValueType && p[i].ParameterType == typeof(object))
+                        arguments[i] = Expression.Convert(arguments[i], typeof(object));
+                }
+
+                return Expression.Call(instance, e.Method, arguments);
+            }
 
             MethodInfo genericMethod =
                 e.Method.GetGenericMethodDefinition();
