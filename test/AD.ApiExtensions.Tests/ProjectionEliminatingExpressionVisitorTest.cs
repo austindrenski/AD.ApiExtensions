@@ -234,8 +234,24 @@ namespace AD.ApiExtensions.Tests
 
             var result = group.Cast<object>().ToArray();
 
-            Assert.Single(result);
-            Assert.Equal(4, result.First().GetType().GetProperties().Length);
+            object item = Assert.Single(result);
+            Assert.NotNull(item);
+            Assert.Equal(4, item.GetType().GetProperties().Length);
+            Assert.Equal("a", item.GetType().GetProperty("A").GetValue(item));
+            Assert.Equal("b", item.GetType().GetProperty("B").GetValue(item));
+            Assert.Equal("c", item.GetType().GetProperty("C").GetValue(item));
+            Assert.Equal(1, item.GetType().GetProperty("D").GetValue(item));
+
+            int expectedHashCode =
+                397 ^
+                (397 * "a".GetHashCode()) ^
+                (397 * "b".GetHashCode()) ^
+                (397 * "c".GetHashCode()) ^
+                (397 * 1.GetHashCode());
+
+            int hashCode = item.GetHashCode();
+
+            Assert.Equal(expectedHashCode, hashCode);
         }
 
         [Fact]
@@ -256,8 +272,19 @@ namespace AD.ApiExtensions.Tests
 
             var result = group.Cast<object>().ToArray();
 
-            Assert.Single(result);
-            Assert.Equal(3, result.First().GetType().GetProperties().Length);
+            object item = Assert.Single(result);
+            Assert.NotNull(item);
+            Assert.Equal(3, item.GetType().GetProperties().Length);
+            Assert.Equal("a", item.GetType().GetProperty("A").GetValue(item));
+            Assert.Equal("b", item.GetType().GetProperty("B").GetValue(item));
+            Assert.Equal("c", item.GetType().GetProperty("C").GetValue(item));
+
+            int expectedHashCode =
+                397 ^ (397 * "a".GetHashCode()) ^ (397 * "b".GetHashCode()) ^ (397 * "c".GetHashCode());
+
+            int hashCode = item.GetHashCode();
+
+            Assert.Equal(expectedHashCode, hashCode);
         }
 
         #endregion

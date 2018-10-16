@@ -32,6 +32,12 @@ namespace AD.ApiExtensions.Types
             typeof(object).GetRuntimeMethod(nameof(object.Equals), new Type[] { typeof(object), typeof(object) });
 
         /// <summary>
+        /// The static method info for <see cref="T:object.GetHashCode()"/>.
+        /// </summary>
+        [NotNull] static readonly MethodInfo ObjectGetHashCode =
+            typeof(object).GetRuntimeMethod(nameof(object.GetHashCode), Type.EmptyTypes);
+
+        /// <summary>
         /// The previously defined types.
         /// </summary>
         [NotNull] static readonly ConcurrentDictionary<int, Type> Types = new ConcurrentDictionary<int, Type>();
@@ -175,7 +181,48 @@ namespace AD.ApiExtensions.Types
 
             il.Emit(OpCodes.Ret);
 
+            DefineGetHashCode(builder, fields);
             DefineTypedEquals(builder, fields);
+        }
+
+        static void DefineGetHashCode([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
+        {
+            const MethodAttributes methodAttributes =
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
+
+            MethodBuilder getHashCode =
+                builder.DefineMethod(nameof(ValueType.GetHashCode), methodAttributes, typeof(int), Type.EmptyTypes);
+
+            ILGenerator il = getHashCode.GetILGenerator();
+
+            il.Emit(OpCodes.Ldc_I4, 397);
+
+            for (int i = 0; i < fields.Length; i++)
+            {
+                Label end = il.DefineLabel();
+                Label isNull = il.DefineLabel();
+
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldflda, fields[i]);
+                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Brfalse_S, isNull);
+
+                // N.B. callvirt normally takes a reference, but constrained -> callvirt requires an address.
+                il.Emit(OpCodes.Constrained, fields[i].FieldType);
+                il.Emit(OpCodes.Callvirt, ObjectGetHashCode);
+                il.Emit(OpCodes.Br_S, end);
+
+                il.MarkLabel(isNull);
+                il.Emit(OpCodes.Pop);
+                il.Emit(OpCodes.Ldc_I4_0);
+
+                il.MarkLabel(end);
+                il.Emit(OpCodes.Ldc_I4, 397);
+                il.Emit(OpCodes.Mul);
+                il.Emit(OpCodes.Xor);
+            }
+
+            il.Emit(OpCodes.Ret);
         }
 
         static void DefineTypedEquals([NotNull] TypeBuilder builder, [NotNull] [ItemNotNull] FieldInfo[] fields)
@@ -184,7 +231,7 @@ namespace AD.ApiExtensions.Types
                 MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
 
             MethodBuilder typedEquals =
-                builder.DefineMethod("Equals", methodAttributes, typeof(bool), new Type[] { builder });
+                builder.DefineMethod(nameof(ValueType.Equals), methodAttributes, typeof(bool), new Type[] { builder });
 
             ILGenerator il = typedEquals.GetILGenerator();
 
@@ -213,7 +260,7 @@ namespace AD.ApiExtensions.Types
                 MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual;
 
             MethodBuilder objectEquals =
-                builder.DefineMethod("Equals", methodAttributes, typeof(bool), new Type[] { typeof(object) });
+                builder.DefineMethod(nameof(ValueType.Equals), methodAttributes, typeof(bool), new Type[] { typeof(object) });
 
             ILGenerator il = objectEquals.GetILGenerator();
             Label isFalse = il.DefineLabel();
@@ -221,6 +268,7 @@ namespace AD.ApiExtensions.Types
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Isinst, builder);
             il.Emit(OpCodes.Brfalse_S, isFalse);
+
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Ldarg_1);
             il.Emit(OpCodes.Unbox_Any, builder);
@@ -318,6 +366,7 @@ namespace AD.ApiExtensions.Types
                     builder.DefineMethod($"get{field.Name}", propertyAttributes, field.FieldType, Type.EmptyTypes);
 
                 ILGenerator il = getter.GetILGenerator();
+
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldfld, field);
                 il.Emit(OpCodes.Ret);
@@ -338,6 +387,7 @@ namespace AD.ApiExtensions.Types
                     builder.DefineMethod($"set{field.Name}", propertyAttributes, typeof(void), new Type[] { field.FieldType });
 
                 ILGenerator il = setter.GetILGenerator();
+
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Stfld, field);
