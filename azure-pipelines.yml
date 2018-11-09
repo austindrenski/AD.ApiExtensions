@@ -1,0 +1,90 @@
+name: 2.1.0-ci.$(Date:yyyyMMdd).$(Rev:r) # equal to $(Build.BuildNumber)
+trigger:
+    branches:
+        include:
+        - dev
+        - master
+        - hotfix/*
+        - release/*
+variables:
+    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+jobs:
+#- job: Linux
+#  pool:
+#      vmImage: ubuntu-16.04
+#  steps:
+#  - task: DotNetCoreCLI@2
+#    displayName: 'Test'
+#    inputs:
+#        command: 'test'
+#        configuration: 'Release'
+#        projects: 'test/**/*.csproj'
+#        publishTestResults: true
+- job: Windows
+  pool:
+      vmImage: vs2017-win2016
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Test'
+    inputs:
+        command: 'test'
+        configuration: 'Release'
+        projects: 'test/**/*.csproj'
+        publishTestResults: true
+
+  #
+  # Package for MyGet release
+  #
+  - task: DotNetCoreCLI@2
+    displayName: 'Package'
+    inputs:
+        command: 'pack'
+        configuration: 'Release'
+        buildProperties: 'Version=$(Build.BuildNumber)'
+        packagesToPack: 'src/AD.ApiExtensions/AD.ApiExtensions.csproj'
+        packDirectory: '$(System.DefaultWorkingDirectory)'
+        verbosityPack: 'normal'
+  # BUG: https://github.com/Microsoft/azure-pipelines-tasks/issues/7160, should use DotNetCoreCLI@2
+  - task: NuGetToolInstaller@0
+    inputs:
+        versionSpec: '4.3.0'
+  - task: NuGetCommand@2
+    displayName: 'Publish to MyGet (unstable)'
+    condition: succeeded()
+    inputs:
+        command: 'push'
+        nuGetFeedType: 'external'
+        packagesToPush: '**/AD.ApiExtensions.$(Build.BuildNumber).nupkg'
+        publishFeedCredentials: 'myget-unstable'
+  - task: NuGetCommand@2
+    displayName: 'Publish to MyGet (stable)'
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'dev'))
+    inputs:
+        command: 'push'
+        nuGetFeedType: 'external'
+        packagesToPush: '**/*.nupkg'
+        publishFeedCredentials: 'myget-stable'
+
+  #
+  # Package for NuGet release
+  #
+  - powershell: Write-Host "##vso[task.setvariable variable=nuget_build_number]$($env:BUILD_BUILDNUMBER.Split('-ci')[0])";
+    displayName: 'Assign NuGet release number'
+  - task: DotNetCoreCLI@2
+    displayName: 'Package'
+    inputs:
+        command: 'pack'
+        configuration: 'Release'
+        buildProperties: 'Version=$(nuget_build_number)'
+        packagesToPack: 'src/AD.ApiExtensions/AD.ApiExtensions.csproj'
+        packDirectory: '$(System.DefaultWorkingDirectory)'
+        verbosityPack: 'normal'
+  - task: NuGetCommand@2
+    displayName: 'Publish to NuGet'
+    condition: and(succeeded(), or(startsWith(variables['Build.SourceBranchName'], 'release/'), startsWith(variables['Build.SourceBranchName'], 'hotfix/')))
+    inputs:
+        command: 'push'
+        nuGetFeedType: 'external'
+        packagesToPush: '**/AD.ApiExtensions.$(nuget_build_number).nupkg'
+        publishFeedCredentials: 'nuget'
