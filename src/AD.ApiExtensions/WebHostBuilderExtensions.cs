@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +23,35 @@ namespace AD.ApiExtensions
         /// <returns>
         /// The <see cref="IWebHostBuilder"/> with the <see cref="IConfiguration"/> and <see cref="IStartup"/> added.
         /// </returns>
+        /// <remarks>
+        ///   <para>
+        ///   The <see cref="IConfiguration"/> is populated from:
+        ///   <list type="number">
+        ///     <item>
+        ///       <description>
+        ///         The initial <see cref="IWebHostBuilder"/>.
+        ///       </description>
+        ///     </item>
+        ///     <item>
+        ///       <description>
+        ///         An optional appsettings.json file.
+        ///       </description>
+        ///     </item>
+        ///     <item>
+        ///       <description>
+        ///         An optional appsettings.{EnvironmentName}.json file
+        ///       </description>
+        ///     </item>
+        ///     <item>
+        ///       <description>
+        ///         The commandline arguments.
+        ///       </description>
+        ///     </item>
+        ///   </list>
+        ///   </para>
+        /// </remarks>
         /// <exception cref="ArgumentNullException"><paramref name="builder"/></exception>
+        /// <exception cref="ArgumentNullException"><paramref name="args"/></exception>
         [Pure]
         [NotNull]
         public static IWebHostBuilder UseStartup<T>([NotNull] this IWebHostBuilder builder, [NotNull] string[] args)
@@ -31,9 +60,19 @@ namespace AD.ApiExtensions
             if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
 
+            if (args == null)
+                throw new ArgumentNullException(nameof(args));
+
+            AssemblyName info = typeof(T).Assembly.GetName();
+
             return
-                builder.UseSetting(WebHostDefaults.ApplicationKey, typeof(T).Assembly.GetName().Name)
-                       .UseConfiguration(new ConfigurationBuilder().AddCommandLine(args).Build())
+                builder.UseSetting(WebHostDefaults.ApplicationKey, info.Name)
+                       .UseSetting("applicationVersion", info.Version.ToString())
+                       .ConfigureAppConfiguration(
+                           (ctx, config) =>
+                               config.AddJsonFile("appsettings.json", true)
+                                     .AddJsonFile($"appsettings.{ctx.HostingEnvironment.EnvironmentName}.json", true)
+                                     .AddCommandLine(args))
                        .ConfigureServices(x => x.AddSingleton(typeof(IStartup), typeof(T)));
         }
     }

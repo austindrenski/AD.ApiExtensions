@@ -8,11 +8,6 @@
     <DocumentationFile>bin/Release/$(TargetFramework)/AD.ApiExtensions.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyVersion />
-    <FileVersion />
-    <Version />
-  </PropertyGroup>
-  <PropertyGroup>
     <Authors>Austin Drenski</Authors>
     <Company>Austin Drenski</Company>
     <Copyright>Copyright (c) 2017 Austin Drenski</Copyright>
@@ -29,13 +24,14 @@
     <PackageReference Include="AD.Xml" Version="2.0.0.21" PrivateAssets="None" />
     <!-- These packages do not flow forward -->
     <PackageReference Include="JetBrains.Annotations" Version="2018.2.1" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.ApiExplorer" Version="2.1.2" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.ApiExplorer" Version="2.1.3" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.1.1" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.1.2" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.1.2" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.3" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.1.3" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor" Version="2.1.3" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.4" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.1.1" PrivateAssets="All" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="3.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" PrivateAssets="All" />
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" PrivateAssets="All" />
   </ItemGroup>
 </Project>
