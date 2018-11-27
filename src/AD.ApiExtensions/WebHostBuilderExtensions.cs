@@ -63,6 +63,15 @@ namespace AD.ApiExtensions
             if (args == null)
                 throw new ArgumentNullException(nameof(args));
 
+            // If the command line overrides the environment, it has to be set first.
+            IConfigurationRoot commandLine =
+                new ConfigurationBuilder()
+                    .AddCommandLine(args)
+                    .Build();
+
+            if (commandLine[WebHostDefaults.EnvironmentKey] is string environment)
+                builder.UseEnvironment(environment);
+
             AssemblyName info = typeof(T).Assembly.GetName();
 
             return
