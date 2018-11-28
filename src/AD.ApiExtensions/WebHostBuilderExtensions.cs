@@ -69,19 +69,22 @@ namespace AD.ApiExtensions
                     .AddCommandLine(args)
                     .Build();
 
-            if (commandLine[WebHostDefaults.EnvironmentKey] is string environment)
-                builder.UseEnvironment(environment);
+            string environment =
+                commandLine[WebHostDefaults.EnvironmentKey] ?? builder.GetSetting(WebHostDefaults.EnvironmentKey);
+
+            IConfigurationRoot configuration =
+                new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json", true)
+                    .AddJsonFile($"appsettings.{environment}.json", true)
+                    .AddConfiguration(commandLine)
+                    .Build();
 
             AssemblyName info = typeof(T).Assembly.GetName();
 
             return
                 builder.UseSetting(WebHostDefaults.ApplicationKey, info.Name)
                        .UseSetting("applicationVersion", info.Version.ToString())
-                       .ConfigureAppConfiguration(
-                           (ctx, config) =>
-                               config.AddJsonFile("appsettings.json", true)
-                                     .AddJsonFile($"appsettings.{ctx.HostingEnvironment.EnvironmentName}.json", true)
-                                     .AddCommandLine(args))
+                       .UseConfiguration(configuration)
                        .ConfigureServices(x => x.AddSingleton(typeof(IStartup), typeof(T)));
         }
     }
